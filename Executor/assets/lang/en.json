@@ -1,0 +1,16 @@
+{
+  "setup.window_title": "Setup",
+  "setup.title": "First-time Setup",
+  "setup.choose_language": "Choose Language",
+  "setup.choose_theme": "Choose Theme",
+  "setup.search_hint": "Search themes...",
+  "setup.lang_zh": "Chinese",
+  "setup.lang_en": "English",
+  "setup.back": "Back",
+  "setup.next": "Next",
+  "setup.finish": "Finish",
+  "setup.msg_choose_language": "Please choose a language.",
+  "setup.msg_select_theme": "Please select a theme.",
+  "setup.msg_write_failed": "Failed to write config.cfg: {0}",
+  "main.title": "Executor"
+}

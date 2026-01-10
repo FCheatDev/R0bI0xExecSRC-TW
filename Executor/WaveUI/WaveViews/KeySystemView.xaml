@@ -1,0 +1,77 @@
+<UserControl x:Class="Executor.WaveUI.WaveViews.KeySystemView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:wave="clr-namespace:Executor.WaveUI"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <Grid Background="#000000" MouseLeftButtonDown="Root_OnMouseLeftButtonDown">
+        <wave:WaveIcon IconName="wave_logo_small" Width="22" Height="22" Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,10,0,0" />
+
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="340">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <wave:WaveIcon x:Name="LockIcon" IconName="lock" Width="28" Height="28" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,14" />
+
+            <TextBlock Grid.Row="1" Text="Wave Key System" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="18" HorizontalAlignment="Center" FontFamily="Comic Sans MS" />
+            <TextBlock Grid.Row="2" Text="Purchase a key from our official&#x0a;store, or from one of our resellers." Foreground="#9AA0A6" TextAlignment="Center" FontSize="12" Margin="0,12,0,0" FontFamily="Bahnschrift" />
+
+            <Grid Grid.Row="3" Margin="0,18,0,0">
+                <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Height="34">
+                    <Grid>
+                        <TextBox x:Name="KeyBox" Background="Transparent" Foreground="#EDEDED" BorderThickness="0" Margin="10,0,29,0" FontSize="12" VerticalContentAlignment="Center" FontFamily="Comic Sans MS" FontWeight="Bold" />
+                        <wave:WaveIcon IconName="key" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
+                <Button x:Name="LoginButton" Width="86" Height="30" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Login_OnClick" FontFamily="Arial Black" FontSize="14">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="Log in" FontWeight="SemiBold" FontSize="12" />
+                </Button>
+
+                <Button Width="86" Height="30" Background="#1A1A1A" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" FontSize="14" FontFamily="Arial Black">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="Get Key" FontWeight="SemiBold" FontSize="12" FontFamily="Arial Black" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,14" Opacity="0.75">
+            <wave:WaveIcon IconName="youtube" Width="14" Height="14" Stretch="Uniform" />
+            <wave:WaveIcon IconName="discord" Width="14" Height="14" Stretch="Uniform" Margin="14,0,0,0" />
+            <wave:WaveIcon IconName="globe" Width="14" Height="14" Stretch="Uniform" Margin="14,0,0,0" />
+        </StackPanel>
+
+        <Grid x:Name="VerifyOverlay" Background="#B0000000" Visibility="Collapsed" Opacity="0">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="52" Height="52">
+                    <Ellipse Stroke="#404040" StrokeThickness="5" />
+                    <Path x:Name="SpinnerArc" Stroke="#EDEDED" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 26,3 A 23,23 0 0 1 49,26" />
+                </Grid>
+                <TextBlock Text="Verifying..." Foreground="#EDEDED" FontSize="16" HorizontalAlignment="Center" Margin="0,12,0,0" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

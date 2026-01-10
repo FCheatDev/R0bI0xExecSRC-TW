@@ -1,0 +1,246 @@
+using System;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Threading;
+using Executor;
+using Executor.WaveUI;
+
+namespace Executor.WaveUI.WaveViews
+{
+    public partial class KeySystemView : UserControl
+    {
+        private readonly Action _onVerified;
+        private DispatcherTimer? _verifyTimer;
+        private DispatcherTimer? _postVerifyTimer;
+        private DispatcherTimer? _autoVerifyDelayTimer;
+        private bool _isVerifying;
+
+        private bool ValidateKey(out string? error)
+        {
+            error = null;
+            var entered = KeyBox?.Text?.Trim() ?? "";
+            if (entered.Length == 0)
+            {
+                error = "Please enter a key.";
+                return false;
+            }
+
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var expected = ConfigManager.Get(cfg, "license_key") ?? ConfigManager.Get(cfg, "key");
+                if (!string.IsNullOrWhiteSpace(expected))
+                {
+                    if (!string.Equals(expected.Trim(), entered, StringComparison.Ordinal))
+                    {
+                        error = "Invalid key.";
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+            return true;
+        }
+
+        private void PersistKeyIfNeeded()
+        {
+            var entered = KeyBox?.Text?.Trim() ?? "";
+            if (entered.Length == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var licenseKey = ConfigManager.Get(cfg, "license_key");
+                if (!string.IsNullOrWhiteSpace(licenseKey))
+                {
+                    return;
+                }
+
+                var existing = ConfigManager.Get(cfg, "key") ?? "";
+                if (string.Equals(existing, entered, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                ConfigManager.Set(cfg, "key", entered);
+                ConfigManager.WriteConfig(cfg);
+            }
+            catch
+            {
+            }
+        }
+
+        private void StartVerifyFlow()
+        {
+            if (_isVerifying)
+            {
+                return;
+            }
+
+            _isVerifying = true;
+            VerifyOverlay.Visibility = Visibility.Visible;
+            VerifyOverlay.BeginAnimation(OpacityProperty, null);
+            VerifyOverlay.Opacity = 0;
+
+            var fadeIn = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+            VerifyOverlay.BeginAnimation(OpacityProperty, fadeIn);
+
+            _verifyTimer?.Stop();
+            _postVerifyTimer?.Stop();
+
+            _verifyTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _verifyTimer.Tick += (_, _) =>
+            {
+                _verifyTimer?.Stop();
+
+                var fadeOut = new DoubleAnimation
+                {
+                    From = 1,
+                    To = 0,
+                    Duration = TimeSpan.FromMilliseconds(180),
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                };
+
+                fadeOut.Completed += (_, _) =>
+                {
+                    VerifyOverlay.Visibility = Visibility.Collapsed;
+                    LockIcon.IconName = "unlock";
+
+                    _postVerifyTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1050) };
+                    _postVerifyTimer.Tick += (_, _) =>
+                    {
+                        _postVerifyTimer?.Stop();
+                        _isVerifying = false;
+                        _onVerified();
+                    };
+                    _postVerifyTimer.Start();
+                };
+
+                VerifyOverlay.BeginAnimation(OpacityProperty, fadeOut);
+            };
+            _verifyTimer.Start();
+        }
+
+        private void TryAutoVerifyFromConfig()
+        {
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var expected = ConfigManager.Get(cfg, "license_key") ?? ConfigManager.Get(cfg, "key");
+                if (string.IsNullOrWhiteSpace(expected))
+                {
+                    return;
+                }
+
+                if (KeyBox != null)
+                {
+                    KeyBox.Text = expected.Trim();
+                }
+
+                PersistKeyIfNeeded();
+
+                _autoVerifyDelayTimer?.Stop();
+                _autoVerifyDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(0.5) };
+                _autoVerifyDelayTimer.Tick += (_, _) =>
+                {
+                    _autoVerifyDelayTimer?.Stop();
+                    StartVerifyFlow();
+                };
+                _autoVerifyDelayTimer.Start();
+            }
+            catch
+            {
+            }
+        }
+
+        public KeySystemView(Action onVerified)
+        {
+            InitializeComponent();
+            _onVerified = onVerified;
+            Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            var rt = new RotateTransform(0, 26, 26);
+            SpinnerArc.RenderTransform = rt;
+
+            var anim = new DoubleAnimation
+            {
+                From = 0,
+                To = 360,
+                Duration = TimeSpan.FromMilliseconds(900),
+                RepeatBehavior = RepeatBehavior.Forever,
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut },
+            };
+            rt.BeginAnimation(RotateTransform.AngleProperty, anim);
+
+            TryAutoVerifyFromConfig();
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            _verifyTimer?.Stop();
+            _verifyTimer = null;
+
+            _postVerifyTimer?.Stop();
+            _postVerifyTimer = null;
+
+            _autoVerifyDelayTimer?.Stop();
+            _autoVerifyDelayTimer = null;
+
+            _isVerifying = false;
+        }
+
+        private void Login_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (!ValidateKey(out var error))
+            {
+                WaveToastService.Show("Error", error ?? "Invalid key.");
+                return;
+            }
+
+            PersistKeyIfNeeded();
+            StartVerifyFlow();
+        }
+
+        private void Root_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState != MouseButtonState.Pressed)
+            {
+                return;
+            }
+
+            var w = Window.GetWindow(this);
+            if (w == null)
+            {
+                return;
+            }
+
+            try
+            {
+                w.DragMove();
+            }
+            catch
+            {
+            }
+        }
+    }
+}
