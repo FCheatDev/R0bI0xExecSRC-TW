@@ -15,11 +15,14 @@ namespace Executor.WaveUI
         private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan ReflowDelay = TimeSpan.FromSeconds(1);
 
+        private const int MaxToasts = 10;
+
         private const double StackSpacing = 8;
         private const double WindowRightMargin = 16;
         private const double WindowBottomMargin = 16;
         private const double MinToastWindowHeight = 56;
         private const double OverlapPeekOffset = 10;
+        private const double WindowTopPadding = 18;
 
         public ObservableCollection<ToastEntry> Toasts { get; } = new();
 
@@ -37,6 +40,11 @@ namespace Executor.WaveUI
         {
             _toastSequence++;
 
+            if (Toasts.Count >= MaxToasts && Toasts.Count > 0)
+            {
+                BeginHide(Toasts[0]);
+            }
+
             var toast = new ToastEntry(_toastSequence, title, message);
             Toasts.Add(toast);
 
@@ -48,7 +56,7 @@ namespace Executor.WaveUI
             UpdateLayout();
             UpdateWindowPlacement();
 
-            ReflowToasts(animated: true);
+            ReflowToasts(animated: false);
         }
 
         private void OverlapToasts()
@@ -145,6 +153,7 @@ namespace Executor.WaveUI
 
             var desiredHeight = Math.Max(0, offset - StackSpacing);
             desiredHeight = Math.Max(MinToastWindowHeight, desiredHeight);
+            desiredHeight += WindowTopPadding;
             var area = SystemParameters.WorkArea;
             var maxHeight = Math.Max(120, area.Height - (WindowBottomMargin * 2));
             Height = Math.Min(maxHeight, desiredHeight);
@@ -211,7 +220,7 @@ namespace Executor.WaveUI
 
                 toast.MeasuredHeight = Math.Max(0, Math.Max(root.ActualHeight, root.DesiredSize.Height));
 
-                ReflowToasts(animated: true);
+                ReflowToasts(animated: false);
             }), DispatcherPriority.Loaded);
 
             StartShowAnimation(root, translate);
@@ -271,11 +280,11 @@ namespace Executor.WaveUI
 
             if (toast.RootElement == null)
             {
-                return 0;
+                return MinToastWindowHeight;
             }
 
             var h = Math.Max(toast.RootElement.ActualHeight, toast.RootElement.DesiredSize.Height);
-            return Math.Max(0, h);
+            return Math.Max(MinToastWindowHeight, h);
         }
 
         private void BeginHide(ToastEntry toast)
@@ -287,10 +296,13 @@ namespace Executor.WaveUI
 
             toast.IsHiding = true;
 
+            toast.HideTimer?.Stop();
+            toast.HideTimer = null;
+
             if (toast.RootElement == null)
             {
                 Toasts.Remove(toast);
-                ReflowToasts(animated: true);
+                ReflowToasts(animated: false);
                 if (Toasts.Count == 0) Hide();
                 return;
             }
@@ -315,7 +327,7 @@ namespace Executor.WaveUI
             fadeOut.Completed += (_, _) =>
             {
                 Toasts.Remove(toast);
-                ReflowToasts(animated: true);
+                ReflowToasts(animated: false);
                 if (Toasts.Count == 0)
                 {
                     Hide();
@@ -323,6 +335,23 @@ namespace Executor.WaveUI
             };
 
             root.BeginAnimation(OpacityProperty, fadeOut);
+        }
+
+        private void ToastClose_OnClick(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+
+            if (sender is not FrameworkElement el)
+            {
+                return;
+            }
+
+            if (el.DataContext is not ToastEntry toast)
+            {
+                return;
+            }
+
+            BeginHide(toast);
         }
 
         private static void StartProgressAnimation(DependencyObject root)

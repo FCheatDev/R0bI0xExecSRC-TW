@@ -440,7 +440,6 @@ namespace Executor
             }
             catch
             {
-                // ignore
             }
 
             var candidates = new List<string>
@@ -450,7 +449,19 @@ namespace Executor
                 safeName + ".jpeg",
             };
 
-            // 處理 Synapse X 的拼寫變體
+            if (string.Equals(name, "Wave", StringComparison.OrdinalIgnoreCase))
+            {
+                candidates.Insert(0, "Wave.png");
+            }
+            else if (string.Equals(name, "KRNL", StringComparison.OrdinalIgnoreCase))
+            {
+                candidates.Insert(0, "Krnl.png");
+            }
+            else if (string.Equals(name, "Synapse X", StringComparison.OrdinalIgnoreCase))
+            {
+                candidates.Insert(0, "Synpase.png");
+            }
+
             if (safeName.Contains("synapse", StringComparison.OrdinalIgnoreCase))
             {
                 candidates.Add(safeName.Replace("synapse", "synpase", StringComparison.OrdinalIgnoreCase) + ".png");

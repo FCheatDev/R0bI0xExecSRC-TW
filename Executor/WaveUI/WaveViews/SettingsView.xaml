@@ -98,7 +98,7 @@
             </StackPanel>
         </ScrollViewer>
 
-        <Border Grid.Column="1" CornerRadius="10" Background="Black" BorderBrush="#202020" Grid.RowSpan="1">
+        <Border Grid.Column="1" Background="Black" BorderBrush="#202020" Grid.RowSpan="1">
             <Grid Margin="14">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />

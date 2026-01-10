@@ -6,7 +6,8 @@
              xmlns:wave="clr-namespace:Executor.WaveUI"
              xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800"
+             FontFamily="Roboto">
 
         <UserControl.Resources>
             <Style x:Key="BounceButtonStyle" TargetType="Button">
@@ -58,9 +59,150 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <Style x:Key="IconHoverButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="5">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#1A1A1A" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#2A2A2A" />
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TabCloseIconButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="Transparent" CornerRadius="5">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TabContextMenuStyle" TargetType="ContextMenu">
+                <Setter Property="OverridesDefaultStyle" Value="True" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="Background" Value="#0C0C0C" />
+                <Setter Property="Foreground" Value="#EDEDED" />
+                <Setter Property="BorderBrush" Value="#202020" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="6" />
+                <Setter Property="MinWidth" Value="160" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContextMenu">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TabContextMenuItemStyle" TargetType="MenuItem">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="#EDEDED" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="MinHeight" Value="34" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="5">
+                                <Grid Margin="{TemplateBinding Padding}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Grid.Column="0" ContentSource="Icon" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                    <ContentPresenter Grid.Column="1" ContentSource="Header"
+                                                      Margin="0"
+                                                      RecognizesAccessKey="True"
+                                                      VerticalAlignment="Center"
+                                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#1A1A1A" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+<Style x:Key="WhiteTabScrollBarStyle" TargetType="ScrollBar">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="#EDEDED" />
+    <Setter Property="MinWidth" Value="10" />
+    <Setter Property="MinHeight" Value="10" />
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="ScrollBar">
+                <Grid Background="{TemplateBinding Background}" Height="10" SnapsToDevicePixels="True">
+                    <Track x:Name="PART_Track" IsDirectionReversed="False" Height="10">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageLeftCommand" Opacity="0" Focusable="False" Height="0" />
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Background="{TemplateBinding Foreground}" Height="5">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Height="5" />
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageRightCommand" Opacity="0" Focusable="False" Height="0" />
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter TargetName="PART_Track" Property="Height" Value="10" />
+                        <Setter TargetName="PART_Track" Property="Width" Value="Auto" />
+                    </Trigger>
+                    <Trigger Property="Orientation" Value="Vertical">
+                        <Setter TargetName="PART_Track" Property="Width" Value="10" />
+                        <Setter TargetName="PART_Track" Property="Height" Value="Auto" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
         </UserControl.Resources>
 
-    <Grid Background="#000000" Margin="0">
+    <Grid Background="#000000" Margin="0" PreviewMouseDown="EditorViewRoot_OnPreviewMouseDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -82,7 +224,10 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <ScrollViewer x:Name="TabScrollViewer" Grid.Column="0" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PreviewMouseWheel="TabScrollViewer_OnPreviewMouseWheel">
+                        <ScrollViewer x:Name="TabScrollViewer" Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" PreviewMouseWheel="TabScrollViewer_OnPreviewMouseWheel">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="ScrollBar" BasedOn="{StaticResource WhiteTabScrollBarStyle}" />
+                            </ScrollViewer.Resources>
                             <ItemsControl x:Name="TabsItems" ItemsSource="{Binding Tabs}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -91,7 +236,31 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Padding="10,6" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonDown="TabBorder_OnMouseLeftButtonDown">
+                                        <Border Padding="10,6" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonDown="TabBorder_OnMouseLeftButtonDown" MouseRightButtonDown="TabBorder_OnMouseRightButtonDown" Opacity="0" RenderTransformOrigin="0.0,0.5">
+                                            <Border.RenderTransform>
+                                                <TransformGroup>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                                    <TranslateTransform X="10" Y="0" />
+                                                </TransformGroup>
+                                            </Border.RenderTransform>
+                                            <Border.Triggers>
+                                                <EventTrigger RoutedEvent="Loaded">
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <QuadraticEase EasingMode="EaseOut" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.X)" To="0" Duration="0:0:0.18">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <QuadraticEase EasingMode="EaseOut" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </EventTrigger>
+                                            </Border.Triggers>
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="Transparent" />
@@ -108,11 +277,12 @@
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
 
-                                                <Rectangle Grid.ColumnSpan="3" Height="2" VerticalAlignment="Bottom" Fill="#1DA1F2">
+                                                <Rectangle Grid.ColumnSpan="4" Height="2" VerticalAlignment="Bottom" Fill="#1DA1F2">
                                                     <Rectangle.Style>
                                                         <Style TargetType="Rectangle">
                                                             <Setter Property="Visibility" Value="Collapsed" />
@@ -125,20 +295,37 @@
                                                     </Rectangle.Style>
                                                 </Rectangle>
 
-                                                <Ellipse Width="8" Height="8" Opacity="0.95" VerticalAlignment="Center">
-                                                    <Ellipse.Style>
-                                                        <Style TargetType="Ellipse">
-                                                            <Setter Property="Fill" Value="#EDEDED" />
+                                                <wave:WaveIcon Grid.Column="0" IconName="pin" Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                    <wave:WaveIcon.Style>
+                                                        <Style TargetType="wave:WaveIcon">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                    <Setter Property="Fill" Value="#FFFFFF" />
+                                                                <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
-                                                    </Ellipse.Style>
-                                                </Ellipse>
+                                                    </wave:WaveIcon.Style>
+                                                </wave:WaveIcon>
 
-                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Margin="5,0,10,0" VerticalAlignment="Center">
+                                                <wave:WaveIcon Grid.Column="1" IconName="note" Width="10" Height="10" Margin="0" VerticalAlignment="Center" Opacity="0.95">
+                                                    <wave:WaveIcon.Style>
+                                                        <Style TargetType="wave:WaveIcon">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Setter Property="Opacity" Value="0.85" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                    <Setter Property="Opacity" Value="1" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </wave:WaveIcon.Style>
+                                                </wave:WaveIcon>
+
+                                                <TextBlock Grid.Column="2" Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" Margin="5,0,10,0" VerticalAlignment="Center">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="Foreground" Value="#EDEDED" />
@@ -155,7 +342,7 @@
                                                     </TextBlock.Style>
                                                 </TextBlock>
 
-                                                <TextBox Grid.Column="1" Text="{Binding EditingTitle, UpdateSourceTrigger=PropertyChanged}" FontSize="12" Margin="5,0,10,0" VerticalAlignment="Center"
+                                                <TextBox Grid.Column="2" Text="{Binding EditingTitle, UpdateSourceTrigger=PropertyChanged}" FontSize="12" Margin="5,0,10,0" VerticalAlignment="Center"
                                                          Background="#0E0E0E" Foreground="#FFFFFF" BorderBrush="#2A2A2A" BorderThickness="1" Padding="4,2"
                                                          Loaded="TabRenameBox_OnLoaded" KeyDown="TabRenameBox_OnKeyDown" LostFocus="TabRenameBox_OnLostFocus">
                                                     <TextBox.Style>
@@ -170,8 +357,25 @@
                                                     </TextBox.Style>
                                                 </TextBox>
 
-                                                <Button Grid.Column="2" Width="18" Height="18" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="TabClose_OnClick" Padding="0">
-                                                    <wave:WaveIcon IconName="editor_tab_close" Width="12" Height="12" Stretch="Uniform" Margin="0" />
+                                                <Button Grid.Column="3" Width="18" Height="18" Cursor="Hand" Click="TabClose_OnClick" Style="{StaticResource TabCloseIconButtonStyle}">
+                                                    <Grid Width="12" Height="12">
+                                                        <wave:WaveIcon x:Name="TabCloseIconMask" IconName="editor_tab_close" Width="12" Height="12" Stretch="Uniform" Margin="0" Opacity="0" />
+                                                        <Rectangle Width="12" Height="12" Fill="#EDEDED">
+                                                            <Rectangle.OpacityMask>
+                                                                <ImageBrush ImageSource="{Binding ElementName=TabCloseIconMask, Path=Source}" />
+                                                            </Rectangle.OpacityMask>
+                                                            <Rectangle.Style>
+                                                                <Style TargetType="Rectangle">
+                                                                    <Setter Property="Fill" Value="#EDEDED" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                            <Setter Property="Fill" Value="#7CC4FF" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Rectangle.Style>
+                                                        </Rectangle>
+                                                    </Grid>
                                                 </Button>
                                             </Grid>
                                         </Border>
@@ -186,9 +390,7 @@
                     </Grid>
 
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <wave:WaveIcon IconName="grid" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" OpacityMask="Black" />
-                        <wave:WaveIcon IconName="chat" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
-                    </StackPanel>
+                 </StackPanel>
                 </DockPanel>
             </Border>
 
@@ -206,16 +408,16 @@
                         <TextBlock Text="Clear" FontWeight="SemiBold" FontSize="12" />
                     </Button>
 
-                    <Button Width="74" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" Style="{StaticResource BounceButtonStyle}">
+                    <Button Width="74" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" Style="{StaticResource BounceButtonStyle}" Click="Open_OnClick">
                         <TextBlock Text="Open" FontWeight="SemiBold" FontSize="12" />
                     </Button>
 
-                    <Button Width="74" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" Style="{StaticResource BounceButtonStyle}">
+                    <Button Width="74" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" Style="{StaticResource BounceButtonStyle}" Click="Save_OnClick">
                         <TextBlock Text="Save" FontWeight="SemiBold" FontSize="12" />
                     </Button>
                 </StackPanel>
 
-                <Button x:Name="ExplorerToggleButton" DockPanel.Dock="Right" Width="36" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Click="ExplorerToggle_OnClick" Margin="10,0,0,0">
+                <Button x:Name="ExplorerToggleButton" DockPanel.Dock="Right" Width="36" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0,0,0,0" Cursor="Hand" Click="ExplorerToggle_OnClick" Margin="0,0,10,0">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" CornerRadius="12" BorderBrush="#202020" BorderThickness="1">

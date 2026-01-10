@@ -7,8 +7,24 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
 
+    <UserControl.Resources>
+        <Style x:Key="IconLinkButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Background="#000000" MouseLeftButtonDown="Root_OnMouseLeftButtonDown">
-        <wave:WaveIcon IconName="wave_logo_small" Width="22" Height="22" Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,10,0,0" />
 
         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="340">
             <Grid.RowDefinitions>
@@ -27,7 +43,7 @@
             <Grid Grid.Row="3" Margin="0,18,0,0">
                 <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Height="34">
                     <Grid>
-                        <TextBox x:Name="KeyBox" Background="Transparent" Foreground="#EDEDED" BorderThickness="0" Margin="10,0,29,0" FontSize="12" VerticalContentAlignment="Center" FontFamily="Comic Sans MS" FontWeight="Bold" />
+                        <TextBox x:Name="KeyBox" Background="Transparent" Foreground="#EDEDED" CaretBrush="#FFFFFF" BorderThickness="0" Margin="10,0,29,0" FontSize="12" VerticalContentAlignment="Center" FontFamily="Comic Sans MS" FontWeight="Bold" />
                         <wave:WaveIcon IconName="key" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" />
                     </Grid>
                 </Border>
@@ -59,9 +75,15 @@
         </Grid>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,14" Opacity="0.75">
-            <wave:WaveIcon IconName="youtube" Width="14" Height="14" Stretch="Uniform" />
-            <wave:WaveIcon IconName="discord" Width="14" Height="14" Stretch="Uniform" Margin="14,0,0,0" />
-            <wave:WaveIcon IconName="globe" Width="14" Height="14" Stretch="Uniform" Margin="14,0,0,0" />
+            <Button Style="{StaticResource IconLinkButtonStyle}" Cursor="Hand" Click="YouTube_OnClick">
+                <wave:WaveIcon IconName="youtube" Width="14" Height="14" Stretch="Uniform" />
+            </Button>
+            <Button Style="{StaticResource IconLinkButtonStyle}" Cursor="Hand" Margin="14,0,0,0" Click="Discord_OnClick">
+                <wave:WaveIcon IconName="discord" Width="14" Height="14" Stretch="Uniform" />
+            </Button>
+            <Button Style="{StaticResource IconLinkButtonStyle}" Cursor="Hand" Margin="14,0,0,0" Click="Global_OnClick">
+                <wave:WaveIcon IconName="globe" Width="14" Height="14" Stretch="Uniform" />
+            </Button>
         </StackPanel>
 
         <Grid x:Name="VerifyOverlay" Background="#B0000000" Visibility="Collapsed" Opacity="0">

@@ -233,7 +233,7 @@
     </Window.Resources>
 
     <Grid>
-        <Border CornerRadius="18" Background="{StaticResource PanelBrush}" SnapsToDevicePixels="True">
+        <Border CornerRadius="18" Background="{StaticResource PanelBrush}" BorderBrush="#323232" BorderThickness="1" SnapsToDevicePixels="True">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="44" />

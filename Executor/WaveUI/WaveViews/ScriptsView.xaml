@@ -7,6 +7,67 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
 
+    <UserControl.Resources>
+        <Style x:Key="HoverActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#1E1E1E" />
+            <Setter Property="Foreground" Value="#EDEDED" />
+            <Setter Property="BorderBrush" Value="#202020" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,1,5,1" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#6FFFFFFF" />
+            <Setter Property="MinWidth" Value="10" />
+            <Setter Property="MinHeight" Value="10" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="{TemplateBinding Background}" Width="10" SnapsToDevicePixels="True">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True" Width="10">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False" Width="0" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Background="{TemplateBinding Foreground}" Width="10">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="5" Width="10" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False" Width="0" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter TargetName="PART_Track" Property="Height" Value="10" />
+                                <Setter TargetName="PART_Track" Property="Width" Value="Auto" />
+                            </Trigger>
+                            <Trigger Property="Orientation" Value="Vertical">
+                                <Setter TargetName="PART_Track" Property="Width" Value="10" />
+                                <Setter TargetName="PART_Track" Property="Height" Value="Auto" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Background="#0C0C0C" Margin="0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -23,76 +84,154 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="10" Height="36" Padding="12,0" VerticalAlignment="Center">
+            <Border Background="#FF111111" BorderBrush="#202020" BorderThickness="1" CornerRadius="10" Height="36" Padding="12,0" VerticalAlignment="Center" Margin="10,5,0,0">
                 <Grid>
-                    <TextBlock Text="" />
-                    <wave:WaveIcon IconName="search" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Center" Opacity="0.8" />
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="SearchBox"
+                             Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                             Background="Transparent" Foreground="#EDEDED" BorderThickness="0"
+                             CaretBrush="#FFFFFF"
+                             VerticalContentAlignment="Center" FontSize="12"
+                             KeyDown="SearchBox_OnKeyDown" FontFamily="Arial Black" />
+                    <Button Grid.Column="1" Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="None" IsHitTestVisible="False" Focusable="False">
+                        <wave:WaveTintIcon IconName="search" Width="14" Height="14" Opacity="0.85" TintBrush="#EDEDED" IsHitTestVisible="False" />
+                    </Button>
                 </Grid>
             </Border>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="10" Width="36" Height="36">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,5,0,0">
+                <Button Width="36" Height="36" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" Cursor="Hand" Click="PrevPage_OnClick">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
                     <wave:WaveIcon IconName="left" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Border>
-                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="10" Width="36" Height="36" Margin="10,0,0,0">
+                </Button>
+                <Button Width="36" Height="36" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" Cursor="Hand" Margin="5,0,0,0" Click="NextPage_OnClick">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
                     <wave:WaveIcon IconName="right" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Border>
+                </Button>
             </StackPanel>
         </Grid>
 
-        <Border Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" CornerRadius="10" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" Margin="0">
+        <Border Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Background="Black" BorderBrush="#202020" 
+                Margin="0">
             <Grid Margin="14">
                 <TextBlock Text="SCRIPTS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
                 <TextBlock Text="Customize the filter to your liking" Foreground="#9AA0A6" FontSize="12" Margin="0,20,0,0" />
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Column="0" Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
-            <WrapPanel Margin="0">
-                <Border Width="260" Height="150" CornerRadius="16" Background="#101010" BorderBrush="#202020" BorderThickness="1" Margin="0,0,12,12">
-                    <Grid>
-                        <wave:WaveIcon IconName="script_thumb_1" Stretch="UniformToFill" />
-                        <Rectangle Fill="#B0000000" RadiusX="16" RadiusY="16" />
-                        <StackPanel VerticalAlignment="Bottom" Margin="14">
-                            <TextBlock Text="Nexo hub 300 plus games" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" />
-                            <TextBlock Text="Universal Script" Foreground="#9AA0A6" FontSize="11" Margin="0,4,0,0" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+        <ScrollViewer Grid.Column="0" Grid.Row="1" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" Margin="0,0,10,0" Padding="5,0,5,0">
+            <ItemsControl ItemsSource="{Binding Scripts}" Margin="10,0,0,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel ItemWidth="220" ItemHeight="150" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- 只用一層 Border，四邊都有邊框 -->
+                        <Border Width="220" Height="150" CornerRadius="5" 
+                                Background="Transparent" 
+                                BorderBrush="#323232" 
+                                BorderThickness="1" 
+                                Margin="0,0,12,12" 
+                                Cursor="Hand" 
+                                x:Name="CardRoot"
+                                >
+                            <Border CornerRadius="5" ClipToBounds="True">
+                                <Grid>
+                                    <Image x:Name="ScriptImage" Source="{Binding ImageUrl}" Stretch="UniformToFill" ImageFailed="ScriptImage_OnImageFailed">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasImage}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
 
-                <Border Width="260" Height="150" CornerRadius="16" Background="#101010" BorderBrush="#202020" BorderThickness="1" Margin="0,0,12,12">
-                    <Grid>
-                        <wave:WaveIcon IconName="script_thumb_2" Stretch="UniformToFill" />
-                        <Rectangle Fill="#B0000000" RadiusX="16" RadiusY="16" />
-                        <StackPanel VerticalAlignment="Bottom" Margin="14">
-                            <TextBlock Text="ml tech" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" />
-                            <TextBlock Text="The Strongest Battlegrounds" Foreground="#9AA0A6" FontSize="11" Margin="0,4,0,0" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                                    <Border Background="#141414">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasImage}" Value="False">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Image x:Name="MissingImage" Source="pack://siteoforigin:,,,/assets/waveUI/404.png" Stretch="UniformToFill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ImageFailed="MissingImage_OnImageFailed" />
+                                            <wave:WaveIcon x:Name="MissingFallbackIcon" IconName="404" Width="80" Height="80" Stretch="Uniform" Opacity="0.9" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                                            <TextBlock x:Name="MissingFallbackText" Text="404" Foreground="#EDEDED" FontSize="26" FontFamily="Arial Black" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.15" Visibility="Collapsed" />
+                                        </Grid>
+                                    </Border>
 
-                <Border Width="260" Height="150" CornerRadius="16" Background="#101010" BorderBrush="#202020" BorderThickness="1" Margin="0,0,12,12">
-                    <Grid>
-                        <wave:WaveIcon IconName="script_thumb_3" Stretch="UniformToFill" />
-                        <Rectangle Fill="#B0000000" RadiusX="16" RadiusY="16" />
-                        <StackPanel VerticalAlignment="Bottom" Margin="14">
-                            <TextBlock Text="THE BEST SCRIPT FOR" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" />
-                            <TextBlock Text="The Lost Front" Foreground="#9AA0A6" FontSize="11" Margin="0,4,0,0" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                                    <Border VerticalAlignment="Bottom" Background="#80000000" Padding="14">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" Foreground="#EDEDED" FontSize="12" TextTrimming="CharacterEllipsis" FontFamily="Arial Black" />
+                                            <TextBlock Text="{Binding GameName}" Foreground="#9AA0A6" FontSize="11" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" FontFamily="Roboto" />
+                                        </StackPanel>
+                                    </Border>
 
-                <Border Width="260" Height="150" CornerRadius="16" Background="#101010" BorderBrush="#202020" BorderThickness="1" Margin="0,0,12,12">
-                    <Grid>
-                        <wave:WaveIcon IconName="script_thumb_4" Stretch="UniformToFill" />
-                        <Rectangle Fill="#B0000000" RadiusX="16" RadiusY="16" />
-                        <StackPanel VerticalAlignment="Bottom" Margin="14">
-                            <TextBlock Text="fragmented mode v4" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" />
-                            <TextBlock Text="DOORS" Foreground="#9AA0A6" FontSize="11" Margin="0,4,0,0" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </WrapPanel>
+                                    <Border x:Name="HoverActions" Background="#66000000" CornerRadius="0" Panel.ZIndex="10">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Opacity" Value="0" />
+                                                <Setter Property="IsHitTestVisible" Value="False" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=CardRoot, Path=IsMouseOver}" Value="True">
+                                                        <Setter Property="IsHitTestVisible" Value="True" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16" />
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.22" />
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8">
+                                                <Button Content="Copy" Style="{StaticResource HoverActionButtonStyle}" Margin="0,0,6,0" Cursor="Hand" Click="CopyScript_OnClick" />
+                                                <Button Content="Execute" Style="{StaticResource HoverActionButtonStyle}" Cursor="Hand" Click="ExecuteScript_OnClick" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
     </Grid>
 </UserControl>

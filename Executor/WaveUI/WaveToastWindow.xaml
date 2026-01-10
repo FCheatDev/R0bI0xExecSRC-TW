@@ -14,8 +14,34 @@
         FontFamily="{DynamicResource WaveFontFamily}"
         SizeToContent="Width">
 
+    <Window.Resources>
+        <Style x:Key="ToastIconHoverButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1A1A1A" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#2A2A2A" />
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid x:Name="RootGrid" Margin="0">
-        <ItemsControl x:Name="ToastItems" ItemsSource="{Binding Toasts}" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+        <ItemsControl x:Name="ToastItems" ItemsSource="{Binding Toasts}" VerticalAlignment="Stretch" HorizontalAlignment="Right">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Grid />
@@ -28,18 +54,30 @@
                                 SnapsToDevicePixels="True" UseLayoutRounding="True"
                                 TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="Grayscale" TextOptions.TextHintingMode="Fixed">
                             <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                                <TextBlock x:Name="ToastTitle" Text="{Binding Title}" Foreground="#1DA1F2" FontSize="12" />
-                                <TextBlock x:Name="ToastMessage" Grid.Row="1" Text="{Binding Message}" Foreground="#EDEDED" FontSize="13" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                <Grid Grid.Column="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-                                <Border x:Name="ProgressTrack" Grid.Row="2" Background="#A8D8FF" Height="3" CornerRadius="2" Margin="0,10,0,4">
-                                    <Border x:Name="ToastProgress" Background="#0B3A92" HorizontalAlignment="Left" Width="0" CornerRadius="2" />
-                                </Border>
+                                    <TextBlock x:Name="ToastTitle" Text="{Binding Title}" Foreground="#1DA1F2" FontSize="12" />
+                                    <TextBlock x:Name="ToastMessage" Grid.Row="1" Text="{Binding Message}" Foreground="#EDEDED" FontSize="13" Margin="0,6,0,0" TextWrapping="Wrap" />
+
+                                    <Border x:Name="ProgressTrack" Grid.Row="2" Background="#A8D8FF" Height="3" CornerRadius="2" Margin="0,10,0,4">
+                                        <Border x:Name="ToastProgress" Background="#0B3A92" HorizontalAlignment="Left" Width="0" CornerRadius="2" />
+                                    </Border>
+                                </Grid>
+
+                                <Button Grid.Column="1" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10,0,0,0"
+                                        Click="ToastClose_OnClick" Style="{StaticResource ToastIconHoverButtonStyle}">
+                                    <TextBlock Text="×" Foreground="#EDEDED" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                </Button>
                             </Grid>
                         </Border>
                     </Grid>

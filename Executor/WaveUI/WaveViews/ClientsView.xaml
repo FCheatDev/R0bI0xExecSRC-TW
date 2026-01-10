@@ -14,7 +14,7 @@
 
         <Border Grid.Column="0" CornerRadius="10" Background="#0B0B0B" BorderBrush="#202020" BorderThickness="1" />
 
-        <Border Grid.Column="1" CornerRadius="10" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" Margin="10,0,0,0">
+        <Border Grid.Column="1" CornerRadius="10" Background="Black" BorderBrush="#202020"  Margin="10,0,0,0">
             <Grid Margin="14">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />

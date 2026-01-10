@@ -214,11 +214,86 @@ namespace Executor.WaveUI
                 "key" => new WaveViews.KeySystemView(OnKeyVerified),
                 "home" => new WaveViews.HomeView(),
                 "editor" => new WaveViews.EditorView(ShowToast),
-                "scripts" => new WaveViews.ScriptsView(),
+                "scripts" => new WaveViews.ScriptsView(ShowToast, OpenScriptInEditor, ExecuteScriptInEditor),
                 "clients" => new WaveViews.ClientsView(),
                 "settings" => new WaveViews.SettingsView(),
                 _ => new WaveViews.HomeView(),
             };
+        }
+
+        private void OpenScriptInEditor(string title, string script)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (!_pages.TryGetValue("Editor", out var control) || control is not WaveViews.EditorView editor)
+                {
+                    editor = new WaveViews.EditorView(ShowToast);
+                    _pages["Editor"] = editor;
+                }
+
+                try
+                {
+                    editor.OpenScriptInNewTab(title, script);
+                }
+                catch (Exception ex)
+                {
+                    ShowToast(ex.Message);
+                }
+
+                SetActiveTab("Editor");
+                NavigateTo("Editor");
+            });
+        }
+
+        private void ExecuteScriptInEditor(string title, string script)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (!_pages.TryGetValue("Editor", out var control) || control is not WaveViews.EditorView editor)
+                {
+                    editor = new WaveViews.EditorView(ShowToast);
+                    _pages["Editor"] = editor;
+                }
+
+                try
+                {
+                    editor.OpenScriptInNewTab(title, script);
+                }
+                catch (Exception ex)
+                {
+                    ShowToast(ex.Message);
+                }
+
+                SetActiveTab("Editor");
+                NavigateTo("Editor");
+
+                var attempts = 0;
+                var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+                timer.Tick += (_, _) =>
+                {
+                    attempts++;
+
+                    try
+                    {
+                        if (editor.IsMonacoReady)
+                        {
+                            timer.Stop();
+                            editor.ExecuteCurrentTab();
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    if (attempts >= 20)
+                    {
+                        timer.Stop();
+                        ShowToast("Monaco is not ready.");
+                    }
+                };
+                timer.Start();
+            });
         }
 
         private void HookLoadCompletedIfNeeded(string page, UserControl control)
@@ -397,7 +472,8 @@ namespace Executor.WaveUI
             TopBarRow.Height = new GridLength(44);
             TopNav.Visibility = hideNav ? Visibility.Collapsed : Visibility.Visible;
 
-            TopBar.Background = (Brush)FindResource("WaveBg");
+            TopBar.Background = Brushes.Black;
+            ShellRoot.Background = Brushes.Black;
         }
 
         private void OnKeyVerified()

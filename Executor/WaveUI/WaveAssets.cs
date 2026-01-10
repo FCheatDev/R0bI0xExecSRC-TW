@@ -21,7 +21,7 @@ namespace Executor.WaveUI
         {
             if (string.IsNullOrWhiteSpace(name))
             {
-                return null;
+                return LoadFallback404();
             }
 
             var key = name.Trim();
@@ -50,15 +50,55 @@ namespace Executor.WaveUI
             }
 
             var fromResource = TryLoadFromResource(fileName);
+            if (fromResource != null)
+            {
+                lock (CacheLock)
+                {
+                    if (Cache.Count >= MaxCacheEntries)
+                    {
+                        Cache.Clear();
+                    }
+                    Cache[key] = fromResource;
+                }
+                return fromResource;
+            }
+
+            // 如果找不到圖片，返回 404.png
+            var fallback = LoadFallback404();
             lock (CacheLock)
             {
                 if (Cache.Count >= MaxCacheEntries)
                 {
                     Cache.Clear();
                 }
-                Cache[key] = fromResource;
+                Cache[key] = fallback;
             }
-            return fromResource;
+            return fallback;
+        }
+
+        private static ImageSource? LoadFallback404()
+        {
+            try
+            {
+                // 嘗試從檔案系統載入 404.png
+                var from404File = TryLoadFromFile("404.png");
+                if (from404File != null)
+                {
+                    return from404File;
+                }
+
+                // 嘗試從資源載入 404.png
+                var from404Resource = TryLoadFromResource("404.png");
+                if (from404Resource != null)
+                {
+                    return from404Resource;
+                }
+            }
+            catch
+            {
+            }
+
+            return null;
         }
 
         private static ImageSource? TryLoadFromFile(string fileName)
@@ -72,6 +112,7 @@ namespace Executor.WaveUI
                     Path.Combine(baseDir, "Assets", "icons", "wave", fileName),
                     Path.Combine(baseDir, "assets", "icons", "wave", fileName),
                     Path.Combine(baseDir, "assets", "wave", fileName),
+                    Path.Combine(baseDir, "assets", "waveUI", fileName),
                 };
 
                 foreach (var path in candidates)
@@ -103,6 +144,7 @@ namespace Executor.WaveUI
                 $"assets/icons/wave/{fileName}",
                 $"Assets/icons/wave/{fileName}",
                 $"assets/wave/{fileName}",
+                $"assets/waveUI/{fileName}",
             };
 
             foreach (var relative in candidates)

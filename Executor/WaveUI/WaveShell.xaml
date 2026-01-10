@@ -11,11 +11,56 @@
     <UserControl.Resources>
         <SolidColorBrush x:Key="WaveBg" Color="#000000" />
         <SolidColorBrush x:Key="WavePageBg" Color="#000000" />
+        <SolidColorBrush x:Key="WaveActiveBg" Color="#000000" />
         <SolidColorBrush x:Key="WavePanel" Color="#101010" />
         <SolidColorBrush x:Key="WavePanel2" Color="#0E0E0E" />
         <SolidColorBrush x:Key="WaveText" Color="#EDEDED" />
         <SolidColorBrush x:Key="WaveSubText" Color="#9AA0A6" />
         <SolidColorBrush x:Key="WaveBlue" Color="#1DA1F2" />
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#6FFFFFFF" />
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton x:Name="PART_DecreaseButton" Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb x:Name="Thumb" Background="{TemplateBinding Foreground}">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="5" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton x:Name="PART_IncreaseButton" Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter Property="Height" Value="10" />
+                                <Setter Property="Width" Value="Auto" />
+                                <Setter TargetName="PART_DecreaseButton" Property="Command" Value="ScrollBar.PageLeftCommand" />
+                                <Setter TargetName="PART_IncreaseButton" Property="Command" Value="ScrollBar.PageRightCommand" />
+                            </Trigger>
+                            <Trigger Property="Orientation" Value="Vertical">
+                                <Setter Property="Width" Value="10" />
+                                <Setter Property="Height" Value="Auto" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style x:Key="Win11CaptionButton" TargetType="Button">
             <Setter Property="Width" Value="46" />
@@ -229,7 +274,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border x:Name="TopBar" Grid.Row="0" Background="{StaticResource WaveBg}" Padding="0,0,5,0" MouseLeftButtonDown="TopBar_OnMouseLeftButtonDown">
+        <Border x:Name="TopBar" Grid.Row="0" Background="Black" Padding="0,0,5,0" MouseLeftButtonDown="TopBar_OnMouseLeftButtonDown">
             <DockPanel LastChildFill="False">
                 <StackPanel x:Name="TopNav" DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                     <wave:WaveIcon IconName="wave_logo" Width="22" Height="22" Stretch="Uniform" Margin="6,0,20,0" />

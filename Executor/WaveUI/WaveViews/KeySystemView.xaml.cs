@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -78,6 +79,33 @@ namespace Executor.WaveUI.WaveViews
             catch
             {
             }
+        }
+
+        private static void OpenUrl(string url)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                WaveToastService.Show("Error", ex.Message);
+            }
+        }
+
+        private void YouTube_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://www.youtube.com/@AzureaXD");
+        }
+
+        private void Discord_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://dsc.gg/ax-exec");
+        }
+
+        private void Global_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://axproject.dpdns.org/");
         }
 
         private void StartVerifyFlow()

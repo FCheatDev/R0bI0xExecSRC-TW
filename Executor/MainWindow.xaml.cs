@@ -1,10 +1,12 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -25,6 +27,8 @@ namespace Executor
         public MainWindow()
         {
             InitializeComponent();
+            Opacity = 0;
+            Loaded += (_, _) => BeginFadeIn();
             ApplyLanguage();
             LocalizationManager.LanguageChanged += OnLanguageChanged;
             Closed += (_, _) => LocalizationManager.LanguageChanged -= OnLanguageChanged;
@@ -32,6 +36,32 @@ namespace Executor
             SourceInitialized += OnSourceInitialized;
 
             ApplyTheme();
+        }
+
+        private void BeginFadeIn()
+        {
+            try
+            {
+                BeginAnimation(OpacityProperty, null);
+                var fade = new DoubleAnimation
+                {
+                    From = Opacity,
+                    To = 1,
+                    Duration = TimeSpan.FromMilliseconds(500),
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    FillBehavior = FillBehavior.HoldEnd,
+                };
+                fade.Completed += (_, _) =>
+                {
+                    BeginAnimation(OpacityProperty, null);
+                    Opacity = 1;
+                };
+                BeginAnimation(OpacityProperty, fade);
+            }
+            catch
+            {
+                Opacity = 1;
+            }
         }
 
         private void OnSourceInitialized(object? sender, EventArgs e)

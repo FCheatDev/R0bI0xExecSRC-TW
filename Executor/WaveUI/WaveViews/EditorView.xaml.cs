@@ -11,6 +11,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Executor.WaveUI;
+using Microsoft.Win32;
 using Microsoft.Web.WebView2.Core;
 
 namespace Executor.WaveUI.WaveViews
@@ -22,7 +24,9 @@ namespace Executor.WaveUI.WaveViews
 
         private bool _monacoInitialized;
         private const string MonacoHostName = "monaco";
-        private const string DefaultScriptText = "loadstring(game:HttpGet('https://raw.githubusercontent.com/...'))";
+        private const string DefaultScriptText = "Welcome to Wave!";
+
+        public bool IsMonacoReady => MonacoView?.CoreWebView2 != null;
 
         private const int MaxTabs = 30;
         public ObservableCollection<TabEntry> Tabs { get; } = new();
@@ -51,10 +55,7 @@ namespace Executor.WaveUI.WaveViews
         {
             Tabs.Clear();
 
-            Tabs.Add(new TabEntry(CreateTabId(), "Untitled 4", ""));
-            Tabs.Add(new TabEntry(CreateTabId(), "$UNC", ""));
-            Tabs.Add(new TabEntry(CreateTabId(), "UNC", ""));
-            Tabs.Add(new TabEntry(CreateTabId(), "Unnamed ESP", DefaultScriptText));
+            Tabs.Add(new TabEntry(CreateTabId(), "Untitled 1", DefaultScriptText));
 
             _activeTab = Tabs[^1];
             _activeTab.IsActive = true;
@@ -326,10 +327,104 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private void EditorViewRoot_OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is DependencyObject obj)
+            {
+                while (obj != null)
+                {
+                    if (obj is TextBox)
+                    {
+                        return;
+                    }
+                    obj = VisualTreeHelper.GetParent(obj);
+                }
+            }
+
+            EndRenameAll(commit: true);
+        }
+
         private void AddTab_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true;
+            if (sender is UIElement el)
+            {
+                try
+                {
+                    el.BeginAnimation(UIElement.OpacityProperty, null);
+                    var anim = new DoubleAnimation
+                    {
+                        From = 1,
+                        To = 0.65,
+                        Duration = TimeSpan.FromMilliseconds(70),
+                        AutoReverse = true,
+                        EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    };
+                    el.BeginAnimation(UIElement.OpacityProperty, anim);
+                }
+                catch
+                {
+                }
+            }
             _ = AddTabAsync();
+        }
+
+        public void OpenScriptInNewTab(string title, string script)
+        {
+            _ = Dispatcher.InvokeAsync(async () => await OpenScriptInNewTabAsync(title, script));
+        }
+
+        private async System.Threading.Tasks.Task OpenScriptInNewTabAsync(string title, string script)
+        {
+            EndRenameAll(commit: true);
+
+            try
+            {
+                if (MonacoView?.CoreWebView2 != null)
+                {
+                    _activeTab.Content = await GetEditorTextAsync();
+                }
+            }
+            catch
+            {
+            }
+
+            if (Tabs.Count >= MaxTabs)
+            {
+                _toast($"Max tabs is {MaxTabs}.");
+                return;
+            }
+
+            var finalTitle = string.IsNullOrWhiteSpace(title) ? $"Untitled {Tabs.Count + 1}" : title;
+            var tab = new TabEntry(CreateTabId(), finalTitle, script ?? string.Empty);
+            Tabs.Add(tab);
+
+            foreach (var t in Tabs)
+            {
+                t.IsActive = false;
+            }
+
+            _activeTab = tab;
+            _activeTab.IsActive = true;
+
+            try
+            {
+                if (MonacoView?.CoreWebView2 != null)
+                {
+                    await SetEditorTextAsync(_activeTab.Content);
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                TabScrollViewer.ScrollToRightEnd();
+            }
+            catch
+            {
+            }
         }
 
         private async System.Threading.Tasks.Task AddTabAsync()
@@ -369,6 +464,12 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
+            if (tab.IsPinned)
+            {
+                _toast("Pinned tab can't be closed.");
+                return;
+            }
+
             if (Tabs.Count <= 1)
             {
                 _toast("At least one tab must remain.");
@@ -387,6 +488,41 @@ namespace Executor.WaveUI.WaveViews
             }
 
             var idx = Tabs.IndexOf(tab);
+
+            Border? tabRoot = null;
+            try
+            {
+                tabRoot = FindAncestor<Border>(el);
+            }
+            catch
+            {
+                tabRoot = null;
+            }
+
+            if (tabRoot != null)
+            {
+                try
+                {
+                    tabRoot.BeginAnimation(UIElement.OpacityProperty, null);
+                    tabRoot.BeginAnimation(UIElement.RenderTransformProperty, null);
+
+                    var fade = new DoubleAnimation
+                    {
+                        From = tabRoot.Opacity,
+                        To = 0,
+                        Duration = TimeSpan.FromMilliseconds(140),
+                        EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                        FillBehavior = FillBehavior.HoldEnd,
+                    };
+                    tabRoot.BeginAnimation(UIElement.OpacityProperty, fade);
+
+                    await System.Threading.Tasks.Task.Delay(150);
+                }
+                catch
+                {
+                }
+            }
+
             Tabs.Remove(tab);
 
             if (!ReferenceEquals(tab, _activeTab))
@@ -441,6 +577,76 @@ namespace Executor.WaveUI.WaveViews
                 obj = VisualTreeHelper.GetParent(obj);
             }
             return false;
+        }
+
+        private void TabBorder_OnMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not FrameworkElement el)
+            {
+                return;
+            }
+
+            if (el.DataContext is not TabEntry tab)
+            {
+                return;
+            }
+
+            e.Handled = true;
+
+            var menu = new ContextMenu
+            {
+                Style = (Style)FindResource("TabContextMenuStyle"),
+                PlacementTarget = el,
+            };
+
+            var pinItem = new MenuItem
+            {
+                Header = tab.IsPinned ? "Unpin" : "Pin",
+                Icon = new WaveIcon { IconName = "pin", Width = 14, Height = 14, Stretch = Stretch.Uniform },
+                Style = (Style)FindResource("TabContextMenuItemStyle"),
+            };
+            pinItem.Click += (_, _) => TogglePin(tab);
+            menu.Items.Add(pinItem);
+
+            el.ContextMenu = menu;
+            menu.IsOpen = true;
+        }
+
+        private void TogglePin(TabEntry tab)
+        {
+            if (tab.IsPinned)
+            {
+                tab.IsPinned = false;
+                return;
+            }
+
+            tab.IsPinned = true;
+
+            try
+            {
+                var idx = Tabs.IndexOf(tab);
+                if (idx > 0)
+                {
+                    Tabs.Move(idx, 0);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private static T? FindAncestor<T>(DependencyObject start) where T : DependencyObject
+        {
+            var current = start;
+            while (current != null)
+            {
+                if (current is T match)
+                {
+                    return match;
+                }
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return null;
         }
 
         private static bool TryExecuteWithVelocity(string script, out string? error)
@@ -691,6 +897,11 @@ namespace Executor.WaveUI.WaveViews
             _ = ExecuteCurrentTabAsync();
         }
 
+        public void ExecuteCurrentTab()
+        {
+            _ = ExecuteCurrentTabAsync();
+        }
+
         private async System.Threading.Tasks.Task ExecuteCurrentTabAsync()
         {
             try
@@ -730,6 +941,87 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private async void Open_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (MonacoView?.CoreWebView2 != null)
+                {
+                    _activeTab.Content = await GetEditorTextAsync();
+                }
+
+                var dlg = new OpenFileDialog
+                {
+                    Filter = "Script Files (*.luau;*.txt)|*.luau;*.txt|All Files (*.*)|*.*",
+                    CheckFileExists = true,
+                    Multiselect = false,
+                    Title = "Open",
+                };
+
+                if (dlg.ShowDialog() != true)
+                {
+                    return;
+                }
+
+                var path = dlg.FileName;
+                var text = File.ReadAllText(path);
+
+                _activeTab.FilePath = path;
+                _activeTab.Title = Path.GetFileName(path);
+                _activeTab.EditingTitle = _activeTab.Title;
+                _activeTab.Content = text;
+
+                if (MonacoView?.CoreWebView2 != null)
+                {
+                    await SetEditorTextAsync(text);
+                }
+            }
+            catch (Exception ex)
+            {
+                _toast(ex.Message);
+            }
+        }
+
+        private async void Save_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (MonacoView?.CoreWebView2 != null)
+                {
+                    _activeTab.Content = await GetEditorTextAsync();
+                }
+
+                var path = _activeTab.FilePath;
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    var dlg = new SaveFileDialog
+                    {
+                        Filter = "Luau (*.luau)|*.luau|Text (*.txt)|*.txt|All Files (*.*)|*.*",
+                        Title = "Save",
+                        FileName = _activeTab.Title,
+                        AddExtension = true,
+                    };
+
+                    if (dlg.ShowDialog() != true)
+                    {
+                        return;
+                    }
+
+                    path = dlg.FileName;
+                    _activeTab.FilePath = path;
+                    _activeTab.Title = Path.GetFileName(path);
+                    _activeTab.EditingTitle = _activeTab.Title;
+                }
+
+                File.WriteAllText(path, _activeTab.Content ?? string.Empty);
+                _toast("Saved.");
+            }
+            catch (Exception ex)
+            {
+                _toast(ex.Message);
+            }
+        }
+
         public sealed class TabEntry : INotifyPropertyChanged
         {
             private string _title;
@@ -737,6 +1029,8 @@ namespace Executor.WaveUI.WaveViews
             private bool _isActive;
             private bool _isEditing;
             private string _editingTitle;
+            private bool _isPinned;
+            private string? _filePath;
 
             public TabEntry(string id, string title, string content)
             {
@@ -814,6 +1108,34 @@ namespace Executor.WaveUI.WaveViews
                         return;
                     }
                     _editingTitle = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            public bool IsPinned
+            {
+                get => _isPinned;
+                set
+                {
+                    if (value == _isPinned)
+                    {
+                        return;
+                    }
+                    _isPinned = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            public string? FilePath
+            {
+                get => _filePath;
+                set
+                {
+                    if (string.Equals(value, _filePath, StringComparison.Ordinal))
+                    {
+                        return;
+                    }
+                    _filePath = value;
                     OnPropertyChanged();
                 }
             }
