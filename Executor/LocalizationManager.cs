@@ -21,18 +21,29 @@ namespace Executor
             var lang = string.IsNullOrWhiteSpace(languageCode) ? "zh" : languageCode.Trim().ToLowerInvariant();
             CurrentLanguageCode = lang;
 
-            var path = Path.Combine(BaseDirectory, "assets", "lang", $"{lang}.json");
+            var path = Path.Combine(BaseDirectory, "Assets", "WaveUI", $"{lang}.json");
             Dictionary<string, string>? data = null;
             string? json = null;
 
             try
             {
-                var uri = new Uri($"pack://application:,,,/assets/lang/{lang}.json", UriKind.Absolute);
-                var streamInfo = Application.GetResourceStream(uri);
-                if (streamInfo != null)
+                var uriCandidates = new[]
                 {
+                    new Uri($"pack://application:,,,/Assets/WaveUI/{lang}.json", UriKind.Absolute),
+                    new Uri($"pack://application:,,,/assets/lang/{lang}.json", UriKind.Absolute),
+                };
+
+                foreach (var uri in uriCandidates)
+                {
+                    var streamInfo = Application.GetResourceStream(uri);
+                    if (streamInfo == null)
+                    {
+                        continue;
+                    }
+
                     using var reader = new StreamReader(streamInfo.Stream);
                     json = reader.ReadToEnd();
+                    break;
                 }
             }
             catch
@@ -45,6 +56,15 @@ namespace Executor
                 if (string.IsNullOrWhiteSpace(json) && File.Exists(path))
                 {
                     json = File.ReadAllText(path);
+                }
+
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    var legacyPath = Path.Combine(BaseDirectory, "assets", "lang", $"{lang}.json");
+                    if (File.Exists(legacyPath))
+                    {
+                        json = File.ReadAllText(legacyPath);
+                    }
                 }
 
                 if (!string.IsNullOrWhiteSpace(json))

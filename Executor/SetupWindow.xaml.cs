@@ -28,22 +28,22 @@ namespace Executor
             InitializeComponent();
             _config = config;
 
-            // ¥DÃD°t¦â¤è®× - ÂX®i¨ì10­Ó¥DÃD
+            // ä¸»é¡Œé…è‰²æ–¹æ¡ˆ - æ“´å±•åˆ°10å€‹ä¸»é¡Œ
             var palette = new[]
             {
-                (Color)ColorConverter.ConvertFromString("#2D7DFF"), // Wave - ÂÅ¦â
-                (Color)ColorConverter.ConvertFromString("#2AA6FF"), // Synapse X - ²LÂÅ
-                (Color)ColorConverter.ConvertFromString("#6A5CFF"), // KRNL - µµ¦â
-                (Color)ColorConverter.ConvertFromString("#19C3B3"), // Fluxus - «C¦â
-                (Color)ColorConverter.ConvertFromString("#FF6B6B"), // Arceus X - ¬õ¦â
-                (Color)ColorConverter.ConvertFromString("#FFB84D"), // Delta - ¾í¦â
-                (Color)ColorConverter.ConvertFromString("#4ECDC4"), // Codex - Á¡²üºñ
-                (Color)ColorConverter.ConvertFromString("#A855F7"), // Evon - µµ¬õ
-                (Color)ColorConverter.ConvertFromString("#10B981"), // Electron - ºñ¦â
-                (Color)ColorConverter.ConvertFromString("#F59E0B"), // Hydrogen - ª÷¦â
+                (Color)ColorConverter.ConvertFromString("#2D7DFF"), // Wave - è—è‰²
+                (Color)ColorConverter.ConvertFromString("#2AA6FF"), // Synapse X - æ·ºè—
+                (Color)ColorConverter.ConvertFromString("#6A5CFF"), // KRNL - ç´«è‰²
+                (Color)ColorConverter.ConvertFromString("#19C3B3"), // Fluxus - é’è‰²
+                (Color)ColorConverter.ConvertFromString("#FF6B6B"), // Arceus X - ç´…è‰²
+                (Color)ColorConverter.ConvertFromString("#FFB84D"), // Delta - æ©™è‰²
+                (Color)ColorConverter.ConvertFromString("#4ECDC4"), // Codex - è–„è·ç¶ 
+                (Color)ColorConverter.ConvertFromString("#A855F7"), // Evon - ç´«ç´…
+                (Color)ColorConverter.ConvertFromString("#10B981"), // Electron - ç¶ è‰²
+                (Color)ColorConverter.ConvertFromString("#F59E0B"), // Hydrogen - é‡‘è‰²
             };
 
-            // ¥DÃD¦WºÙ¦Cªí - ÂX®i¨ì10­Ó
+            // ä¸»é¡Œåç¨±åˆ—è¡¨ - æ“´å±•åˆ°10å€‹
             var names = new List<string>
             {
                 "Wave",
@@ -432,7 +432,7 @@ namespace Executor
         {
             var safeName = ToSafeFileName(name);
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            var themeDir = Path.Combine(baseDir, "Assets", "themes");
+            var themeDir = Path.Combine(baseDir, "Assets", "WaveUI");
 
             try
             {
@@ -450,7 +450,7 @@ namespace Executor
                 safeName + ".jpeg",
             };
 
-            // ³B²z Synapse X ªº«÷¼gÅÜÅé
+            // è™•ç† Synapse X çš„æ‹¼å¯«è®Šé«”
             if (safeName.Contains("synapse", StringComparison.OrdinalIgnoreCase))
             {
                 candidates.Add(safeName.Replace("synapse", "synpase", StringComparison.OrdinalIgnoreCase) + ".png");
@@ -470,6 +470,20 @@ namespace Executor
                 {
                     fullPath = p;
                     break;
+                }
+            }
+
+            if (fullPath == null)
+            {
+                var legacyThemeDir = Path.Combine(baseDir, "Assets", "themes");
+                foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    var p = Path.Combine(legacyThemeDir, candidate);
+                    if (File.Exists(p))
+                    {
+                        fullPath = p;
+                        break;
+                    }
                 }
             }
 

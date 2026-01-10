@@ -27,6 +27,37 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Monaco\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\Monaco\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\WaveUI\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\waveUI\Monaco\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\waveUI\Monaco\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\waveUI\Monaco1\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>waveUI\Monaco1\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Assets\imgs\*.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
@@ -52,6 +83,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\imgs\*.png" />
+    <Resource Include="Assets\WaveUI\*.*" />
     <Resource Include="assets\icons\wave\*.png" />
     <Resource Include="Assets\icons\wave\*.png" />
     <Resource Include="assets\lang\*.json" />

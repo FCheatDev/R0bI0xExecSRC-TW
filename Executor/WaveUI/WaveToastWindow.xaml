@@ -12,26 +12,39 @@
         ShowActivated="False"
         ResizeMode="NoResize"
         FontFamily="{DynamicResource WaveFontFamily}"
-        SizeToContent="WidthAndHeight">
+        SizeToContent="Width">
 
     <Grid x:Name="RootGrid" Margin="0">
-        <Border Background="#101010" CornerRadius="10" BorderBrush="#202020" BorderThickness="1" Padding="14,10" MinWidth="320"
-                SnapsToDevicePixels="True" UseLayoutRounding="True"
-                TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="Grayscale" TextOptions.TextHintingMode="Fixed">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <ItemsControl x:Name="ToastItems" ItemsSource="{Binding Toasts}" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Loaded="ToastItemRoot_OnLoaded" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                        <Border Background="#101010" CornerRadius="10" BorderBrush="#202020" BorderThickness="1" Padding="14,10" MinWidth="320"
+                                SnapsToDevicePixels="True" UseLayoutRounding="True"
+                                TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="Grayscale" TextOptions.TextHintingMode="Fixed">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-                <TextBlock x:Name="ToastTitle" Text="Info" Foreground="#1DA1F2" FontSize="12" />
-                <TextBlock x:Name="ToastMessage" Grid.Row="1" Text="" Foreground="#EDEDED" FontSize="13" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                <TextBlock x:Name="ToastTitle" Text="{Binding Title}" Foreground="#1DA1F2" FontSize="12" />
+                                <TextBlock x:Name="ToastMessage" Grid.Row="1" Text="{Binding Message}" Foreground="#EDEDED" FontSize="13" Margin="0,6,0,0" TextWrapping="Wrap" />
 
-                <Border x:Name="ProgressTrack" Grid.Row="2" Background="#A8D8FF" Height="3" CornerRadius="2" Margin="0,10,0,4">
-                    <Border x:Name="ToastProgress" Background="#0B3A92" HorizontalAlignment="Left" Width="0" CornerRadius="2" />
-                </Border>
-            </Grid>
-        </Border>
+                                <Border x:Name="ProgressTrack" Grid.Row="2" Background="#A8D8FF" Height="3" CornerRadius="2" Margin="0,10,0,4">
+                                    <Border x:Name="ToastProgress" Background="#0B3A92" HorizontalAlignment="Left" Width="0" CornerRadius="2" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </Window>
