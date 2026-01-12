@@ -9,6 +9,50 @@
 
     <UserControl.Resources>
         <SolidColorBrush x:Key="WaveBlue" Color="#1DA1F2" />
+        <SolidColorBrush x:Key="WaveBlueLight" Color="#7CC4FF" />
+        <SolidColorBrush x:Key="WaveBlueDeep" Color="#0D3B66" />
+
+        <Style x:Key="SettingsThinScrollBar" TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#6FFFFFFF" />
+            <Setter Property="MinWidth" Value="5" />
+            <Setter Property="MinHeight" Value="5" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="{TemplateBinding Background}" Width="5" SnapsToDevicePixels="True">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True" Width="5">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False" Width="0" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Background="{TemplateBinding Foreground}" Width="5">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="3" Width="5" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False" Width="0" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter TargetName="PART_Track" Property="Height" Value="5" />
+                                <Setter TargetName="PART_Track" Property="Width" Value="Auto" />
+                            </Trigger>
+                            <Trigger Property="Orientation" Value="Vertical">
+                                <Setter TargetName="PART_Track" Property="Width" Value="5" />
+                                <Setter TargetName="PART_Track" Property="Height" Value="Auto" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style x:Key="WaveCheckBox" TargetType="CheckBox">
             <Setter Property="Width" Value="18" />
@@ -19,7 +63,7 @@
                     <ControlTemplate TargetType="CheckBox">
                         <Grid>
                             <Border x:Name="Box" Width="18" Height="18" CornerRadius="4" Background="#121212" BorderBrush="#2A2A2A" BorderThickness="1" />
-                            <Path x:Name="Check" Data="M 4.2 9.4 L 7.4 12.6 L 13.8 6.2" StrokeThickness="2" Stroke="White" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Visibility="Collapsed" />
+                            <Path x:Name="Check" Data="M 4.2 9.4 L 7.4 12.6 L 13.8 6.2" StrokeThickness="2" Stroke="White" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -28,7 +72,213 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Box" Property="Background" Value="{StaticResource WaveBlue}" />
                                 <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource WaveBlue}" />
-                                <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="WaveOpacitySlider" TargetType="Slider">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="18" VerticalAlignment="Center">
+                            <Border Height="4" VerticalAlignment="Center" Background="{StaticResource WaveBlueLight}" CornerRadius="2" />
+
+                            <Track x:Name="PART_Track" VerticalAlignment="Center">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Opacity="0" Focusable="False" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="14" Height="14" Background="{StaticResource WaveBlueDeep}">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Fill="{TemplateBinding Background}" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Opacity="0" Focusable="False" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DarkComboBoxItem" TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#EDEDED" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1A1A1A" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#2A2A2A" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DarkComboBox" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="#EDEDED" />
+            <Setter Property="Background" Value="#121212" />
+            <Setter Property="BorderBrush" Value="#202020" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItem}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Bd" Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}" BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}" BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}" CornerRadius="6">
+                                            <Grid Margin="{Binding Padding, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter Grid.Column="0"
+                                                                  VerticalAlignment="Center"
+                                                                  HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                  Content="{TemplateBinding Content}"
+                                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                                  ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                                  TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ComboBox}}" />
+                                                <TextBlock Grid.Column="1" Text="▼" Foreground="#9AA0A6" FontSize="10" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderBrush" Value="#2A2A2A" />
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter TargetName="Bd" Property="Opacity" Value="0.6" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   PlacementTarget="{Binding ElementName=ToggleButton}"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade"
+                                   StaysOpen="False">
+                                <Border Background="#0E0E0E"
+                                        BorderBrush="#202020"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="4"
+                                        SnapsToDevicePixels="True"
+                                        MinWidth="{Binding ActualWidth, ElementName=ToggleButton}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <ScrollViewer SnapsToDevicePixels="True" VerticalScrollBarVisibility="Auto" CanContentScroll="True">
+                                        <ScrollViewer.Resources>
+                                            <Style TargetType="ScrollBar" BasedOn="{StaticResource SettingsThinScrollBar}" />
+                                        </ScrollViewer.Resources>
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NoHoverButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#EDEDED" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ApiTileButton" TargetType="Button" BasedOn="{StaticResource NoHoverButton}">
+            <Setter Property="Background" Value="#0E0E0E" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="#202020" Margin="0,0,5,0" BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.5" />
@@ -46,9 +296,12 @@
             <ColumnDefinition Width="280" />
         </Grid.ColumnDefinitions>
 
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
+        <ScrollViewer x:Name="SettingsScrollViewer" Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0" ScrollChanged="SettingsScrollViewer_OnScrollChanged">
+            <ScrollViewer.Resources>
+                <Style TargetType="ScrollBar" BasedOn="{StaticResource SettingsThinScrollBar}" />
+            </ScrollViewer.Resources>
             <StackPanel>
-                <TextBlock Text="Application" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,0,0,16" FontFamily="Comic Sans MS" Padding="10,10,0,0" />
+                <TextBlock x:Name="ApplicationSection" Text="Application" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,0,0,16" FontFamily="Comic Sans MS" Padding="10,10,0,0" />
 
                 <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
                     <Grid>
@@ -57,10 +310,10 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Topmost" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
-                            <TextBlock Text="Allow Wave to position itself over everything else" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                            <TextBlock x:Name="TopmostTitleText" Text="Topmost" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="TopmostDescText" Text="Allow Wave to position itself over everything else" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
                         </StackPanel>
-                        <CheckBox Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource WaveCheckBox}" />
+                        <CheckBox x:Name="TopmostCheckBox" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource WaveCheckBox}" Checked="TopmostCheckBox_OnChanged" Unchecked="TopmostCheckBox_OnChanged" />
                     </Grid>
                 </Border>
 
@@ -71,10 +324,10 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Start on Boot" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
-                            <TextBlock Text="Automatically have Wave run when your system boots" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                            <TextBlock x:Name="BootTitleText" Text="Start on Boot" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="BootDescText" Text="Automatically have Wave run when your system boots" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
                         </StackPanel>
-                        <CheckBox Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource WaveCheckBox}" />
+                        <CheckBox x:Name="BootCheckBox" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource WaveCheckBox}" Checked="BootCheckBox_OnChanged" Unchecked="BootCheckBox_OnChanged" />
                     </Grid>
                 </Border>
 
@@ -85,16 +338,239 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Transparency" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
-                            <TextBlock Text="Adjust Wave's window transparency (from 0.1 to 1)" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                            <TextBlock x:Name="OpacityTitleText" Text="Transparency" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="OpacityDescText" Text="Adjust Wave's window transparency (from 0.1 to 1)" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
                         </StackPanel>
                         <Border Grid.Column="1" Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6" VerticalAlignment="Center">
-                            <TextBlock Text="1.0" Foreground="#EDEDED" FontSize="12" />
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Slider x:Name="OpacitySlider" Minimum="0.1" Maximum="1" Value="1" Width="140" IsSnapToTickEnabled="False" ValueChanged="OpacitySlider_OnValueChanged" Style="{StaticResource WaveOpacitySlider}" />
+                                <TextBlock x:Name="OpacityValueText" Text="1.0" Foreground="#EDEDED" FontSize="12" Margin="10,0,0,0" Width="32" />
+                            </StackPanel>
                         </Border>
                     </Grid>
                 </Border>
 
-                <TextBlock Text="Appearance" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,18,0,10" FontFamily="Comic Sans MS" Padding="10,0,0,0" />
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,12,10,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="ReloadAppTitleText" Text="Reload App" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="ReloadAppDescText" Text="Reload Wave" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="ReloadApp_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <TextBlock x:Name="ReloadAppButtonText" Text="Reload" Foreground="#EDEDED" FontSize="12" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <TextBlock x:Name="AppearanceSection" Text="Appearance" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,18,0,10" FontFamily="Comic Sans MS" Padding="10,0,0,0" />
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="LanguageTitleText" Text="Language" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="LanguageDescText" Text="Change UI language" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <ComboBox x:Name="LanguageCombo" Grid.Column="1" SelectionChanged="LanguageCombo_OnSelectionChanged" MinWidth="120" Style="{StaticResource DarkComboBox}" VerticalAlignment="Center">
+                            <ComboBoxItem Content="中文" Tag="zh" />
+                            <ComboBoxItem Content="English" Tag="en" />
+                        </ComboBox>
+                    </Grid>
+                </Border>
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="ThemeTitleText" Text="Theme" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="ThemeDescText" Text="Change UI theme" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <ComboBox x:Name="ThemeCombo" Grid.Column="1" SelectionChanged="ThemeCombo_OnSelectionChanged" MinWidth="160" Style="{StaticResource DarkComboBox}" VerticalAlignment="Center">
+                            <ComboBoxItem Content="Wave" />
+                            <ComboBoxItem Content="Synapse X" />
+                            <ComboBoxItem Content="KRNL" />
+                            <ComboBoxItem Content="Fluxus" />
+                            <ComboBoxItem Content="Arceus X" />
+                            <ComboBoxItem Content="Delta" />
+                            <ComboBoxItem Content="Codex" />
+                            <ComboBoxItem Content="Evon" />
+                            <ComboBoxItem Content="Electron" />
+                            <ComboBoxItem Content="Hydrogen" />
+                        </ComboBox>
+                    </Grid>
+                </Border>
+
+                <TextBlock x:Name="DataSection" Text="Data" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,18,0,10" FontFamily="Comic Sans MS" Padding="10,0,0,0" />
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="AppDirectoryTitleText" Text="App Directory" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBox Text="{Binding AppDirectoryPath, Mode=OneWay}" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" Background="Transparent" BorderThickness="0" IsReadOnly="True" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="OpenAppDirectory_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <TextBlock x:Name="OpenAppDirectoryButtonText" Text="Open" Foreground="#EDEDED" FontSize="12" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="MonacoTitleText" Text="Monaco" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBox Text="{Binding MonacoDirectoryPathDisplay, Mode=OneWay}" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" Background="Transparent" BorderThickness="0" IsReadOnly="True" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="OpenMonacoDirectory_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <TextBlock x:Name="OpenMonacoDirectoryButtonText" Text="Open" Foreground="#EDEDED" FontSize="12" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="WaveUiImagesTitleText" Text="WaveUI Images" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBox Text="{Binding WaveUiPngPathDisplay, Mode=OneWay}" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" Background="Transparent" BorderThickness="0" IsReadOnly="True" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="OpenWaveUiDirectory_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <TextBlock x:Name="OpenWaveUiDirectoryButtonText" Text="Open" Foreground="#EDEDED" FontSize="12" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="OpenConfigFolderTitleText" Text="Open Config Folder" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="OpenConfigFolderDescText" Text="Open the folder that contains config.cfg" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="OpenConfigFolder_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <TextBlock x:Name="OpenConfigFolderButtonText" Text="Open" Foreground="#EDEDED" FontSize="12" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="OpenConfigFileTitleText" Text="Open config.cfg" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="OpenConfigFileDescText" Text="Open the config file" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="OpenConfigFile_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <TextBlock x:Name="OpenConfigFileButtonText" Text="Open" Foreground="#EDEDED" FontSize="12" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="OpenVersionFileTitleText" Text="Open version.json" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="OpenVersionFileDescText" Text="Open the version file" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="OpenVersionFile_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <TextBlock x:Name="OpenVersionFileButtonText" Text="Open" Foreground="#EDEDED" FontSize="12" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <TextBlock x:Name="ApisSection" Text="APIs" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,18,0,10" FontFamily="Comic Sans MS" Padding="10,0,0,0" />
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock x:Name="ChooseApisTitleText" Text="ChooseAPIs" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                        </StackPanel>
+
+                        <Button x:Name="ChooseApiButton" Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="ChooseApiButton_OnClick" VerticalAlignment="Center">
+                            <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="CurrentApiText" Text="-" Foreground="#EDEDED" FontSize="12" />
+                                    <TextBlock Text="▼" Foreground="#9AA0A6" FontSize="10" Margin="10,1,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <TextBlock x:Name="ApiDebugSection" Text="Debug" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,0,0,10" FontFamily="Comic Sans MS" Padding="10,0,0,0" />
+
+                <Border Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="12" Padding="16" Margin="15,0,10,12">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="IsAttached" Foreground="#9AA0A6" FontSize="12" />
+                            <TextBlock x:Name="ApiDebugIsAttachedValueText" Grid.Column="1" Text="-" Foreground="#EDEDED" FontSize="12" />
+                        </Grid>
+
+                        <Border Background="#202020" Height="1" Margin="0,10,0,10" HorizontalAlignment="Stretch" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="IsRobloxOpen" Foreground="#9AA0A6" FontSize="12" />
+                            <TextBlock x:Name="ApiDebugIsRobloxOpenValueText" Grid.Column="1" Text="-" Foreground="#EDEDED" FontSize="12" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
 
@@ -106,30 +582,125 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="SETTINGS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
-                <TextBlock Grid.Row="1" Text="Customize Wave to your liking" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                <TextBlock x:Name="SettingsRightTitleText" Text="SETTINGS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
+                <TextBlock x:Name="SettingsRightSubtitleText" Grid.Row="1" Text="Customize Wave to your liking" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
 
                 <StackPanel Grid.Row="2" Margin="0,14,0,0">
-                    <Border Background="#1DA1F2" CornerRadius="10" Padding="12,10" Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal">
+                    <Grid Cursor="Hand" Tag="Application" Margin="0,0,0,10" MouseLeftButtonDown="RightNavItem_OnMouseLeftButtonDown">
+                        <Border CornerRadius="10" Background="#121212" />
+                        <Border x:Name="NavApplicationActiveBg" CornerRadius="10" Background="#1DA1F2" Opacity="1" />
+                        <StackPanel Orientation="Horizontal" Margin="12,10">
                             <wave:WaveIcon IconName="app" Width="14" Height="14" Stretch="Uniform" />
-                            <TextBlock Text="Application" Foreground="White" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0" FontFamily="Comic Sans MS" Height="22" Width="101" />
+                            <Grid Margin="10,0,0,0">
+                                <TextBlock x:Name="NavApplicationTextInactive" Text="Application" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="0" />
+                                <TextBlock x:Name="NavApplicationTextActive" Text="Application" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="1" />
+                            </Grid>
                         </StackPanel>
-                    </Border>
-                    <Border Background="#121212" CornerRadius="10" Padding="12,10" Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal">
+                    </Grid>
+
+                    <Grid Cursor="Hand" Tag="Appearance" Margin="0,0,0,10" MouseLeftButtonDown="RightNavItem_OnMouseLeftButtonDown">
+                        <Border CornerRadius="10" Background="#121212" />
+                        <Border x:Name="NavAppearanceActiveBg" CornerRadius="10" Background="#1DA1F2" Opacity="0" />
+                        <StackPanel Orientation="Horizontal" Margin="12,10">
                             <wave:WaveIcon IconName="appearance" Width="14" Height="14" Stretch="Uniform" />
-                            <TextBlock Text="Appearance" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0" FontFamily="Comic Sans MS" />
+                            <Grid Margin="10,0,0,0">
+                                <TextBlock x:Name="NavAppearanceTextInactive" Text="Appearance" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="1" />
+                                <TextBlock x:Name="NavAppearanceTextActive" Text="Appearance" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="0" />
+                            </Grid>
                         </StackPanel>
-                    </Border>
-                    <Border Background="#121212" CornerRadius="10" Padding="12,10">
-                        <StackPanel Orientation="Horizontal">
+                    </Grid>
+
+                    <Grid Cursor="Hand" Tag="Data" MouseLeftButtonDown="RightNavItem_OnMouseLeftButtonDown">
+                        <Border CornerRadius="10" Background="#121212" />
+                        <Border x:Name="NavDataActiveBg" CornerRadius="10" Background="#1DA1F2" Opacity="0" />
+                        <StackPanel Orientation="Horizontal" Margin="12,10">
                             <wave:WaveIcon IconName="data" Width="14" Height="14" Stretch="Uniform" />
-                            <TextBlock Text="Data" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0" FontFamily="Comic Sans MS" />
+                            <Grid Margin="10,0,0,0">
+                                <TextBlock x:Name="NavDataTextInactive" Text="Data" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="1" />
+                                <TextBlock x:Name="NavDataTextActive" Text="Data" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="0" />
+                            </Grid>
                         </StackPanel>
-                    </Border>
+                    </Grid>
+
+                    <Grid Cursor="Hand" Tag="APIs" Margin="0,10,0,0" MouseLeftButtonDown="RightNavItem_OnMouseLeftButtonDown">
+                        <Border CornerRadius="10" Background="#121212" />
+                        <Border x:Name="NavApisActiveBg" CornerRadius="10" Background="#1DA1F2" Opacity="0" />
+                        <StackPanel Orientation="Horizontal" Margin="12,10">
+                            <wave:WaveIcon IconName="apis" Width="14" Height="14" Stretch="Uniform" />
+                            <Grid Margin="10,0,0,0">
+                                <TextBlock x:Name="NavApisTextInactive" Text="APIs" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="1" />
+                                <TextBlock x:Name="NavApisTextActive" Text="APIs" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="0" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Cursor="Hand" Tag="Debug" Margin="0,10,0,0" MouseLeftButtonDown="RightNavItem_OnMouseLeftButtonDown">
+                        <Border CornerRadius="10" Background="#121212" />
+                        <Border x:Name="NavDebugActiveBg" CornerRadius="10" Background="#1DA1F2" Opacity="0" />
+                        <StackPanel Orientation="Horizontal" Margin="12,10">
+                            <wave:WaveIcon IconName="debug" Width="14" Height="14" Stretch="Uniform" />
+                            <Grid Margin="10,0,0,0">
+                                <TextBlock x:Name="NavDebugTextInactive" Text="Debug" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="1" />
+                                <TextBlock x:Name="NavDebugTextActive" Text="Debug" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="Comic Sans MS" Opacity="0" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Grid>
         </Border>
+
+        <Grid x:Name="ApiModalOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Opacity="0">
+            <Border Background="#80000000" MouseLeftButtonDown="ApiModalBackdrop_OnMouseLeftButtonDown" />
+
+            <Border Width="680" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="5" Padding="16"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MouseLeftButtonDown="ApiModalContent_OnMouseLeftButtonDown">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="ApiModalTitleText" Text="ChooseAPIs" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="16" />
+                        <Button Grid.Column="1" Style="{StaticResource NoHoverButton}" Click="CloseApiModalButton_OnClick" Width="26" Height="26">
+                            <TextBlock Text="✕" Foreground="#9AA0A6" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Button>
+                    </Grid>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,14">
+                        <TextBlock x:Name="ApiModalCurrentLabelText" Text="Current:" Foreground="#9AA0A6" FontSize="12" />
+                        <TextBlock Text=" " />
+                        <TextBlock Text="{Binding ElementName=CurrentApiText, Path=Text}" Foreground="#EDEDED" FontSize="12" />
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MaxHeight="420">
+                        <ItemsControl x:Name="ApiItemsControl" ItemsSource="{Binding ApiItems}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="5" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource ApiTileButton}" Click="ApiTileButton_OnClick" Tag="{Binding}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding SuncLine}" Foreground="#9AA0A6" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding UncLine}" Foreground="#9AA0A6" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

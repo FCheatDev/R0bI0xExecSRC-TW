@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 
 namespace Executor.WaveUI
 {
@@ -31,6 +32,25 @@ namespace Executor.WaveUI
                 // }
 
                 _window.ShowToast(title, message);
+            });
+        }
+
+        internal static void ShowPrompt(string title, string message, string yesText, string noText, Action? onYes, Action? onNo)
+        {
+            if (Application.Current == null)
+            {
+                return;
+            }
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (_window == null)
+                {
+                    _window = new WaveToastWindow();
+                    _window.Closed += (_, _) => _window = null;
+                }
+
+                _window.ShowPrompt(title, message, yesText, noText, onYes, onNo);
             });
         }
     }

@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -7,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Executor;
 
 namespace Executor.WaveUI
 {
@@ -24,11 +28,54 @@ namespace Executor.WaveUI
         private bool _loadHooked;
         private bool _loadCompleted;
         private bool _mainPagesPreloadStarted;
+        private bool _autoAttachStarted;
+        private bool _autoAttachEnabled;
+        private readonly object _autoAttachLock = new();
+        private bool _robloxWatchSubscribed;
+        private bool _homeRobloxPromptShown;
+        private long _lastAutoAttachAttemptTicks;
+
+        private readonly object _attachUiLock = new();
+        private Task? _inflightAttachUiTask;
+        private int _inflightAttachUiPid;
+        private int _lastAttachToastPid;
+        private bool _attachToastAttachingShown;
+        private bool _attachToastAttachedShown;
+        private string? _lastAttachToastMessage;
+        private long _lastAttachToastMessageTicks;
+
+        private DispatcherTimer? _robloxPollTimer;
+        private bool _lastRobloxRunning;
+        private int _lastRobloxPid;
 
         public WaveShell()
         {
             InitializeComponent();
             Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_robloxWatchSubscribed)
+                {
+                    RobloxRuntime.RobloxRunningChanged -= OnRobloxRunningChanged;
+                    _robloxWatchSubscribed = false;
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                _robloxPollTimer?.Stop();
+            }
+            catch
+            {
+            }
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -39,8 +86,424 @@ namespace Executor.WaveUI
             }
 
             _booted = true;
+
+            try
+            {
+                RobloxRuntime.Initialize();
+            }
+            catch
+            {
+            }
+
+            EnsureRobloxPolling();
+
             ShowLoadThenKey();
         }
+
+        private void EnsureRobloxPolling()
+        {
+            if (_robloxPollTimer == null)
+            {
+                _robloxPollTimer = new DispatcherTimer(DispatcherPriority.Background)
+                {
+                    Interval = TimeSpan.FromMilliseconds(600),
+                };
+                _robloxPollTimer.Tick += (_, _) => PollRobloxState();
+            }
+
+            if (!_robloxPollTimer.IsEnabled)
+            {
+                _robloxPollTimer.Start();
+            }
+        }
+
+        private void PollRobloxState()
+        {
+            if (!IsLoaded)
+            {
+                return;
+            }
+
+            bool running;
+            int pid;
+
+            var prevRunning = _lastRobloxRunning;
+            var prevPid = _lastRobloxPid;
+
+            try
+            {
+                running = SpashApiInvoker.IsRobloxProcessRunning();
+            }
+            catch
+            {
+                running = false;
+            }
+
+            pid = 0;
+            try
+            {
+                if (running)
+                {
+                    _ = RobloxRuntime.TryGetRobloxProcessId(out pid);
+                }
+            }
+            catch
+            {
+                pid = 0;
+            }
+
+            var started = running && !prevRunning;
+            var stopped = !running && prevRunning;
+            var restarted = running && prevRunning && prevPid != 0 && pid != 0 && pid != prevPid;
+
+            _lastRobloxRunning = running;
+            _lastRobloxPid = pid;
+
+            if (stopped || restarted)
+            {
+                try
+                {
+                    if (stopped)
+                    {
+                        Logger.Info("WaveShell", "Roblox stopped.");
+                    }
+                    else
+                    {
+                        Logger.Info("WaveShell", $"Roblox restarted: {prevPid} -> {pid}");
+                    }
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    SpashApiInvoker.ResetForApiChange();
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    API.ResetAttachState(clearLastAttachedPid: false);
+                }
+                catch
+                {
+                }
+
+                _lastAutoAttachAttemptTicks = 0;
+
+                ResetAttachUiState();
+            }
+
+            if (_autoAttachEnabled && (started || restarted))
+            {
+                // Roblox opened (or restarted): auto-attach
+                try
+                {
+                    Logger.Info("WaveShell", started ? $"Roblox started (pid={pid}). Scheduling auto-attach." : $"Roblox restart detected (pid={pid}). Scheduling auto-attach.");
+                }
+                catch
+                {
+                }
+
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(800);
+                    AttemptAttach();
+                });
+            }
+
+            if (_autoAttachEnabled && running)
+            {
+                try
+                {
+                    if (!API.IsAttached())
+                    {
+                        var now = DateTime.UtcNow.Ticks;
+                        var last = Interlocked.Read(ref _lastAutoAttachAttemptTicks);
+                        if (last == 0 || new TimeSpan(now - last) >= TimeSpan.FromSeconds(2))
+                        {
+                            Interlocked.Exchange(ref _lastAutoAttachAttemptTicks, now);
+                            _ = Task.Run(async () =>
+                            {
+                                await Task.Delay(800);
+                                AttemptAttach();
+                            });
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private void TryAutoAttach()
+        {
+            if (!_autoAttachEnabled)
+            {
+                return;
+            }
+
+            lock (_autoAttachLock)
+            {
+                if (_autoAttachStarted)
+                {
+                    return;
+                }
+
+                _autoAttachStarted = true;
+            }
+
+            try
+            {
+                RobloxRuntime.Initialize();
+            }
+            catch
+            {
+            }
+
+            EnsureRobloxPolling();
+
+            if (!_robloxWatchSubscribed)
+            {
+                _robloxWatchSubscribed = true;
+                RobloxRuntime.RobloxRunningChanged += OnRobloxRunningChanged;
+            }
+
+            if (RobloxRuntime.IsRobloxRunning)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(1000);
+                    AttemptAttach();
+                });
+            }
+        }
+
+        private void OnRobloxRunningChanged(bool running)
+        {
+            if (!running)
+            {
+                try
+                {
+                    API.ResetAttachState(clearLastAttachedPid: false);
+                }
+                catch
+                {
+                }
+
+                ResetAttachUiState();
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(1000);
+                AttemptAttach();
+            });
+        }
+
+        private void AttemptAttach()
+        {
+            var pid = 0;
+            try
+            {
+                _ = RobloxRuntime.TryGetRobloxProcessId(out pid);
+            }
+            catch
+            {
+                pid = 0;
+            }
+
+            lock (_attachUiLock)
+            {
+                if (_inflightAttachUiTask != null && !_inflightAttachUiTask.IsCompleted)
+                {
+                    if (_inflightAttachUiPid == 0 || pid == 0 || _inflightAttachUiPid == pid)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            var task = Task.Run(async () =>
+            {
+                try
+                {
+                    try
+                    {
+                        if (pid != 0 && API.IsAttached())
+                        {
+                            var showAttached = false;
+                            lock (_attachUiLock)
+                            {
+                                if (_lastAttachToastPid != pid || !_attachToastAttachedShown)
+                                {
+                                    _lastAttachToastPid = pid;
+                                    _attachToastAttachedShown = true;
+                                    _attachToastAttachingShown = true;
+                                    showAttached = true;
+                                }
+                            }
+
+                            if (showAttached)
+                            {
+                                Dispatcher.Invoke(() => ShowToast(LocalizationManager.T("WaveUI.Shell.Toast.Attached")));
+                            }
+
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    var showAttaching = false;
+                    lock (_attachUiLock)
+                    {
+                        if (pid != 0)
+                        {
+                            if (_lastAttachToastPid != pid)
+                            {
+                                _lastAttachToastPid = pid;
+                                _attachToastAttachingShown = false;
+                                _attachToastAttachedShown = false;
+                                _lastAttachToastMessage = null;
+                                _lastAttachToastMessageTicks = 0;
+                            }
+
+                            if (!_attachToastAttachingShown)
+                            {
+                                _attachToastAttachingShown = true;
+                                showAttaching = true;
+                            }
+                        }
+                        else
+                        {
+                            if (!_attachToastAttachingShown)
+                            {
+                                _attachToastAttachingShown = true;
+                                showAttaching = true;
+                            }
+                        }
+                    }
+
+                    if (showAttaching)
+                    {
+                        Dispatcher.Invoke(() => ShowToast(LocalizationManager.T("WaveUI.Shell.Toast.Attaching")));
+                    }
+
+                    var result = await API.AttachAsync(CancellationToken.None);
+                    if (result.Success)
+                    {
+                        var showAttached = false;
+                        lock (_attachUiLock)
+                        {
+                            if (!_attachToastAttachedShown)
+                            {
+                                _attachToastAttachedShown = true;
+                                showAttached = true;
+                            }
+                        }
+
+                        if (showAttached)
+                        {
+                            Dispatcher.Invoke(() => ShowToast(LocalizationManager.T("WaveUI.Shell.Toast.Attached")));
+                        }
+                        return;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(result.Message))
+                    {
+                        if (!result.Message.Contains("Xeno", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var msg = result.Message.Trim();
+                            var showMsg = false;
+                            var now = DateTime.UtcNow.Ticks;
+                            lock (_attachUiLock)
+                            {
+                                if (!string.Equals(_lastAttachToastMessage, msg, StringComparison.Ordinal))
+                                {
+                                    _lastAttachToastMessage = msg;
+                                    _lastAttachToastMessageTicks = now;
+                                    showMsg = true;
+                                }
+                                else if (_lastAttachToastMessageTicks == 0 || new TimeSpan(now - _lastAttachToastMessageTicks) >= TimeSpan.FromSeconds(3))
+                                {
+                                    _lastAttachToastMessageTicks = now;
+                                    showMsg = true;
+                                }
+                            }
+
+                            if (showMsg)
+                            {
+                                Dispatcher.Invoke(() => ShowToast(msg));
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        var msg = LocalizationManager.F("WaveUI.Shell.Toast.AttachError", ex.Message);
+                        var showMsg = false;
+                        var now = DateTime.UtcNow.Ticks;
+                        lock (_attachUiLock)
+                        {
+                            if (!string.Equals(_lastAttachToastMessage, msg, StringComparison.Ordinal))
+                            {
+                                _lastAttachToastMessage = msg;
+                                _lastAttachToastMessageTicks = now;
+                                showMsg = true;
+                            }
+                            else if (_lastAttachToastMessageTicks == 0 || new TimeSpan(now - _lastAttachToastMessageTicks) >= TimeSpan.FromSeconds(3))
+                            {
+                                _lastAttachToastMessageTicks = now;
+                                showMsg = true;
+                            }
+                        }
+
+                        if (showMsg)
+                        {
+                            Dispatcher.Invoke(() => ShowToast(msg));
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            });
+
+            lock (_attachUiLock)
+            {
+                _inflightAttachUiPid = pid;
+                _inflightAttachUiTask = task;
+            }
+        }
+
+        private void ResetAttachUiState()
+        {
+            lock (_attachUiLock)
+            {
+                _inflightAttachUiTask = null;
+                _inflightAttachUiPid = 0;
+                _lastAttachToastPid = 0;
+                _attachToastAttachingShown = false;
+                _attachToastAttachedShown = false;
+                _lastAttachToastMessage = null;
+                _lastAttachToastMessageTicks = 0;
+            }
+        }
+
+private static bool IsRobloxProcessRunning()
+{
+    // 委託給 SpashApiInvoker
+    return SpashApiInvoker.IsRobloxProcessRunning();
+}
 
         private void ShowLoadThenKey()
         {
@@ -203,6 +666,16 @@ namespace Executor.WaveUI
                 afterTransition = null;
             }
 
+            if (string.Equals(page, "Home", StringComparison.OrdinalIgnoreCase))
+            {
+                BeginPreloadMainTabPages();
+                afterTransition = () =>
+                {
+                    TryAutoAttach();
+                    ShowOpenRobloxPromptIfNotRunning();
+                };
+            }
+
             SetPageContentAnimated(control, animateTransition, afterTransition);
         }
 
@@ -289,7 +762,7 @@ namespace Executor.WaveUI
                     if (attempts >= 20)
                     {
                         timer.Stop();
-                        ShowToast("Monaco is not ready.");
+                        ShowToast(LocalizationManager.T("WaveUI.Editor.Toast.MonacoNotReady"));
                     }
                 };
                 timer.Start();
@@ -478,13 +951,45 @@ namespace Executor.WaveUI
 
         private void OnKeyVerified()
         {
+            _autoAttachEnabled = true;
             SetActiveTab("Home");
             NavigateTo("Home");
         }
 
         public void ShowToast(string message)
         {
-            WaveToastService.Show("Info", message);
+            WaveToastService.Show(LocalizationManager.T("WaveUI.Common.Info"), message);
+        }
+
+        private void ShowOpenRobloxPromptIfNotRunning()
+        {
+            if (_homeRobloxPromptShown)
+            {
+                return;
+            }
+
+            _homeRobloxPromptShown = true;
+
+            try
+            {
+                RobloxRuntime.Initialize();
+            }
+            catch
+            {
+            }
+
+            if (RobloxRuntime.IsRobloxRunning)
+            {
+                return;
+            }
+
+            WaveToastService.ShowPrompt(
+                LocalizationManager.T("WaveUI.Common.Info"),
+                LocalizationManager.T("WaveUI.Roblox.Prompt.Open"),
+                LocalizationManager.T("WaveUI.Common.Yes"),
+                LocalizationManager.T("WaveUI.Common.No"),
+                () => _ = RobloxRuntime.TryLaunchRoblox(),
+                null);
         }
 
         private void Close_OnClick(object sender, RoutedEventArgs e)

@@ -1,3 +1,8 @@
 <Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <BuildType Name="x86" />
+  </Configurations>
   <Project Path="Executor/Executor.csproj" />
 </Solution>

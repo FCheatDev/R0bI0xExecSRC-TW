@@ -7,93 +7,102 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Platforms>AnyCPU;x86</Platforms>
+    <Configurations>Debug;Release;x86</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="SpashAPIVelocity">
       <HintPath>..\SpashAPI - Velocity\SpashAPIVelocity.dll</HintPath>
+    </Reference>
+    <Reference Include="SpashAPIXeno">
+      <HintPath>..\SpashAPI - Xeno\SpashAPIXeno.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\SpashAPI - Velocity\Bin\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>SpashAPI - Velocity\Bin\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <TargetPath>SpashAPI - Velocity\Bin\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+
+    <Content Include="..\SpashAPI - Xeno\bin\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>SpashAPI - Xeno\bin\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <TargetPath>SpashAPI - Xeno\bin\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
+    <PackageReference Include="System.Management" Version="9.0.0" />
   </ItemGroup>
 
+  <!-- WaveUI 所有檔案（包含子資料夾如 Monaco） -->
   <ItemGroup>
-    <Content Include="Assets\Monaco\**\*.*">
+    <Content Include="Assets\WaveUI\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Assets\Monaco\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <Link>Assets\WaveUI\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
-  </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="Assets\WaveUI\*.*">
+    <Content Include="..\waveUI\Monaco\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <Link>Assets\WaveUI\Monaco\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <TargetPath>Assets\WaveUI\Monaco\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
-  </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="Assets\waveUI\Monaco\**\*.*">
+    <Content Include="..\waveUI\*.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Assets\waveUI\Monaco\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <Link>Assets\WaveUI\%(Filename)%(Extension)</Link>
+      <TargetPath>Assets\WaveUI\%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 
+  <!-- 語言檔案 -->
   <ItemGroup>
-    <Content Include="..\waveUI\Monaco1\**\*.*">
+    <Content Include="Assets\lang\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>waveUI\Monaco1\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <Link>Assets\lang\%(Filename)%(Extension)</Link>
     </Content>
-  </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="Assets\imgs\*.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="assets\icons\wave\*.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="assets\waveUI\*.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Assets\icons\wave\*.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="assets\lang\*.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <Link>Assets\lang\%(Filename)%(Extension)</Link>
+      <TargetPath>Assets\lang\%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 
+  <!-- 圖片資源 (僅供 WPF 設計時使用) -->
   <ItemGroup>
     <Resource Include="Assets\imgs\*.png" />
-    <Resource Include="Assets\WaveUI\*.*" />
-    <Resource Include="assets\icons\wave\*.png" />
-    <Resource Include="Assets\icons\wave\*.png" />
-    <Resource Include="assets\waveUI\*.png" />
-    <Resource Include="assets\lang\*.json" />
   </ItemGroup>
 
 </Project>

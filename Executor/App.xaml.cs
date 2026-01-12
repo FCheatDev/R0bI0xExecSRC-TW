@@ -1,5 +1,8 @@
 ﻿using System.Configuration;
 using System.Data;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -13,6 +16,54 @@ namespace Executor
     {
         protected override void OnStartup(StartupEventArgs e)
         {
+            Logger.Initialize();
+
+            try
+            {
+                AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+                {
+                    try
+                    {
+                        if (args.ExceptionObject is Exception ex)
+                        {
+                            Logger.Exception("UnhandledException", ex);
+                        }
+                        else
+                        {
+                            Logger.Error("UnhandledException", "Non-Exception: " + (args.ExceptionObject?.ToString() ?? "<null>"));
+                        }
+                    }
+                    catch
+                    {
+                    }
+                };
+
+                DispatcherUnhandledException += (_, args) =>
+                {
+                    try
+                    {
+                        Logger.Exception("DispatcherUnhandledException", args.Exception);
+                    }
+                    catch
+                    {
+                    }
+                };
+
+                TaskScheduler.UnobservedTaskException += (_, args) =>
+                {
+                    try
+                    {
+                        Logger.Exception("UnobservedTaskException", args.Exception);
+                    }
+                    catch
+                    {
+                    }
+                };
+            }
+            catch
+            {
+            }
+
             base.OnStartup(e);
 
             ShutdownMode = ShutdownMode.OnExplicitShutdown;

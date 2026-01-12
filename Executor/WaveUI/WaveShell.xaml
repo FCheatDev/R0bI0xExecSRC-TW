@@ -282,7 +282,7 @@
                     <ToggleButton x:Name="TabHome" Style="{StaticResource WaveTabButton}" IsChecked="True" Click="Tab_OnClick" Tag="Home">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <wave:WaveTintIcon x:Name="TabHomeIcon" IconName="home" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabHomeText" Text="HOME" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5" FontFamily="Arial Black">
+                            <TextBlock x:Name="TabHomeText" Text="HOME" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5">
                                 <TextBlock.LayoutTransform>
                                     <ScaleTransform x:Name="TabHomeTextScale" ScaleX="1" ScaleY="1" />
                                 </TextBlock.LayoutTransform>
@@ -293,7 +293,7 @@
                     <ToggleButton x:Name="TabEditor" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Editor">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <wave:WaveTintIcon x:Name="TabEditorIcon" IconName="editor" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabEditorText" Text="EDITOR" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5" FontFamily="Arial Black">
+                            <TextBlock x:Name="TabEditorText" Text="EDITOR" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5">
                                 <TextBlock.LayoutTransform>
                                     <ScaleTransform x:Name="TabEditorTextScale" ScaleX="0" ScaleY="1" />
                                 </TextBlock.LayoutTransform>
@@ -304,7 +304,7 @@
                     <ToggleButton x:Name="TabScripts" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Scripts">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <wave:WaveTintIcon x:Name="TabScriptsIcon" IconName="scripts" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabScriptsText" Text="SCRIPTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5" FontFamily="Arial Black">
+                            <TextBlock x:Name="TabScriptsText" Text="SCRIPTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5">
                                 <TextBlock.LayoutTransform>
                                     <ScaleTransform x:Name="TabScriptsTextScale" ScaleX="0" ScaleY="1" />
                                 </TextBlock.LayoutTransform>
@@ -315,7 +315,7 @@
                     <ToggleButton x:Name="TabClients" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Clients">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <wave:WaveTintIcon x:Name="TabClientsIcon" IconName="clients" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabClientsText" Text="CLIENTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5" FontFamily="Arial Black"> 
+                            <TextBlock x:Name="TabClientsText" Text="CLIENTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5"> 
                                 <TextBlock.LayoutTransform>
                                     <ScaleTransform x:Name="TabClientsTextScale" ScaleX="0" ScaleY="1" />
                                 </TextBlock.LayoutTransform>
@@ -326,7 +326,7 @@
                     <ToggleButton x:Name="TabSettings" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Settings">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <wave:WaveTintIcon x:Name="TabSettingsIcon" IconName="settings" Width="16" Height="16" Margin="0,0,8,0" Loaded="TabSettingsIcon_Loaded" />
-                            <TextBlock x:Name="TabSettingsText" Text="SETTINGS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5" FontFamily="Arial Black">
+                            <TextBlock x:Name="TabSettingsText" Text="SETTINGS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" RenderTransformOrigin="0,0.5">
                                 <TextBlock.LayoutTransform>
                                     <ScaleTransform x:Name="TabSettingsTextScale" ScaleX="0" ScaleY="1" />
                                 </TextBlock.LayoutTransform>

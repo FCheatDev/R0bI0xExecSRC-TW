@@ -7,7 +7,7 @@ namespace Executor
 {
     internal static class ConfigManager
     {
-        internal static string ConfigPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.cfg");
+        internal static string ConfigPath => AppPaths.ConfigPath;
 
         internal static Dictionary<string, string> ReadConfig()
         {

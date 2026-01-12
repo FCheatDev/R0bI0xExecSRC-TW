@@ -59,6 +59,36 @@ namespace Executor.WaveUI
             ReflowToasts(animated: false);
         }
 
+        public void ShowPrompt(string title, string message, string yesText, string noText, Action? onYes, Action? onNo)
+        {
+            _toastSequence++;
+
+            if (Toasts.Count >= MaxToasts && Toasts.Count > 0)
+            {
+                BeginHide(Toasts[0]);
+            }
+
+            var toast = new ToastEntry(_toastSequence, title, message)
+            {
+                HasActions = true,
+                YesText = yesText,
+                NoText = noText,
+                YesAction = onYes,
+                NoAction = onNo,
+            };
+            Toasts.Add(toast);
+
+            if (!IsVisible)
+            {
+                Show();
+            }
+
+            UpdateLayout();
+            UpdateWindowPlacement();
+
+            ReflowToasts(animated: false);
+        }
+
         private void OverlapToasts()
         {
             double maxToastHeight = 0;
@@ -354,6 +384,74 @@ namespace Executor.WaveUI
             BeginHide(toast);
         }
 
+        private void ToastYes_OnClick(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+
+            if (sender is not FrameworkElement el)
+            {
+                return;
+            }
+
+            if (el.DataContext is not ToastEntry toast)
+            {
+                return;
+            }
+
+            BeginHide(toast);
+
+            var action = toast.YesAction;
+            if (action == null)
+            {
+                return;
+            }
+
+            _ = System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch
+                {
+                }
+            });
+        }
+
+        private void ToastNo_OnClick(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+
+            if (sender is not FrameworkElement el)
+            {
+                return;
+            }
+
+            if (el.DataContext is not ToastEntry toast)
+            {
+                return;
+            }
+
+            BeginHide(toast);
+
+            var action = toast.NoAction;
+            if (action == null)
+            {
+                return;
+            }
+
+            _ = System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch
+                {
+                }
+            });
+        }
+
         private static void StartProgressAnimation(DependencyObject root)
         {
             var track = FindChildByName<Border>(root, "ProgressTrack");
@@ -426,6 +524,9 @@ namespace Executor.WaveUI
             private int _zIndex;
             private double _measuredHeight;
             private bool _isRunning;
+            private bool _hasActions;
+            private string _yesText = string.Empty;
+            private string _noText = string.Empty;
 
             internal ToastEntry(int id, string title, string message)
             {
@@ -438,6 +539,41 @@ namespace Executor.WaveUI
             public int Id { get; }
             public string Title { get; }
             public string Message { get; }
+
+            public bool HasActions
+            {
+                get => _hasActions;
+                internal set
+                {
+                    if (value == _hasActions) return;
+                    _hasActions = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            public string YesText
+            {
+                get => _yesText;
+                internal set
+                {
+                    value ??= string.Empty;
+                    if (string.Equals(value, _yesText, StringComparison.Ordinal)) return;
+                    _yesText = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            public string NoText
+            {
+                get => _noText;
+                internal set
+                {
+                    value ??= string.Empty;
+                    if (string.Equals(value, _noText, StringComparison.Ordinal)) return;
+                    _noText = value;
+                    OnPropertyChanged();
+                }
+            }
 
             internal DispatcherTimer? HideTimer { get; set; }
             internal bool IsHiding { get; set; }
@@ -453,6 +589,9 @@ namespace Executor.WaveUI
             }
 
             internal FrameworkElement? RootElement { get; set; }
+
+            internal Action? YesAction { get; set; }
+            internal Action? NoAction { get; set; }
 
             public int ZIndex
             {

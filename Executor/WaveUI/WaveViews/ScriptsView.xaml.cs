@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Executor;
 
 namespace Executor.WaveUI.WaveViews
 {
@@ -30,6 +31,67 @@ namespace Executor.WaveUI.WaveViews
         private int _totalPages = 1;
 
         private string _searchQuery = string.Empty;
+
+        private string _scriptsRightTitle = "SCRIPTS";
+        private string _scriptsRightSubtitle = "";
+        private string _copyButtonLabel = "Copy";
+        private string _executeButtonLabel = "Execute";
+
+        public string ScriptsRightTitle
+        {
+            get => _scriptsRightTitle;
+            private set
+            {
+                if (value == _scriptsRightTitle)
+                {
+                    return;
+                }
+                _scriptsRightTitle = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string ScriptsRightSubtitle
+        {
+            get => _scriptsRightSubtitle;
+            private set
+            {
+                if (value == _scriptsRightSubtitle)
+                {
+                    return;
+                }
+                _scriptsRightSubtitle = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string CopyButtonLabel
+        {
+            get => _copyButtonLabel;
+            private set
+            {
+                if (value == _copyButtonLabel)
+                {
+                    return;
+                }
+                _copyButtonLabel = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string ExecuteButtonLabel
+        {
+            get => _executeButtonLabel;
+            private set
+            {
+                if (value == _executeButtonLabel)
+                {
+                    return;
+                }
+                _executeButtonLabel = value;
+                OnPropertyChanged();
+            }
+        }
 
         public string SearchQuery
         {
@@ -77,6 +139,25 @@ namespace Executor.WaveUI.WaveViews
             DataContext = this;
 
             Loaded += ScriptsView_OnLoaded;
+            Unloaded += ScriptsView_OnUnloaded;
+        }
+
+        private void ScriptsView_OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            LocalizationManager.LanguageChanged -= OnLanguageChanged;
+        }
+
+        private void OnLanguageChanged()
+        {
+            Dispatcher.BeginInvoke(new Action(ApplyLanguage));
+        }
+
+        private void ApplyLanguage()
+        {
+            ScriptsRightTitle = LocalizationManager.T("WaveUI.Scripts.Right.Title");
+            ScriptsRightSubtitle = LocalizationManager.T("WaveUI.Scripts.Right.Subtitle");
+            CopyButtonLabel = LocalizationManager.T("WaveUI.Scripts.Card.Copy");
+            ExecuteButtonLabel = LocalizationManager.T("WaveUI.Scripts.Card.Execute");
         }
 
         private void ActionButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -98,14 +179,14 @@ namespace Executor.WaveUI.WaveViews
 
             if (string.IsNullOrWhiteSpace(card.Script))
             {
-                _toast("Script is empty.");
+                _toast(LocalizationManager.T("WaveUI.Scripts.Toast.ScriptEmpty"));
                 return;
             }
 
             try
             {
                 Clipboard.SetText(card.Script);
-                _toast("Copied.");
+                _toast(LocalizationManager.T("WaveUI.Scripts.Toast.Copied"));
             }
             catch (Exception ex)
             {
@@ -113,7 +194,7 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
-        private void ExecuteScript_OnClick(object sender, RoutedEventArgs e)
+        private async void ExecuteScript_OnClick(object sender, RoutedEventArgs e)
         {
             if (sender is not FrameworkElement el)
             {
@@ -125,21 +206,65 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
+            try
+            {
+                RobloxRuntime.Initialize();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                RobloxRuntime.RefreshRunningState();
+            }
+            catch
+            {
+            }
+
+            if (!RobloxRuntime.IsRobloxRunning)
+            {
+                Executor.WaveUI.WaveToastService.ShowPrompt(
+                    LocalizationManager.T("WaveUI.Common.Info"),
+                    LocalizationManager.T("WaveUI.Roblox.Prompt.Open"),
+                    LocalizationManager.T("WaveUI.Common.Yes"),
+                    LocalizationManager.T("WaveUI.Common.No"),
+                    () => _ = RobloxRuntime.TryLaunchRoblox(),
+                    null);
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(card.Script))
             {
-                _toast("Script is empty.");
+                _toast(LocalizationManager.T("WaveUI.Scripts.Toast.ScriptEmpty"));
                 return;
             }
 
             try
             {
-                if (!TryExecuteWithVelocity(card.Script, out var error))
+                if (!global::Executor.API.IsAttached())
                 {
-                    _toast(error ?? "Execute failed.");
+                    var attach = await global::Executor.API.AttachAsync(System.Threading.CancellationToken.None);
+                    if (!attach.Success)
+                    {
+                        if (string.Equals(attach.Provider, "Xeno", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return;
+                        }
+
+                        _toast(attach.Message);
+                        return;
+                    }
+                }
+
+                var result = await global::Executor.API.ExecuteScriptAsync(card.Script, System.Threading.CancellationToken.None);
+
+                if (!result.Success && string.Equals(result.Provider, "Xeno", StringComparison.OrdinalIgnoreCase))
+                {
                     return;
                 }
 
-                _toast("Executed.");
+                _toast(result.Message);
             }
             catch (Exception ex)
             {
@@ -147,59 +272,12 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
-        private static bool TryExecuteWithVelocity(string script, out string? error)
-        {
-            error = null;
-
-            try
-            {
-                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    Type? apiType = null;
-                    try
-                    {
-                        foreach (var t in asm.GetTypes())
-                        {
-                            if (string.Equals(t.Name, "SpashAPIVelocity", StringComparison.Ordinal))
-                            {
-                                apiType = t;
-                                break;
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-
-                    if (apiType == null)
-                    {
-                        continue;
-                    }
-
-                    var method = apiType.GetMethod("ExecuteScript", new[] { typeof(string) });
-                    if (method == null)
-                    {
-                        error = "SpashAPIVelocity.ExecuteScript(string) not found.";
-                        return false;
-                    }
-
-                    method.Invoke(null, new object?[] { script });
-                    return true;
-                }
-
-                error = "SpashAPIVelocity type not found in loaded assemblies.";
-                return false;
-            }
-            catch (Exception ex)
-            {
-                error = ex.Message;
-                return false;
-            }
-        }
-
         private void ScriptsView_OnLoaded(object sender, RoutedEventArgs e)
         {
+            LocalizationManager.LanguageChanged -= OnLanguageChanged;
+            LocalizationManager.LanguageChanged += OnLanguageChanged;
+            ApplyLanguage();
+
             if (_loaded)
             {
                 return;
@@ -242,7 +320,7 @@ namespace Executor.WaveUI.WaveViews
 
                 if (!doc.RootElement.TryGetProperty("result", out var result))
                 {
-                    _toast("Invalid response.");
+                    _toast(LocalizationManager.T("WaveUI.Scripts.Toast.InvalidResponse"));
                     return;
                 }
 
@@ -266,7 +344,7 @@ namespace Executor.WaveUI.WaveViews
                 Scripts.Clear();
                 foreach (var s in scriptsEl.EnumerateArray())
                 {
-                    var title = SafeGetString(s, "title") ?? "Untitled";
+                    var title = SafeGetString(s, "title") ?? LocalizationManager.T("WaveUI.Common.Untitled");
                     var script = SafeGetString(s, "script") ?? string.Empty;
 
                     var gameName = string.Empty;

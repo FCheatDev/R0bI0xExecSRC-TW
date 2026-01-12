@@ -63,7 +63,7 @@ namespace Executor.WaveUI
                 return fromResource;
             }
 
-            // ¦pªG§ä¤£¨ì¹Ï¤ù¡Aªğ¦^ 404.png
+            // å¦‚æœæ‰¾ä¸åˆ°åœ–ç‰‡ï¼Œè¿”å› 404.png
             var fallback = LoadFallback404();
             lock (CacheLock)
             {
@@ -80,14 +80,14 @@ namespace Executor.WaveUI
         {
             try
             {
-                // ¹Á¸Õ±qÀÉ®×¨t²Î¸ü¤J 404.png
+                // å˜—è©¦å¾æª”æ¡ˆç³»çµ±è¼‰å…¥ 404.png
                 var from404File = TryLoadFromFile("404.png");
                 if (from404File != null)
                 {
                     return from404File;
                 }
 
-                // ¹Á¸Õ±q¸ê·½¸ü¤J 404.png
+                // å˜—è©¦å¾è³‡æºè¼‰å…¥ 404.png
                 var from404Resource = TryLoadFromResource("404.png");
                 if (from404Resource != null)
                 {
@@ -105,7 +105,7 @@ namespace Executor.WaveUI
         {
             try
             {
-                var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                var baseDir = global::Executor.AppPaths.AppDirectory;
                 var candidates = new[]
                 {
                     Path.Combine(baseDir, "Assets", "WaveUI", fileName),

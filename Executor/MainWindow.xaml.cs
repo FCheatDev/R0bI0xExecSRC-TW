@@ -203,7 +203,7 @@ namespace Executor
         private const int HTBOTTOMLEFT = 16;
         private const int HTBOTTOMRIGHT = 17;
 
-        private void ApplyTheme()
+        internal void ApplyTheme()
         {
             var cfg = ConfigManager.ReadConfig();
             var theme = ConfigManager.Get(cfg, "theme") ?? "";

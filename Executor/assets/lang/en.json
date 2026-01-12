@@ -1,0 +1,210 @@
+{
+  "main.title": "Wave",
+  "setup.title": "Setup",
+  "setup.choose_language": "Choose your language",
+  "setup.choose_theme": "Choose your theme",
+  "setup.search_hint": "Search...",
+  "setup.lang_zh": "Chinese",
+  "setup.lang_en": "English",
+  "setup.back": "Back",
+  "setup.next": "Next",
+  "setup.finish": "Finish",
+  "setup.window_title": "Wave Setup",
+  "setup.msg_choose_language": "Please choose a language.",
+  "setup.msg_select_theme": "Please select a theme.",
+
+  "WaveUI": {
+    "Common": {
+      "Info": "Info",
+      "Open": "Open",
+      "Execute": "Execute",
+      "Clear": "Clear",
+      "Save": "Save",
+      "Copy": "Copy",
+      "SelectAll": "Select All",
+      "Untitled": "Untitled",
+      "Yes": "Yes",
+      "No": "No"
+    },
+    "Roblox": {
+      "Prompt": {
+        "Open": "Roblox is not open. Open Roblox now?"
+      }
+    },
+    "Shell": {
+      "Tab": {
+        "Home": "Home",
+        "Editor": "Editor",
+        "Scripts": "Scripts",
+        "Clients": "Clients",
+        "Settings": "Settings"
+      },
+      "Toast": {
+        "Attaching": "Attaching...",
+        "Attached": "Successfully attached!",
+        "AttachError": "Attach error: {0}"
+      }
+    },
+    "Settings": {
+      "Right": {
+        "Title": "SETTINGS",
+        "Subtitle": "Customize Wave to your liking"
+      },
+      "Section": {
+        "Application": "Application",
+        "Appearance": "Appearance",
+        "Data": "Data",
+        "APIs": "APIs"
+      },
+      "Application": {
+        "Topmost": {
+          "Title": "Topmost",
+          "Desc": "Allow Wave to position itself over everything else"
+        },
+        "Boot": {
+          "Title": "Start on Boot",
+          "Desc": "Automatically have Wave run when your system boots"
+        },
+        "Opacity": {
+          "Title": "Transparency",
+          "Desc": "Adjust Wave's window transparency (from 0.1 to 1)"
+        },
+        "ReloadApp": {
+          "Title": "Reload App",
+          "Desc": "Restart Wave",
+          "Button": "Reload"
+        }
+      },
+      "Appearance": {
+        "Language": {
+          "Title": "Language",
+          "Desc": "Change UI language"
+        },
+        "Theme": {
+          "Title": "Theme",
+          "Desc": "Change UI theme"
+        }
+      },
+      "Data": {
+        "AppDirectory": {
+          "Title": "App Directory"
+        },
+        "Monaco": {
+          "Title": "Monaco"
+        },
+        "WaveUiImages": {
+          "Title": "WaveUI Images"
+        },
+        "OpenConfigFolder": {
+          "Title": "Open Config Folder",
+          "Desc": "Open the folder that contains config.cfg"
+        },
+        "OpenConfigFile": {
+          "Title": "Open config.cfg",
+          "Desc": "Open the config file"
+        },
+        "OpenVersionFile": {
+          "Title": "Open version.json",
+          "Desc": "Open the version file"
+        }
+      },
+      "APIs": {
+        "Choose": {
+          "Title": "Choose APIs"
+        },
+        "Debug": {
+          "Title": "Debug",
+          "IsAttached": "IsAttached",
+          "IsRobloxOpen": "IsRobloxOpen"
+        },
+        "Current": "Current:",
+        "Toast": {
+          "RestartingRoblox": "API switched. Restarting Roblox..."
+        }
+      },
+      "Nav": {
+        "Application": "Application",
+        "Appearance": "Appearance",
+        "Data": "Data",
+        "APIs": "APIs"
+      }
+    },
+    "Editor": {
+      "Explorer": {
+        "Title": "EXPLORER",
+        "Subtitle": "Explore all your saved scripts",
+        "SavedScripts": "Saved Scripts"
+      },
+      "TabMenu": {
+        "Pin": "Pin",
+        "Unpin": "Unpin"
+      },
+      "Toast": {
+        "MonacoNotReady": "Monaco is not ready.",
+        "PinnedTabCantBeClosed": "Pinned tab can't be closed.",
+        "AtLeastOneTabMustRemain": "At least one tab must remain.",
+        "MaxTabs": "Max tabs is {0}.",
+        "MonacoAssetsNotFound": "Monaco assets not found (Assets\\WaveUI\\Monaco, Assets\\Monaco, Assets\\waveUI\\Monaco, or waveUI\\Monaco1).",
+        "MonacoInitFailed": "Monaco init failed: {0}",
+        "RobloxKilled": "Roblox has been closed.",
+        "ScriptEmpty": "Script is empty."
+      },
+      "DefaultScript": "Welcome to Wave!",
+      "Untitled": "Untitled {0}"
+    },
+    "Scripts": {
+      "Right": {
+        "Title": "SCRIPTS",
+        "Subtitle": "Customize the filter to your liking"
+      },
+      "Card": {
+        "Copy": "Copy",
+        "Execute": "Execute"
+      },
+      "Toast": {
+        "ScriptEmpty": "Script is empty.",
+        "Copied": "Copied.",
+        "Executed": "Executed.",
+        "ExecuteFailed": "Execute failed.",
+        "InvalidResponse": "Invalid response."
+      }
+    },
+    "Home": {
+      "Welcome": "Welcome to Wave,",
+      "Website": "Website",
+      "Store": "Store",
+      "Subscription": "SUBSCRIPTION",
+      "KeyExpiry": "Key Expiry:",
+      "Plan": "Plan:",
+      "Widgets": "WIDGETS",
+      "Widget": {
+        "Release": "Release",
+        "ReleaseDesc": "Wave is finally available to the public, after\nmany months!",
+        "Status": "Status",
+        "StatusDesc": "Wave is currently undetected, and up-to\ndate.",
+        "Discord": "Discord",
+        "DiscordDesc": "Join our discord server for further updates,\nand a community."
+      },
+      "Recent": "RECENT",
+      "Edited": "Edited",
+      "End": "You've reached the end of the list"
+    },
+    "Clients": {
+      "Right": {
+        "Title": "CLIENTS",
+        "Subtitle": "Client manager used for Wave to\nmanage your current sessions"
+      }
+    },
+    "KeySystem": {
+      "Title": "Wave Key System",
+      "Subtitle": "Purchase a key from our official\nstore, or from one of our resellers.",
+      "Login": "Log in",
+      "GetKey": "Get Key",
+      "Verifying": "Verifying...",
+      "Error": {
+        "EnterKey": "Please enter a key.",
+        "InvalidKey": "Invalid key."
+      }
+    }
+  }
+}

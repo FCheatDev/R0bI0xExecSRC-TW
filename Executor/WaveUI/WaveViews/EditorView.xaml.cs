@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
@@ -11,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Executor;
 using Executor.WaveUI;
 using Microsoft.Win32;
 using Microsoft.Web.WebView2.Core;
@@ -24,7 +26,6 @@ namespace Executor.WaveUI.WaveViews
 
         private bool _monacoInitialized;
         private const string MonacoHostName = "monaco";
-        private const string DefaultScriptText = "Welcome to Wave!";
 
         public bool IsMonacoReady => MonacoView?.CoreWebView2 != null;
 
@@ -49,13 +50,72 @@ namespace Executor.WaveUI.WaveViews
             InitializeTabs();
 
             Loaded += EditorView_OnLoaded;
+            Unloaded += EditorView_OnUnloaded;
+        }
+
+        private void EditorView_OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            LocalizationManager.LanguageChanged -= OnLanguageChanged;
+        }
+
+        private void OnLanguageChanged()
+        {
+            Dispatcher.BeginInvoke(new Action(ApplyLanguage));
+        }
+
+        private void ApplyLanguage()
+        {
+            if (!IsLoaded)
+            {
+                return;
+            }
+
+            if (ExecuteButtonText != null)
+            {
+                ExecuteButtonText.Text = LocalizationManager.T("WaveUI.Editor.Buttons.Execute");
+            }
+
+            if (ClearButtonText != null)
+            {
+                ClearButtonText.Text = LocalizationManager.T("WaveUI.Editor.Buttons.Clear");
+            }
+
+            if (OpenButtonText != null)
+            {
+                OpenButtonText.Text = LocalizationManager.T("WaveUI.Editor.Buttons.Open");
+            }
+
+            if (SaveButtonText != null)
+            {
+                SaveButtonText.Text = LocalizationManager.T("WaveUI.Editor.Buttons.Save");
+            }
+
+            if (KillRobloxButtonText != null)
+            {
+                KillRobloxButtonText.Text = LocalizationManager.T("WaveUI.Editor.Buttons.KillRoblox");
+            }
+
+            if (ExplorerTitleText != null)
+            {
+                ExplorerTitleText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.Title");
+            }
+
+            if (ExplorerSubtitleText != null)
+            {
+                ExplorerSubtitleText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.Subtitle");
+            }
+
+            if (ExplorerSavedScriptsText != null)
+            {
+                ExplorerSavedScriptsText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SavedScripts");
+            }
         }
 
         private void InitializeTabs()
         {
             Tabs.Clear();
 
-            Tabs.Add(new TabEntry(CreateTabId(), "Untitled 1", DefaultScriptText));
+            Tabs.Add(new TabEntry(CreateTabId(), FormatUntitledTitle(1), LocalizationManager.T("WaveUI.Editor.DefaultScript")));
 
             _activeTab = Tabs[^1];
             _activeTab.IsActive = true;
@@ -66,8 +126,17 @@ namespace Executor.WaveUI.WaveViews
             return Guid.NewGuid().ToString("N");
         }
 
+        private static string FormatUntitledTitle(int n)
+        {
+            return LocalizationManager.F("WaveUI.Editor.Untitled", n);
+        }
+
         private async void EditorView_OnLoaded(object sender, RoutedEventArgs e)
         {
+            LocalizationManager.LanguageChanged -= OnLanguageChanged;
+            LocalizationManager.LanguageChanged += OnLanguageChanged;
+            ApplyLanguage();
+
             if (_monacoInitialized)
             {
                 return;
@@ -79,12 +148,12 @@ namespace Executor.WaveUI.WaveViews
             {
                 await MonacoView.EnsureCoreWebView2Async();
 
-                var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                var baseDir = AppPaths.AppDirectory;
 
                 var monacoFolder = ResolveMonacoFolder(baseDir);
                 if (monacoFolder == null)
                 {
-                    _toast("Monaco assets not found (Assets\\Monaco, Assets\\waveUI\\Monaco, or waveUI\\Monaco1)." );
+                    _toast(LocalizationManager.T("WaveUI.Editor.Toast.MonacoAssetsNotFound"));
                     return;
                 }
 
@@ -101,7 +170,7 @@ namespace Executor.WaveUI.WaveViews
             }
             catch (Exception ex)
             {
-                _toast($"Monaco init failed: {ex.Message}");
+                _toast(LocalizationManager.F("WaveUI.Editor.Toast.MonacoInitFailed", ex.Message));
             }
         }
 
@@ -109,6 +178,7 @@ namespace Executor.WaveUI.WaveViews
         {
             var candidates = new[]
             {
+                Path.Combine(baseDir, "Assets", "WaveUI", "Monaco"),
                 Path.Combine(baseDir, "Assets", "Monaco"),
                 Path.Combine(baseDir, "Assets", "waveUI", "Monaco"),
                 Path.Combine(baseDir, "waveUI", "Monaco1"),
@@ -391,11 +461,11 @@ namespace Executor.WaveUI.WaveViews
 
             if (Tabs.Count >= MaxTabs)
             {
-                _toast($"Max tabs is {MaxTabs}.");
+                _toast(LocalizationManager.F("WaveUI.Editor.Toast.MaxTabs", MaxTabs));
                 return;
             }
 
-            var finalTitle = string.IsNullOrWhiteSpace(title) ? $"Untitled {Tabs.Count + 1}" : title;
+            var finalTitle = string.IsNullOrWhiteSpace(title) ? FormatUntitledTitle(Tabs.Count + 1) : title;
             var tab = new TabEntry(CreateTabId(), finalTitle, script ?? string.Empty);
             Tabs.Add(tab);
 
@@ -431,12 +501,12 @@ namespace Executor.WaveUI.WaveViews
         {
             if (Tabs.Count >= MaxTabs)
             {
-                _toast($"Max tabs is {MaxTabs}.");
+                _toast(LocalizationManager.F("WaveUI.Editor.Toast.MaxTabs", MaxTabs));
                 return;
             }
 
             var nextNumber = Tabs.Count + 1;
-            var tab = new TabEntry(CreateTabId(), $"Untitled {nextNumber}", string.Empty);
+            var tab = new TabEntry(CreateTabId(), FormatUntitledTitle(nextNumber), string.Empty);
             Tabs.Add(tab);
 
             await SwitchToTabAsync(tab);
@@ -466,13 +536,13 @@ namespace Executor.WaveUI.WaveViews
 
             if (tab.IsPinned)
             {
-                _toast("Pinned tab can't be closed.");
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.PinnedTabCantBeClosed"));
                 return;
             }
 
             if (Tabs.Count <= 1)
             {
-                _toast("At least one tab must remain.");
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.AtLeastOneTabMustRemain"));
                 return;
             }
 
@@ -601,7 +671,9 @@ namespace Executor.WaveUI.WaveViews
 
             var pinItem = new MenuItem
             {
-                Header = tab.IsPinned ? "Unpin" : "Pin",
+                Header = tab.IsPinned
+                    ? LocalizationManager.T("WaveUI.Editor.TabMenu.Unpin")
+                    : LocalizationManager.T("WaveUI.Editor.TabMenu.Pin"),
                 Icon = new WaveIcon { IconName = "pin", Width = 14, Height = 14, Stretch = Stretch.Uniform },
                 Style = (Style)FindResource("TabContextMenuItemStyle"),
             };
@@ -647,57 +719,6 @@ namespace Executor.WaveUI.WaveViews
                 current = VisualTreeHelper.GetParent(current);
             }
             return null;
-        }
-
-        private static bool TryExecuteWithVelocity(string script, out string? error)
-        {
-            error = null;
-
-            try
-            {
-                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    Type? apiType = null;
-                    try
-                    {
-                        foreach (var t in asm.GetTypes())
-                        {
-                            if (string.Equals(t.Name, "SpashAPIVelocity", StringComparison.Ordinal))
-                            {
-                                apiType = t;
-                                break;
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-
-                    if (apiType == null)
-                    {
-                        continue;
-                    }
-
-                    var method = apiType.GetMethod("ExecuteScript", new[] { typeof(string) });
-                    if (method == null)
-                    {
-                        error = "SpashAPIVelocity.ExecuteScript(string) not found.";
-                        return false;
-                    }
-
-                    method.Invoke(null, new object?[] { script });
-                    return true;
-                }
-
-                error = "SpashAPIVelocity type not found in loaded assemblies.";
-                return false;
-            }
-            catch (Exception ex)
-            {
-                error = ex.Message;
-                return false;
-            }
         }
 
         private void ExplorerToggle_OnClick(object sender, RoutedEventArgs e)
@@ -908,20 +929,72 @@ namespace Executor.WaveUI.WaveViews
             {
                 if (MonacoView?.CoreWebView2 == null)
                 {
-                    _toast("Monaco is not ready.");
+                    _toast(LocalizationManager.T("WaveUI.Editor.Toast.MonacoNotReady"));
+                    return;
+                }
+
+                try
+                {
+                    RobloxRuntime.Initialize();
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    RobloxRuntime.RefreshRunningState();
+                }
+                catch
+                {
+                }
+
+                if (!RobloxRuntime.IsRobloxRunning)
+                {
+                    WaveToastService.ShowPrompt(
+                        LocalizationManager.T("WaveUI.Common.Info"),
+                        LocalizationManager.T("WaveUI.Roblox.Prompt.Open"),
+                        LocalizationManager.T("WaveUI.Common.Yes"),
+                        LocalizationManager.T("WaveUI.Common.No"),
+                        () => _ = RobloxRuntime.TryLaunchRoblox(),
+                        null);
                     return;
                 }
 
                 var script = await GetEditorTextAsync();
                 _activeTab.Content = script;
 
-                if (!TryExecuteWithVelocity(script, out var error))
+                if (string.IsNullOrWhiteSpace(script))
                 {
-                    _toast(error ?? "Execute failed.");
+                    _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptEmpty"));
                     return;
                 }
 
-                _toast("Executed.");
+                if (!global::Executor.API.IsAttached())
+                {
+                    var attach = await global::Executor.API.AttachAsync(System.Threading.CancellationToken.None);
+                    if (!attach.Success)
+                    {
+                        _toast(attach.Message);
+                        return;
+                    }
+                }
+
+                var result = await global::Executor.API.ExecuteScriptAsync(script, System.Threading.CancellationToken.None);
+                _toast(result.Message);
+            }
+            catch (Exception ex)
+            {
+                _toast(ex.Message);
+            }
+        }
+
+        private void KillRoblox_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                RobloxRuntime.KillRoblox();
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.RobloxKilled"));
             }
             catch (Exception ex)
             {

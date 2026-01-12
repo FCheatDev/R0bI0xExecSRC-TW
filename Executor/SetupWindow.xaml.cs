@@ -10,6 +10,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 
 namespace Executor
+
 {
     public partial class SetupWindow : Window
     {
@@ -431,7 +432,7 @@ namespace Executor
         private static ImageSource? TryLoadImage(string name)
         {
             var safeName = ToSafeFileName(name);
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var baseDir = AppPaths.AppDirectory;
             var themeDir = Path.Combine(baseDir, "Assets", "WaveUI");
 
             try

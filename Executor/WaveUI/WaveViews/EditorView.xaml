@@ -99,6 +99,49 @@
                 </Setter>
             </Style>
 
+            <Style x:Key="KillRobloxTextButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <StackPanel x:Name="TextBlockHost" Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0">
+                                    <ContentPresenter x:Name="ContentHost" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                    <Rectangle x:Name="Underline" Height="2" Fill="#EDEDED" HorizontalAlignment="Left" Margin="0,2,0,-4"
+                                               Width="{Binding ActualWidth, ElementName=ContentHost}" RenderTransformOrigin="0,0.5">
+                                        <Rectangle.RenderTransform>
+                                            <ScaleTransform x:Name="UnderlineScale" ScaleX="0" ScaleY="1" />
+                                        </Rectangle.RenderTransform>
+                                    </Rectangle>
+                                </StackPanel>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="UnderlineScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.28" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="UnderlineScale" Storyboard.TargetProperty="ScaleX" To="0" Duration="0:0:0.28" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style x:Key="TabContextMenuStyle" TargetType="ContextMenu">
                 <Setter Property="OverridesDefaultStyle" Value="True" />
                 <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -401,19 +444,23 @@
             <DockPanel Grid.Row="2" LastChildFill="False" Margin="0,0,3,10" Background="#0C0C0C">
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <Button x:Name="ExecuteButton" Width="92" Height="36" Background="#42A2F8" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Execute_OnClick" Margin="10,0,10,0" Style="{StaticResource BounceButtonStyle}">
-                        <TextBlock Text="Execute" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="ExecuteButtonText" Text="Execute" FontWeight="SemiBold" FontSize="12" />
                     </Button>
 
                     <Button Width="74" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="0" Click="Clear_OnClick" Style="{StaticResource BounceButtonStyle}">
-                        <TextBlock Text="Clear" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="ClearButtonText" Text="Clear" FontWeight="SemiBold" FontSize="12" />
                     </Button>
 
                     <Button Width="74" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" Style="{StaticResource BounceButtonStyle}" Click="Open_OnClick">
-                        <TextBlock Text="Open" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="OpenButtonText" Text="Open" FontWeight="SemiBold" FontSize="12" />
                     </Button>
 
                     <Button Width="74" Height="36" Background="#191A1B" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" Style="{StaticResource BounceButtonStyle}" Click="Save_OnClick">
-                        <TextBlock Text="Save" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="SaveButtonText" Text="Save" FontWeight="SemiBold" FontSize="12" />
+                    </Button>
+
+                    <Button Background="Transparent" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" Click="KillRoblox_OnClick" Style="{StaticResource KillRobloxTextButtonStyle}" Height="36">
+                        <TextBlock x:Name="KillRobloxButtonText" Text="KillRoblox" FontWeight="SemiBold" FontSize="12" />
                     </Button>
                 </StackPanel>
 
@@ -443,8 +490,8 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="EXPLORER" Foreground="#EDEDED" FontSize="14" FontWeight="SemiBold" FontFamily="Arial Black" UseLayoutRounding="True" />
-                <TextBlock Grid.Row="1" Text="Explore all your saved scripts" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" FontFamily="Noto Sans HK Black" />
+                <TextBlock x:Name="ExplorerTitleText" Text="EXPLORER" Foreground="#EDEDED" FontSize="14" FontWeight="SemiBold" FontFamily="Arial Black" UseLayoutRounding="True" />
+                <TextBlock x:Name="ExplorerSubtitleText" Grid.Row="1" Text="Explore all your saved scripts" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" FontFamily="Noto Sans HK Black" />
 
                 <Border Grid.Row="2" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="0" Height="36" Padding="12,0" Margin="0,14,0,0" VerticalAlignment="Center">
                     <Grid>
@@ -466,7 +513,7 @@
                                     <RotateTransform Angle="90" CenterX="7" CenterY="7" />
                                 </wave:WaveIcon.RenderTransform>
                             </wave:WaveIcon>
-                            <TextBlock Grid.Column="1" Text="Saved Scripts" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" Margin="10,0,0,0" FontFamily="Arial Black" />
+                            <TextBlock x:Name="ExplorerSavedScriptsText" Grid.Column="1" Text="Saved Scripts" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" Margin="10,0,0,0" FontFamily="Arial Black" />
                             <Border Grid.Column="2" Background="#1DA1F2" CornerRadius="4,4,4,4" Width="22" Height="22" HorizontalAlignment="Right">
                                 <wave:WaveIcon IconName="explorer_add" Width="12" Height="12" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>

@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:wave="clr-namespace:Executor.WaveUI"
              mc:Ignorable="d"
+             x:Name="Root"
              d:DesignHeight="450" d:DesignWidth="800">
 
     <UserControl.Resources>
@@ -129,8 +130,8 @@
         <Border Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Background="Black" BorderBrush="#202020" 
                 Margin="0">
             <Grid Margin="14">
-                <TextBlock Text="SCRIPTS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
-                <TextBlock Text="Customize the filter to your liking" Foreground="#9AA0A6" FontSize="12" Margin="0,20,0,0" />
+                <TextBlock Text="{Binding ElementName=Root, Path=ScriptsRightTitle}" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
+                <TextBlock Text="{Binding ElementName=Root, Path=ScriptsRightSubtitle}" Foreground="#9AA0A6" FontSize="12" Margin="0,20,0,0" />
             </Grid>
         </Border>
 
@@ -221,8 +222,8 @@
 
                                         <Grid>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8">
-                                                <Button Content="Copy" Style="{StaticResource HoverActionButtonStyle}" Margin="0,0,6,0" Cursor="Hand" Click="CopyScript_OnClick" />
-                                                <Button Content="Execute" Style="{StaticResource HoverActionButtonStyle}" Cursor="Hand" Click="ExecuteScript_OnClick" />
+                                                <Button Content="{Binding ElementName=Root, Path=CopyButtonLabel}" Style="{StaticResource HoverActionButtonStyle}" Margin="0,0,6,0" Cursor="Hand" Click="CopyScript_OnClick" />
+                                                <Button Content="{Binding ElementName=Root, Path=ExecuteButtonLabel}" Style="{StaticResource HoverActionButtonStyle}" Cursor="Hand" Click="ExecuteScript_OnClick" />
                                             </StackPanel>
                                         </Grid>
                                     </Border>
