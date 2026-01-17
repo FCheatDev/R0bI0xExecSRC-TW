@@ -33,6 +33,16 @@ namespace Executor.WaveUI.WaveViews
         public ObservableCollection<TabEntry> Tabs { get; } = new();
         private TabEntry _activeTab = null!;
 
+        private const double SavedScriptsExpandedAngle = 90;
+        private const double SavedScriptsCollapsedAngle = 0;
+        private bool _isSavedScriptsExpanded;
+        private bool _isSavedScriptsAnimating;
+        private bool _isNewScriptModalOpen;
+        private bool _isNewScriptModalAnimating;
+        private readonly string _workspaceDirectory;
+
+        public ObservableCollection<WorkspaceScriptEntry> WorkspaceScripts { get; } = new();
+
         private const double ExplorerWidth = 280;
         private const double ExplorerGap = 10;
         private static readonly Thickness ExplorerOpenMargin = new(0, 0, ExplorerWidth + ExplorerGap, 0);
@@ -43,9 +53,13 @@ namespace Executor.WaveUI.WaveViews
             InitializeComponent();
             _toast = toast;
 
+            _workspaceDirectory = ResolveWorkspaceDirectory();
+            _isSavedScriptsExpanded = false;
+
             DataContext = this;
 
             ApplyExplorerState(animated: false);
+            ApplySavedScriptsState(animated: false);
 
             InitializeTabs();
 
@@ -109,6 +123,36 @@ namespace Executor.WaveUI.WaveViews
             {
                 ExplorerSavedScriptsText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SavedScripts");
             }
+
+            if (SavedScriptsEmptyText != null)
+            {
+                SavedScriptsEmptyText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.Empty");
+            }
+
+            if (NewScriptTitleText != null)
+            {
+                NewScriptTitleText.Text = LocalizationManager.T("WaveUI.Editor.NewScript.Title");
+            }
+
+            if (NewScriptNameLabelText != null)
+            {
+                NewScriptNameLabelText.Text = LocalizationManager.T("WaveUI.Editor.NewScript.NameLabel");
+            }
+
+            if (NewScriptContentLabelText != null)
+            {
+                NewScriptContentLabelText.Text = LocalizationManager.T("WaveUI.Editor.NewScript.ContentLabel");
+            }
+
+            if (NewScriptCancelText != null)
+            {
+                NewScriptCancelText.Text = LocalizationManager.T("WaveUI.Editor.NewScript.Cancel");
+            }
+
+            if (NewScriptCreateText != null)
+            {
+                NewScriptCreateText.Text = LocalizationManager.T("WaveUI.Editor.NewScript.Create");
+            }
         }
 
         private void InitializeTabs()
@@ -131,11 +175,176 @@ namespace Executor.WaveUI.WaveViews
             return LocalizationManager.F("WaveUI.Editor.Untitled", n);
         }
 
+        private static bool IsSupportedScriptExtension(string? ext)
+        {
+            if (string.IsNullOrWhiteSpace(ext))
+            {
+                return false;
+            }
+
+            return ext.Equals(".luau", StringComparison.OrdinalIgnoreCase)
+                   || ext.Equals(".txt", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool HasSupportedScriptExtension(string path)
+        {
+            return IsSupportedScriptExtension(Path.GetExtension(path));
+        }
+
+        private static string ResolveWorkspaceDirectory()
+        {
+            var dir = Path.Combine(AppPaths.AppDirectory, "workspace");
+            try
+            {
+                Directory.CreateDirectory(dir);
+            }
+            catch
+            {
+            }
+            return dir;
+        }
+
+        private void LoadWorkspaceScripts()
+        {
+            WorkspaceScripts.Clear();
+
+            IEnumerable<string> files = Array.Empty<string>();
+            try
+            {
+                Directory.CreateDirectory(_workspaceDirectory);
+                files = Directory.EnumerateFiles(_workspaceDirectory, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(HasSupportedScriptExtension)
+                    .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                _toast(ex.Message);
+            }
+
+            foreach (var file in files)
+            {
+                var name = Path.GetFileName(file);
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    continue;
+                }
+                WorkspaceScripts.Add(new WorkspaceScriptEntry(name, file));
+            }
+
+            UpdateSavedScriptsEmptyState();
+            ApplySavedScriptsState(animated: false);
+        }
+
+        private void UpdateSavedScriptsEmptyState()
+        {
+            if (SavedScriptsEmptyText == null)
+            {
+                return;
+            }
+
+            SavedScriptsEmptyText.Visibility = WorkspaceScripts.Count == 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        private double CalculateSavedScriptsHeight()
+        {
+            if (SavedScriptsListContent == null)
+            {
+                return 0;
+            }
+
+            SavedScriptsListContent.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            return Math.Max(0, SavedScriptsListContent.DesiredSize.Height);
+        }
+
+        private void ApplySavedScriptsState(bool animated)
+        {
+            if (SavedScriptsListHost == null || SavedScriptsToggleRotate == null)
+            {
+                return;
+            }
+
+            var targetHeight = _isSavedScriptsExpanded ? CalculateSavedScriptsHeight() : 0;
+            var targetOpacity = _isSavedScriptsExpanded ? 1 : 0;
+            var targetAngle = _isSavedScriptsExpanded ? SavedScriptsExpandedAngle : SavedScriptsCollapsedAngle;
+
+            if (!animated)
+            {
+                SavedScriptsListHost.BeginAnimation(Border.MaxHeightProperty, null);
+                SavedScriptsListHost.BeginAnimation(UIElement.OpacityProperty, null);
+                SavedScriptsToggleRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+
+                SavedScriptsListHost.MaxHeight = targetHeight;
+                SavedScriptsListHost.Opacity = targetOpacity;
+                SavedScriptsToggleRotate.Angle = targetAngle;
+                return;
+            }
+
+            if (_isSavedScriptsAnimating)
+            {
+                return;
+            }
+
+            _isSavedScriptsAnimating = true;
+
+            var heightAnim = new DoubleAnimation
+            {
+                From = SavedScriptsListHost.MaxHeight,
+                To = targetHeight,
+                Duration = TimeSpan.FromMilliseconds(160),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            heightAnim.Completed += (_, _) =>
+            {
+                SavedScriptsListHost.BeginAnimation(Border.MaxHeightProperty, null);
+                SavedScriptsListHost.MaxHeight = targetHeight;
+                _isSavedScriptsAnimating = false;
+            };
+
+            var opacityAnim = new DoubleAnimation
+            {
+                From = SavedScriptsListHost.Opacity,
+                To = targetOpacity,
+                Duration = TimeSpan.FromMilliseconds(120),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            opacityAnim.Completed += (_, _) =>
+            {
+                SavedScriptsListHost.BeginAnimation(UIElement.OpacityProperty, null);
+                SavedScriptsListHost.Opacity = targetOpacity;
+            };
+
+            var rotateAnim = new DoubleAnimation
+            {
+                From = SavedScriptsToggleRotate.Angle,
+                To = targetAngle,
+                Duration = TimeSpan.FromMilliseconds(120),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            rotateAnim.Completed += (_, _) =>
+            {
+                SavedScriptsToggleRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+                SavedScriptsToggleRotate.Angle = targetAngle;
+            };
+
+            SavedScriptsListHost.BeginAnimation(Border.MaxHeightProperty, heightAnim);
+            SavedScriptsListHost.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+            SavedScriptsToggleRotate.BeginAnimation(RotateTransform.AngleProperty, rotateAnim);
+        }
+
         private async void EditorView_OnLoaded(object sender, RoutedEventArgs e)
         {
             LocalizationManager.LanguageChanged -= OnLanguageChanged;
             LocalizationManager.LanguageChanged += OnLanguageChanged;
             ApplyLanguage();
+            LoadWorkspaceScripts();
 
             if (_monacoInitialized)
             {
@@ -193,6 +402,297 @@ namespace Executor.WaveUI.WaveViews
             }
 
             return null;
+        }
+
+        private static bool IsDescendantOf(DependencyObject? obj, DependencyObject ancestor)
+        {
+            var current = obj;
+            while (current != null)
+            {
+                if (ReferenceEquals(current, ancestor))
+                {
+                    return true;
+                }
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return false;
+        }
+
+        private void SavedScriptsToggle_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+            _isSavedScriptsExpanded = !_isSavedScriptsExpanded;
+            ApplySavedScriptsState(animated: true);
+        }
+
+        private void SavedScriptsAdd_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+            ShowNewScriptModal();
+        }
+
+        private void SavedScriptItem_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+
+            if (sender is not FrameworkElement el)
+            {
+                return;
+            }
+
+            if (el.DataContext is not WorkspaceScriptEntry entry)
+            {
+                return;
+            }
+
+            try
+            {
+                var text = File.ReadAllText(entry.FullPath);
+                OpenScriptInNewTab(entry.Name, text, entry.FullPath);
+            }
+            catch (Exception ex)
+            {
+                _toast(ex.Message);
+            }
+        }
+
+        private void ShowNewScriptModal()
+        {
+            if (_isNewScriptModalAnimating || _isNewScriptModalOpen)
+            {
+                return;
+            }
+
+            _isNewScriptModalOpen = true;
+            _isNewScriptModalAnimating = true;
+
+            if (NewScriptModalOverlay == null || NewScriptModalScale == null || NewScriptModalTranslate == null)
+            {
+                _isNewScriptModalAnimating = false;
+                return;
+            }
+
+            if (NewScriptNameBox != null)
+            {
+                NewScriptNameBox.Text = string.Empty;
+            }
+
+            if (NewScriptContentBox != null)
+            {
+                NewScriptContentBox.Text = string.Empty;
+            }
+
+            NewScriptModalOverlay.Visibility = Visibility.Visible;
+            NewScriptModalOverlay.BeginAnimation(OpacityProperty, null);
+            NewScriptModalOverlay.Opacity = 0;
+
+            NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            NewScriptModalTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+
+            NewScriptModalScale.ScaleX = 0.96;
+            NewScriptModalScale.ScaleY = 0.96;
+            NewScriptModalTranslate.Y = 8;
+
+            var fadeIn = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(160),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            fadeIn.Completed += (_, _) =>
+            {
+                NewScriptModalOverlay.BeginAnimation(OpacityProperty, null);
+                NewScriptModalOverlay.Opacity = 1;
+                _isNewScriptModalAnimating = false;
+
+                if (NewScriptNameBox != null)
+                {
+                    NewScriptNameBox.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        NewScriptNameBox.Focus();
+                        NewScriptNameBox.SelectAll();
+                    }), DispatcherPriority.Background);
+                }
+            };
+
+            var scaleAnim = new DoubleAnimation
+            {
+                From = 0.96,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(160),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            var translateAnim = new DoubleAnimation
+            {
+                From = 8,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(160),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            scaleAnim.Completed += (_, _) =>
+            {
+                NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                NewScriptModalScale.ScaleX = 1;
+                NewScriptModalScale.ScaleY = 1;
+            };
+
+            translateAnim.Completed += (_, _) =>
+            {
+                NewScriptModalTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+                NewScriptModalTranslate.Y = 0;
+            };
+
+            NewScriptModalOverlay.BeginAnimation(OpacityProperty, fadeIn);
+            NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            NewScriptModalTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+        }
+
+        private void HideNewScriptModal()
+        {
+            if (_isNewScriptModalAnimating || !_isNewScriptModalOpen)
+            {
+                return;
+            }
+
+            if (NewScriptModalOverlay == null || NewScriptModalScale == null || NewScriptModalTranslate == null)
+            {
+                return;
+            }
+
+            _isNewScriptModalAnimating = true;
+
+            NewScriptModalOverlay.BeginAnimation(OpacityProperty, null);
+            var fadeOut = new DoubleAnimation
+            {
+                From = NewScriptModalOverlay.Opacity,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            fadeOut.Completed += (_, _) =>
+            {
+                NewScriptModalOverlay.BeginAnimation(OpacityProperty, null);
+                NewScriptModalOverlay.Opacity = 0;
+                NewScriptModalOverlay.Visibility = Visibility.Collapsed;
+                _isNewScriptModalAnimating = false;
+                _isNewScriptModalOpen = false;
+            };
+
+            var scaleAnim = new DoubleAnimation
+            {
+                From = NewScriptModalScale.ScaleX,
+                To = 0.96,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            var translateAnim = new DoubleAnimation
+            {
+                From = NewScriptModalTranslate.Y,
+                To = 8,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            scaleAnim.Completed += (_, _) =>
+            {
+                NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                NewScriptModalScale.ScaleX = 0.96;
+                NewScriptModalScale.ScaleY = 0.96;
+            };
+
+            translateAnim.Completed += (_, _) =>
+            {
+                NewScriptModalTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+                NewScriptModalTranslate.Y = 8;
+            };
+
+            NewScriptModalOverlay.BeginAnimation(OpacityProperty, fadeOut);
+            NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            NewScriptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            NewScriptModalTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+        }
+
+        private void NewScriptOverlay_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (NewScriptModalPanel != null
+                && e.OriginalSource is DependencyObject obj
+                && IsDescendantOf(obj, NewScriptModalPanel))
+            {
+                return;
+            }
+
+            e.Handled = true;
+            HideNewScriptModal();
+        }
+
+        private void NewScriptCancel_OnClick(object sender, RoutedEventArgs e)
+        {
+            HideNewScriptModal();
+        }
+
+        private void NewScriptCreate_OnClick(object sender, RoutedEventArgs e)
+        {
+            var rawName = NewScriptNameBox?.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(rawName))
+            {
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptNameEmpty"));
+                return;
+            }
+
+            if (rawName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptNameInvalid"));
+                return;
+            }
+
+            var extension = Path.GetExtension(rawName);
+            var fileName = string.IsNullOrWhiteSpace(extension)
+                ? $"{rawName}.luau"
+                : rawName;
+
+            if (!IsSupportedScriptExtension(Path.GetExtension(fileName)))
+            {
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptExtensionInvalid"));
+                return;
+            }
+
+            var path = Path.Combine(_workspaceDirectory, fileName);
+            if (File.Exists(path))
+            {
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptExists"));
+                return;
+            }
+
+            var content = NewScriptContentBox?.Text ?? string.Empty;
+
+            try
+            {
+                Directory.CreateDirectory(_workspaceDirectory);
+                File.WriteAllText(path, content);
+            }
+            catch (Exception ex)
+            {
+                _toast(ex.Message);
+                return;
+            }
+
+            HideNewScriptModal();
+            LoadWorkspaceScripts();
+            OpenScriptInNewTab(Path.GetFileName(path), content, path);
         }
 
         private async void MonacoView_OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
@@ -439,12 +939,12 @@ namespace Executor.WaveUI.WaveViews
             _ = AddTabAsync();
         }
 
-        public void OpenScriptInNewTab(string title, string script)
+        public void OpenScriptInNewTab(string title, string script, string? filePath = null)
         {
-            _ = Dispatcher.InvokeAsync(async () => await OpenScriptInNewTabAsync(title, script));
+            _ = Dispatcher.InvokeAsync(async () => await OpenScriptInNewTabAsync(title, script, filePath));
         }
 
-        private async System.Threading.Tasks.Task OpenScriptInNewTabAsync(string title, string script)
+        private async System.Threading.Tasks.Task OpenScriptInNewTabAsync(string title, string script, string? filePath)
         {
             EndRenameAll(commit: true);
 
@@ -466,7 +966,10 @@ namespace Executor.WaveUI.WaveViews
             }
 
             var finalTitle = string.IsNullOrWhiteSpace(title) ? FormatUntitledTitle(Tabs.Count + 1) : title;
-            var tab = new TabEntry(CreateTabId(), finalTitle, script ?? string.Empty);
+            var tab = new TabEntry(CreateTabId(), finalTitle, script ?? string.Empty)
+            {
+                FilePath = filePath,
+            };
             Tabs.Add(tab);
 
             foreach (var t in Tabs)
@@ -1219,6 +1722,18 @@ namespace Executor.WaveUI.WaveViews
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
             }
+        }
+
+        public sealed class WorkspaceScriptEntry
+        {
+            public WorkspaceScriptEntry(string name, string fullPath)
+            {
+                Name = name;
+                FullPath = fullPath;
+            }
+
+            public string Name { get; }
+            public string FullPath { get; }
         }
     }
 }

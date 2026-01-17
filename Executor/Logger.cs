@@ -33,7 +33,7 @@ namespace Executor
 
                     var now = DateTime.Now;
                     var pid = Environment.ProcessId;
-                    var fileName = $"{now:yyyyMMdd_HHmmss_fff}.log";
+                    var fileName = $"{now:yyyy-MM-dd_HH-mm-ss_fff}.log";
                     _logFilePath = Path.Combine(logDir, fileName);
 
                     var fs = new FileStream(_logFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
@@ -91,9 +91,14 @@ namespace Executor
             Write("INFO", source, message, null);
         }
 
+        internal static void Success(string source, string message)
+        {
+            Write("SUCCESS", source, message, null);
+        }
+
         internal static void Warn(string source, string message)
         {
-            Write("WARN", source, message, null);
+            Write("WARING", source, message, null);
         }
 
         internal static void Error(string source, string message)
@@ -103,7 +108,7 @@ namespace Executor
 
         internal static void Exception(string source, Exception ex, string? message = null)
         {
-            Write("EX", source, message ?? ex.Message, ex);
+            Write("ERROR", source, message ?? ex.Message, ex);
         }
 
         private static void Write(string level, string source, string message, Exception? ex)

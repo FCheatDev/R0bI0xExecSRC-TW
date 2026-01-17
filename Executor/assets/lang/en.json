@@ -17,10 +17,12 @@
     "Common": {
       "Info": "Info",
       "Open": "Open",
+      "Skip": "Skip",
       "Execute": "Execute",
       "Clear": "Clear",
       "Save": "Save",
       "Copy": "Copy",
+      "Copied": "Copied",
       "SelectAll": "Select All",
       "Untitled": "Untitled",
       "Yes": "Yes",
@@ -89,11 +91,14 @@
         "AppDirectory": {
           "Title": "App Directory"
         },
+        "ApisFolder": {
+          "Title": "APIs Folder"
+        },
         "Monaco": {
           "Title": "Monaco"
         },
         "WaveUiImages": {
-          "Title": "WaveUI Images"
+          "Title": "WaveUI Resources"
         },
         "OpenConfigFolder": {
           "Title": "Open Config Folder",
@@ -114,6 +119,20 @@
         },
         "Debug": {
           "Title": "Debug",
+          "SkipLoadApp": {
+            "Title": "Skip load screen",
+            "Desc": "Show skip button in Load/KeySystem"
+          },
+          "TestPrompt": {
+            "Title": "Test prompt",
+            "Desc": "Test toast/prompt",
+            "Button": "Test",
+            "Prompt": "This is a test prompt.",
+            "Toast": {
+              "Yes": "You clicked Yes.",
+              "No": "You clicked No."
+            }
+          },
           "IsAttached": "IsAttached",
           "IsRobloxOpen": "IsRobloxOpen"
         },
@@ -126,14 +145,30 @@
         "Application": "Application",
         "Appearance": "Appearance",
         "Data": "Data",
-        "APIs": "APIs"
+        "APIs": "APIs",
+        "Debug": "Debug"
       }
     },
     "Editor": {
+      "Buttons": {
+        "Execute": "Execute",
+        "Clear": "Clear",
+        "Open": "Open",
+        "Save": "Save",
+        "KillRoblox": "Kill Roblox"
+      },
       "Explorer": {
         "Title": "EXPLORER",
         "Subtitle": "Explore all your saved scripts",
-        "SavedScripts": "Saved Scripts"
+        "SavedScripts": "Saved Scripts",
+        "Empty": "No saved scripts"
+      },
+      "NewScript": {
+        "Title": "New Script",
+        "NameLabel": "Name",
+        "ContentLabel": "Content",
+        "Cancel": "Cancel",
+        "Create": "Create"
       },
       "TabMenu": {
         "Pin": "Pin",
@@ -147,7 +182,11 @@
         "MonacoAssetsNotFound": "Monaco assets not found (Assets\\WaveUI\\Monaco, Assets\\Monaco, Assets\\waveUI\\Monaco, or waveUI\\Monaco1).",
         "MonacoInitFailed": "Monaco init failed: {0}",
         "RobloxKilled": "Roblox has been closed.",
-        "ScriptEmpty": "Script is empty."
+        "ScriptEmpty": "Script is empty.",
+        "ScriptNameEmpty": "Script name is required.",
+        "ScriptNameInvalid": "Script name contains invalid characters.",
+        "ScriptExtensionInvalid": "Only .luau or .txt are allowed.",
+        "ScriptExists": "A script with this name already exists."
       },
       "DefaultScript": "Welcome to Wave!",
       "Untitled": "Untitled {0}"
@@ -160,6 +199,18 @@
       "Card": {
         "Copy": "Copy",
         "Execute": "Execute"
+      },
+      "Status": {
+        "KeyLabel": "Key = ",
+        "ModeLabel": "Mode = ",
+        "VerifyLabel": "Verify = ",
+        "KeyRequired": "Required",
+        "KeyNotRequired": "Not Required",
+        "ModeFree": "Free",
+        "ModePaid": "Paid",
+        "Verified": "Verified",
+        "Unverified": "Unverified",
+        "Unknown": "-"
       },
       "Toast": {
         "ScriptEmpty": "Script is empty.",

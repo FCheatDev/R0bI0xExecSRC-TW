@@ -1,0 +1,237 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
+using coms;
+
+namespace RKOVelocity
+{
+	// Token: 0x02000002 RID: 2
+	public static class api
+	{
+		// Token: 0x06000001 RID: 1 RVA: 0x00002050 File Offset: 0x00000250
+		public static string Base64Encode(string plainText)
+		{
+			return Convert.ToBase64String(Encoding.UTF8.GetBytes(plainText));
+		}
+
+		// Token: 0x06000002 RID: 2 RVA: 0x00002072 File Offset: 0x00000272
+		public static byte[] Base64Decode(string plainText)
+		{
+			return Convert.FromBase64String(plainText);
+		}
+
+		// Token: 0x06000003 RID: 3 RVA: 0x0000207C File Offset: 0x0000027C
+		private static bool IsPidRunning(int pid)
+		{
+			bool result;
+			try
+			{
+				Process.GetProcessById(pid);
+				result = true;
+			}
+			catch (ArgumentException ex)
+			{
+				result = false;
+			}
+			return result;
+		}
+
+		// Token: 0x06000004 RID: 4 RVA: 0x000020B4 File Offset: 0x000002B4
+		private static void AutoUpdate()
+		{
+			string result;
+			try
+			{
+				result = api.client.GetStringAsync(api.current_version_url).Result;
+			}
+			catch (Exception ex)
+			{
+				return;
+			}
+			string b = "";
+			bool flag = File.Exists("Bin\\current_version.txt");
+			if (flag)
+			{
+				b = File.ReadAllText("Bin\\current_version.txt");
+			}
+			bool flag2 = result != b;
+			if (flag2)
+			{
+				bool flag3 = File.Exists("Bin\\erto3e4rortoergn.exe");
+				if (flag3)
+				{
+					File.Delete("Bin\\erto3e4rortoergn.exe");
+				}
+				bool flag4 = File.Exists("Bin\\Decompiler.exe");
+				if (flag4)
+				{
+					File.Delete("Bin\\Decompiler.exe");
+				}
+				HttpResponseMessage result2 = api.client.GetAsync(api.current_injector_url).Result;
+				bool isSuccessStatusCode = result2.IsSuccessStatusCode;
+				if (isSuccessStatusCode)
+				{
+					File.WriteAllBytes("Bin\\erto3e4rortoergn.exe", result2.Content.ReadAsByteArrayAsync().Result);
+				}
+				HttpResponseMessage result3 = api.client.GetAsync(api.currret_decompiler_url).Result;
+				bool isSuccessStatusCode2 = result3.IsSuccessStatusCode;
+				if (isSuccessStatusCode2)
+				{
+					File.WriteAllBytes("Bin\\Decompiler.exe", result3.Content.ReadAsByteArrayAsync().Result);
+				}
+			}
+			File.WriteAllText("Bin\\current_version.txt", result);
+		}
+
+		// Token: 0x06000005 RID: 5 RVA: 0x000021E4 File Offset: 0x000003E4
+		public static void StartCommunication()
+		{
+			bool flag = !Directory.Exists("Bin");
+			if (flag)
+			{
+				Directory.CreateDirectory("Bin");
+			}
+			bool flag2 = !Directory.Exists("AutoExec");
+			if (flag2)
+			{
+				Directory.CreateDirectory("AutoExec");
+			}
+			bool flag3 = !Directory.Exists("Workspace");
+			if (flag3)
+			{
+				Directory.CreateDirectory("Workspace");
+			}
+			bool flag4 = !Directory.Exists("Scripts");
+			if (flag4)
+			{
+				Directory.CreateDirectory("Scripts");
+			}
+			api.AutoUpdate();
+			api.StopCommunication();
+			api.decompilerProcess = new Process();
+			api.decompilerProcess.StartInfo.FileName = "Bin\\Decompiler.exe";
+			api.decompilerProcess.StartInfo.UseShellExecute = false;
+			api.decompilerProcess.EnableRaisingEvents = true;
+			api.decompilerProcess.StartInfo.RedirectStandardError = true;
+			api.decompilerProcess.StartInfo.RedirectStandardInput = true;
+			api.decompilerProcess.StartInfo.RedirectStandardOutput = true;
+			api.decompilerProcess.StartInfo.CreateNoWindow = true;
+			api.decompilerProcess.Start();
+			api.CommunicationTimer = new Timer(100.0);
+			api.CommunicationTimer.Elapsed += delegate([Nullable(2)] object source, ElapsedEventArgs e)
+			{
+				foreach (int num in api.injected_pids.ToArray())
+				{
+					bool flag5 = !api.IsPidRunning(num);
+					if (flag5)
+					{
+						api.injected_pids.Remove(num);
+					}
+				}
+				string plainText = "setworkspacefolder: " + Directory.GetCurrentDirectory() + "\\Workspace";
+				foreach (int pid in api.injected_pids)
+				{
+					NamedPipes.LuaPipe(api.Base64Encode(plainText), pid);
+				}
+			};
+			api.CommunicationTimer.Start();
+		}
+
+		// Token: 0x06000006 RID: 6 RVA: 0x00002344 File Offset: 0x00000544
+		public static void StopCommunication()
+		{
+			bool flag = api.CommunicationTimer != null;
+			if (flag)
+			{
+				api.CommunicationTimer.Stop();
+				api.CommunicationTimer = null;
+			}
+			bool flag2 = api.decompilerProcess != null;
+			if (flag2)
+			{
+				api.decompilerProcess.Kill();
+				api.decompilerProcess.Dispose();
+				api.decompilerProcess = null;
+			}
+			api.injected_pids.Clear();
+		}
+
+		// Token: 0x06000007 RID: 7 RVA: 0x000023A6 File Offset: 0x000005A6
+		public static bool IsAttached(int pid)
+		{
+			return api.injected_pids.Contains(pid);
+		}
+
+		// Token: 0x06000008 RID: 8 RVA: 0x000023B4 File Offset: 0x000005B4
+		[DebuggerStepThrough]
+		private static Task<VelocityStates> Attach(int pid)
+		{
+			api.<Attach>d__15 <Attach>d__ = new api.<Attach>d__15();
+			<Attach>d__.<>t__builder = AsyncTaskMethodBuilder<VelocityStates>.Create();
+			<Attach>d__.pid = pid;
+			<Attach>d__.<>1__state = -1;
+			<Attach>d__.<>t__builder.Start<api.<Attach>d__15>(ref <Attach>d__);
+			return <Attach>d__.<>t__builder.Task;
+		}
+
+		// Token: 0x06000009 RID: 9 RVA: 0x000023F8 File Offset: 0x000005F8
+		[DebuggerStepThrough]
+		public static void Inject()
+		{
+			api.<Inject>d__16 <Inject>d__ = new api.<Inject>d__16();
+			<Inject>d__.<>t__builder = AsyncVoidMethodBuilder.Create();
+			<Inject>d__.<>1__state = -1;
+			<Inject>d__.<>t__builder.Start<api.<Inject>d__16>(ref <Inject>d__);
+		}
+
+		// Token: 0x0600000A RID: 10 RVA: 0x0000242C File Offset: 0x0000062C
+		public static VelocityStates Execute(string script)
+		{
+			bool flag = api.injected_pids.Count == 0;
+			VelocityStates result;
+			if (flag)
+			{
+				result = VelocityStates.NotAttached;
+			}
+			else
+			{
+				foreach (int pid in api.injected_pids)
+				{
+					NamedPipes.LuaPipe(api.Base64Encode(script), pid);
+				}
+				result = VelocityStates.Executed;
+			}
+			return result;
+		}
+
+		// Token: 0x04000001 RID: 1
+		private static HttpClient client = new HttpClient();
+
+		// Token: 0x04000002 RID: 2
+		private static string current_injector_url = "https://getvelocity.lol/assets/erto3e4rortoergn.exe";
+
+		// Token: 0x04000003 RID: 3
+		private static string currret_decompiler_url = "https://getvelocity.lol/assets/Decompiler.exe";
+
+		// Token: 0x04000004 RID: 4
+		private static string current_version_url = "https://getvelocity.lol/assets/current_version.txt";
+
+		// Token: 0x04000005 RID: 5
+		private static Process decompilerProcess;
+
+		// Token: 0x04000006 RID: 6
+		public static VelocityStates VelocityStatus = VelocityStates.NotAttached;
+
+		// Token: 0x04000007 RID: 7
+		private static List<int> injected_pids = new List<int>();
+
+		// Token: 0x04000008 RID: 8
+		private static Timer CommunicationTimer;
+	}
+}

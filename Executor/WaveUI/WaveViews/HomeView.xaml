@@ -69,19 +69,19 @@
             <Border CornerRadius="12" Background="#1DA1F2" Padding="16" Margin="0,0,0,10">
                 <StackPanel>
                     <TextBlock Text="Release" Foreground="White" FontSize="16" FontWeight="SemiBold" />
-                    <TextBlock Text="Wave is finally available to the public, after\nmany months!" Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" />
+                    <TextBlock Text="Wave is finally available to the public, after&#10;many months!" Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="12" Background="#1DA1F2" Padding="16" Margin="0,0,0,10">
                 <StackPanel>
                     <TextBlock Text="Status" Foreground="White" FontSize="16" FontWeight="SemiBold" />
-                    <TextBlock Text="Wave is currently undetected, and up-to\ndate." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" />
+                    <TextBlock Text="Wave is currently undetected, and up-to&#10;date." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="12" Background="#1DA1F2" Padding="16">
                 <StackPanel>
                     <TextBlock Text="Discord" Foreground="White" FontSize="16" FontWeight="SemiBold" />
-                    <TextBlock Text="Join our discord server for further updates,\nand a community." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" />
+                    <TextBlock Text="Join our discord server for further updates,&#10;and a community." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" />
                 </StackPanel>
             </Border>
         </StackPanel>

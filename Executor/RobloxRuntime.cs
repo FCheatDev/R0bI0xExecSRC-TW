@@ -180,6 +180,18 @@ namespace Executor
                             {
                             }
 
+                            var title = string.Empty;
+                            try
+                            {
+                                title = p.MainWindowTitle ?? string.Empty;
+                            }
+                            catch
+                            {
+                                title = string.Empty;
+                            }
+
+                            var hasTitle = !string.IsNullOrWhiteSpace(title);
+
                             DateTime startTime;
                             try
                             {
@@ -194,6 +206,7 @@ namespace Executor
                             {
                                 Process = p,
                                 HasWindow = hasWindow,
+                                HasTitle = hasTitle,
                                 StartTime = startTime,
                             };
                         }
@@ -205,6 +218,7 @@ namespace Executor
                     .Where(x => x != null)
                     .Select(x => x!)
                     .OrderByDescending(x => x.HasWindow)
+                    .ThenByDescending(x => x.HasTitle)
                     .ThenByDescending(x => x.StartTime)
                     .ToList();
 

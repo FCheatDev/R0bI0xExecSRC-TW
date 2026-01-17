@@ -23,7 +23,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Text="CLIENTS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
-                <TextBlock Grid.Row="1" Text="Client manager used for Wave to\nmanage your current sessions" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                <TextBlock Grid.Row="1" Text="Client manager used for Wave to&#10;manage your current sessions" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" />
 
                 <Button Grid.Row="3" Content="Select All" Width="90" Height="32" HorizontalAlignment="Right" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Margin="0,0,0,0">
                     <Button.Template>

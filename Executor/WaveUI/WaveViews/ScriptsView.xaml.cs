@@ -14,7 +14,7 @@ using Executor;
 
 namespace Executor.WaveUI.WaveViews
 {
-    public partial class ScriptsView : UserControl
+    public partial class ScriptsView : UserControl, INotifyPropertyChanged
     {
         private const int MaxPerPage = 20;
         private static readonly HttpClient Http = new();
@@ -36,6 +36,23 @@ namespace Executor.WaveUI.WaveViews
         private string _scriptsRightSubtitle = "";
         private string _copyButtonLabel = "Copy";
         private string _executeButtonLabel = "Execute";
+        private string _scriptStatusKeyLabel = "Key = ";
+        private string _scriptStatusModeLabel = "Mode = ";
+        private string _scriptStatusVerifyLabel = "Verify = ";
+
+        private string _keyRequiredText = "Required";
+        private string _keyNotRequiredText = "Not Required";
+        private string _modeFreeText = "Free";
+        private string _modePaidText = "Paid";
+        private string _verifiedText = "Verified";
+        private string _unverifiedText = "Unverified";
+        private string _statusUnknownText = "-";
+
+        private string _selectedScriptKeyStatus = "-";
+        private string _selectedScriptModeStatus = "-";
+        private string _selectedScriptVerifyStatus = "-";
+
+        private ScriptCard? _selectedScript;
 
         public string ScriptsRightTitle
         {
@@ -89,6 +106,96 @@ namespace Executor.WaveUI.WaveViews
                     return;
                 }
                 _executeButtonLabel = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string ScriptStatusKeyLabel
+        {
+            get => _scriptStatusKeyLabel;
+            private set
+            {
+                if (value == _scriptStatusKeyLabel)
+                {
+                    return;
+                }
+
+                _scriptStatusKeyLabel = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string ScriptStatusModeLabel
+        {
+            get => _scriptStatusModeLabel;
+            private set
+            {
+                if (value == _scriptStatusModeLabel)
+                {
+                    return;
+                }
+
+                _scriptStatusModeLabel = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string ScriptStatusVerifyLabel
+        {
+            get => _scriptStatusVerifyLabel;
+            private set
+            {
+                if (value == _scriptStatusVerifyLabel)
+                {
+                    return;
+                }
+
+                _scriptStatusVerifyLabel = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string SelectedScriptKeyStatus
+        {
+            get => _selectedScriptKeyStatus;
+            private set
+            {
+                if (value == _selectedScriptKeyStatus)
+                {
+                    return;
+                }
+
+                _selectedScriptKeyStatus = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string SelectedScriptModeStatus
+        {
+            get => _selectedScriptModeStatus;
+            private set
+            {
+                if (value == _selectedScriptModeStatus)
+                {
+                    return;
+                }
+
+                _selectedScriptModeStatus = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string SelectedScriptVerifyStatus
+        {
+            get => _selectedScriptVerifyStatus;
+            private set
+            {
+                if (value == _selectedScriptVerifyStatus)
+                {
+                    return;
+                }
+
+                _selectedScriptVerifyStatus = value;
                 OnPropertyChanged();
             }
         }
@@ -158,6 +265,68 @@ namespace Executor.WaveUI.WaveViews
             ScriptsRightSubtitle = LocalizationManager.T("WaveUI.Scripts.Right.Subtitle");
             CopyButtonLabel = LocalizationManager.T("WaveUI.Scripts.Card.Copy");
             ExecuteButtonLabel = LocalizationManager.T("WaveUI.Scripts.Card.Execute");
+
+            ScriptStatusKeyLabel = LocalizationManager.T("WaveUI.Scripts.Status.KeyLabel");
+            ScriptStatusModeLabel = LocalizationManager.T("WaveUI.Scripts.Status.ModeLabel");
+            ScriptStatusVerifyLabel = LocalizationManager.T("WaveUI.Scripts.Status.VerifyLabel");
+
+            _keyRequiredText = LocalizationManager.T("WaveUI.Scripts.Status.KeyRequired");
+            _keyNotRequiredText = LocalizationManager.T("WaveUI.Scripts.Status.KeyNotRequired");
+            _modeFreeText = LocalizationManager.T("WaveUI.Scripts.Status.ModeFree");
+            _modePaidText = LocalizationManager.T("WaveUI.Scripts.Status.ModePaid");
+            _verifiedText = LocalizationManager.T("WaveUI.Scripts.Status.Verified");
+            _unverifiedText = LocalizationManager.T("WaveUI.Scripts.Status.Unverified");
+            _statusUnknownText = LocalizationManager.T("WaveUI.Scripts.Status.Unknown");
+
+            UpdateSelectedScriptStatus(_selectedScript);
+        }
+
+        private void UpdateSelectedScriptStatus(ScriptCard? card)
+        {
+            _selectedScript = card;
+            SelectedScriptKeyStatus = FormatKeyStatus(card?.KeyRequired);
+            SelectedScriptModeStatus = FormatModeStatus(card?.ScriptType);
+            SelectedScriptVerifyStatus = FormatVerifyStatus(card?.Verified);
+        }
+
+        private string FormatKeyStatus(bool? required)
+        {
+            if (required == null)
+            {
+                return _statusUnknownText;
+            }
+
+            return required.Value ? _keyRequiredText : _keyNotRequiredText;
+        }
+
+        private string FormatModeStatus(string? mode)
+        {
+            if (string.IsNullOrWhiteSpace(mode))
+            {
+                return _statusUnknownText;
+            }
+
+            if (string.Equals(mode, "free", StringComparison.OrdinalIgnoreCase))
+            {
+                return _modeFreeText;
+            }
+
+            if (string.Equals(mode, "paid", StringComparison.OrdinalIgnoreCase))
+            {
+                return _modePaidText;
+            }
+
+            return _statusUnknownText;
+        }
+
+        private string FormatVerifyStatus(bool? verified)
+        {
+            if (verified == null)
+            {
+                return _statusUnknownText;
+            }
+
+            return verified.Value ? _verifiedText : _unverifiedText;
         }
 
         private void ActionButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -179,7 +348,8 @@ namespace Executor.WaveUI.WaveViews
 
             if (string.IsNullOrWhiteSpace(card.Script))
             {
-                _toast(LocalizationManager.T("WaveUI.Scripts.Toast.ScriptEmpty"));
+                var emptyText = LocalizationManager.T("WaveUI.Scripts.Toast.ScriptEmpty");
+                _toast(emptyText);
                 return;
             }
 
@@ -236,7 +406,8 @@ namespace Executor.WaveUI.WaveViews
 
             if (string.IsNullOrWhiteSpace(card.Script))
             {
-                _toast(LocalizationManager.T("WaveUI.Scripts.Toast.ScriptEmpty"));
+                var emptyText = LocalizationManager.T("WaveUI.Scripts.Toast.ScriptEmpty");
+                _toast(emptyText);
                 return;
             }
 
@@ -301,6 +472,7 @@ namespace Executor.WaveUI.WaveViews
                 if (resetPage)
                 {
                     _page = 1;
+                    UpdateSelectedScriptStatus(null);
                 }
 
                 var q = (SearchQuery ?? string.Empty).Trim();
@@ -346,6 +518,9 @@ namespace Executor.WaveUI.WaveViews
                 {
                     var title = SafeGetString(s, "title") ?? LocalizationManager.T("WaveUI.Common.Untitled");
                     var script = SafeGetString(s, "script") ?? string.Empty;
+                    var keyRequired = SafeGetBool(s, "key");
+                    var verified = SafeGetBool(s, "verified");
+                    var scriptType = SafeGetString(s, "scriptType") ?? SafeGetString(s, "mode");
 
                     var gameName = string.Empty;
                     var imageUrl = string.Empty;
@@ -370,6 +545,9 @@ namespace Executor.WaveUI.WaveViews
                         ImageUrl = imageUrl,
                         Script = script,
                         HasImage = !string.IsNullOrWhiteSpace(imageUrl),
+                        KeyRequired = keyRequired,
+                        Verified = verified,
+                        ScriptType = scriptType ?? string.Empty,
                     });
                 }
             }
@@ -445,6 +623,51 @@ namespace Executor.WaveUI.WaveViews
 
             return null;
         }
+
+        private static bool? SafeGetBool(JsonElement obj, string prop)
+        {
+            if (!obj.TryGetProperty(prop, out var el))
+            {
+                return null;
+            }
+
+            return el.ValueKind switch
+            {
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Number when el.TryGetInt32(out var num) => num != 0,
+                _ => null,
+            };
+        }
+
+        private void ScriptCard_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is DependencyObject source)
+            {
+                var current = source;
+                while (current != null)
+                {
+                    if (current is Button)
+                    {
+                        return;
+                    }
+                    current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+                }
+            }
+
+            if (sender is not FrameworkElement el)
+            {
+                return;
+            }
+
+            if (el.DataContext is not ScriptCard card)
+            {
+                return;
+            }
+
+            UpdateSelectedScriptStatus(card);
+        }
+
 
         private void SearchButton_OnClick(object sender, RoutedEventArgs e)
         {
@@ -539,47 +762,15 @@ namespace Executor.WaveUI.WaveViews
             _ = RefreshAsync(resetPage: false);
         }
 
-        private void ScriptCard_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            // If the click originated from a Button inside the card (Copy/Execute), ignore it.
-            if (e.OriginalSource is DependencyObject source)
-            {
-                var current = source;
-                while (current != null)
-                {
-                    if (current is Button)
-                    {
-                        return;
-                    }
-                    current = System.Windows.Media.VisualTreeHelper.GetParent(current);
-                }
-            }
-
-            if (sender is not FrameworkElement el)
-            {
-                return;
-            }
-
-            if (el.DataContext is not ScriptCard card)
-            {
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(card.Script))
-            {
-                _toast("Script is empty.");
-                return;
-            }
-
-            // Click is enabled, but intentionally no action for now.
-        }
-
         public sealed class ScriptCard : INotifyPropertyChanged
         {
             public string Title { get; set; } = string.Empty;
             public string GameName { get; set; } = string.Empty;
             public string ImageUrl { get; set; } = string.Empty;
             public string Script { get; set; } = string.Empty;
+            public bool? KeyRequired { get; set; }
+            public bool? Verified { get; set; }
+            public string ScriptType { get; set; } = string.Empty;
 
             private bool _hasImage;
 

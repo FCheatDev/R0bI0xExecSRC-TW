@@ -17,6 +17,13 @@ namespace Executor
         private const string VelocityKey = "velocity";
         private const string XenoKey = "xeno";
 
+        private static readonly string[] VelocityApiTypeCandidates =
+        {
+            "SpashAPIVelocity+API",
+            "SpashAPIVelocity.API",
+            "SpashAPIVelocity",
+        };
+
         private static readonly object ResolverLock = new();
         private static bool _resolverInstalled;
         private static string? _resolverApiFolder;
@@ -211,6 +218,68 @@ namespace Executor
             }
         }
 
+        private static bool TryFindApiTypeQuiet(string typeName, out Type? apiType)
+        {
+            apiType = null;
+
+            if (_apiTypeCache.TryGetValue(typeName, out var cached))
+            {
+                apiType = cached;
+                return apiType != null;
+            }
+
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    var t = asm.GetType(typeName, false, true);
+                    if (t != null)
+                    {
+                        _apiTypeCache[typeName] = t;
+                        apiType = t;
+                        return true;
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryInvokeVelocityMethod(string methodName, object[] args, out object? result, out string? error)
+        {
+            result = null;
+            error = null;
+
+            foreach (var typeName in VelocityApiTypeCandidates)
+            {
+                if (!TryFindApiTypeQuiet(typeName, out var apiType) || apiType == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var method = apiType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
+                    if (method == null)
+                    {
+                        continue;
+                    }
+                }
+                catch
+                {
+                    continue;
+                }
+
+                return TryInvokeApiMethod(typeName, methodName, args, out result, out error);
+            }
+
+            error = $"Velocity method '{methodName}' not found.";
+            return false;
+        }
+
         internal static bool IsRobloxProcessRunning()
         {
             try
@@ -250,11 +319,28 @@ namespace Executor
             try
             {
                 var api = GetSelectedApi();
-                var typeName = api == SelectedApi.Xeno ? "SpashAPIXeno" : "SpashAPIVelocity";
 
-                if (!TryInvokeApiMethod(typeName, "ExecuteScript", new object[] { script }, out var result, out error))
+                object? result;
+                if (api == SelectedApi.Velocity)
                 {
-                    return false;
+                    if (!TryInvokeVelocityMethod("ExecuteScript", new object[] { script }, out result, out error))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    var typeName = "SpashAPIXeno";
+                    if (!TryInvokeApiMethod(typeName, "ExecuteScript", new object[] { script }, out result, out error))
+                    {
+                        return false;
+                    }
+                }
+
+                if (api == SelectedApi.Velocity && result is Task task && !task.IsCompleted)
+                {
+                    // Avoid UI lag: do not block waiting for Velocity async ExecuteScript.
+                    return true;
                 }
 
                 if (!TryUnwrapTaskResult(result, out var final, out error))
@@ -293,20 +379,44 @@ namespace Executor
             try
             {
                 var api = GetSelectedApi();
-                var typeName = api == SelectedApi.Xeno ? "SpashAPIXeno" : "SpashAPIVelocity";
+                var apiTag = GetApiLogTag(api);
 
-                if (!TryInvokeApiMethod(typeName, "AttachAPI", Array.Empty<object>(), out var result, out error))
+                object? result;
+                if (api == SelectedApi.Velocity)
                 {
-                    return false;
+                    if (!TryInvokeVelocityMethod("AttachAPI", Array.Empty<object>(), out result, out error))
+                    {
+                        LogError(apiTag, $"AttachAPI invoke failed: {error ?? "Unknown error"}");
+                        TryLogVelocityInternalState("AttachAPI");
+                        return false;
+                    }
+                }
+                else
+                {
+                    var typeName = "SpashAPIXeno";
+                    if (!TryInvokeApiMethod(typeName, "AttachAPI", Array.Empty<object>(), out result, out error))
+                    {
+                        return false;
+                    }
                 }
 
                 if (!TryUnwrapTaskResult(result, out var final, out error))
                 {
+                    if (api == SelectedApi.Velocity)
+                    {
+                        LogError(apiTag, $"AttachAPI result faulted: {error ?? "Unknown error"}");
+                        TryLogVelocityInternalState("AttachAPI");
+                    }
                     return false;
                 }
 
                 if (final is bool ok && !ok)
                 {
+                    if (api == SelectedApi.Velocity)
+                    {
+                        LogError(apiTag, "AttachAPI returned false");
+                        TryLogVelocityInternalState("AttachAPI");
+                    }
                     error = "AttachAPI returned false";
                     return false;
                 }
@@ -339,11 +449,22 @@ namespace Executor
             try
             {
                 var api = GetSelectedApi();
-                var typeName = api == SelectedApi.Xeno ? "SpashAPIXeno" : "SpashAPIVelocity";
 
-                if (!TryInvokeApiMethod(typeName, "IsAttached", Array.Empty<object>(), out var obj, out error))
+                object? obj;
+                if (api == SelectedApi.Velocity)
                 {
-                    return false;
+                    if (!TryInvokeVelocityMethod("IsAttached", Array.Empty<object>(), out obj, out error))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    var typeName = "SpashAPIXeno";
+                    if (!TryInvokeApiMethod(typeName, "IsAttached", Array.Empty<object>(), out obj, out error))
+                    {
+                        return false;
+                    }
                 }
 
                 if (!TryUnwrapTaskResult(obj, out var final, out error))
@@ -380,11 +501,22 @@ namespace Executor
             try
             {
                 var api = GetSelectedApi();
-                var typeName = api == SelectedApi.Xeno ? "SpashAPIXeno" : "SpashAPIVelocity";
 
-                if (!TryInvokeApiMethod(typeName, "IsRobloxOpen", Array.Empty<object>(), out var obj, out error))
+                object? obj;
+                if (api == SelectedApi.Velocity)
                 {
-                    return false;
+                    if (!TryInvokeVelocityMethod("IsRobloxOpen", Array.Empty<object>(), out obj, out error))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    var typeName = "SpashAPIXeno";
+                    if (!TryInvokeApiMethod(typeName, "IsRobloxOpen", Array.Empty<object>(), out obj, out error))
+                    {
+                        return false;
+                    }
                 }
 
                 if (!TryUnwrapTaskResult(obj, out var final, out error))
@@ -419,8 +551,12 @@ namespace Executor
             try
             {
                 var api = GetSelectedApi();
-                var typeName = api == SelectedApi.Xeno ? "SpashAPIXeno" : "SpashAPIVelocity";
-                return TryInvokeApiMethod(typeName, "KillRoblox", Array.Empty<object>(), out error);
+                if (api == SelectedApi.Velocity)
+                {
+                    return TryInvokeVelocityMethod("KillRoblox", Array.Empty<object>(), out _, out error);
+                }
+
+                return TryInvokeApiMethod("SpashAPIXeno", "KillRoblox", Array.Empty<object>(), out error);
             }
             catch (Exception ex)
             {
@@ -567,6 +703,90 @@ namespace Executor
             }
         }
 
+        private static void TryLogVelocityInternalState(string stage)
+        {
+            try
+            {
+                var apiTag = GetApiLogTag(SelectedApi.Velocity);
+                var flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+                var keywords = new[] { "error", "status", "message", "reason", "url", "uri", "endpoint" };
+
+                foreach (var typeName in VelocityApiTypeCandidates)
+                {
+                    if (!TryFindApiTypeQuiet(typeName, out var t) || t == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (var prop in t.GetProperties(flags))
+                    {
+                        if (prop.GetIndexParameters().Length != 0)
+                        {
+                            continue;
+                        }
+
+                        var name = prop.Name;
+                        if (!keywords.Any(k => name.Contains(k, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            continue;
+                        }
+
+                        object? value = null;
+                        try { value = prop.GetValue(null); } catch { value = null; }
+                        if (value == null)
+                        {
+                            continue;
+                        }
+
+                        var text = value.ToString();
+                        if (string.IsNullOrWhiteSpace(text))
+                        {
+                            continue;
+                        }
+
+                        if (text.Length > 300)
+                        {
+                            text = text.Substring(0, 300) + "...";
+                        }
+
+                        LogWarn(apiTag, $"{stage} state {t.Name}.{name} = {text}");
+                    }
+
+                    foreach (var field in t.GetFields(flags))
+                    {
+                        var name = field.Name;
+                        if (!keywords.Any(k => name.Contains(k, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            continue;
+                        }
+
+                        object? value = null;
+                        try { value = field.GetValue(null); } catch { value = null; }
+                        if (value == null)
+                        {
+                            continue;
+                        }
+
+                        var text = value.ToString();
+                        if (string.IsNullOrWhiteSpace(text))
+                        {
+                            continue;
+                        }
+
+                        if (text.Length > 300)
+                        {
+                            text = text.Substring(0, 300) + "...";
+                        }
+
+                        LogWarn(apiTag, $"{stage} state {t.Name}.{name} = {text}");
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private static string FormatResultForLog(object? result)
         {
             if (result == null)
@@ -625,8 +845,8 @@ namespace Executor
 
                 if (task.IsFaulted)
                 {
-                    var ex = task.Exception?.GetBaseException();
-                    error = ex?.Message ?? "Task faulted.";
+                    var ex = task.Exception ?? new Exception("Task faulted.");
+                    error = FormatExceptionMessage(ex);
                     return false;
                 }
 
@@ -675,8 +895,21 @@ namespace Executor
                 return true;
             }
 
-            if (value is string)
+            if (value is string s)
             {
+                if (s.Contains("fail", StringComparison.OrdinalIgnoreCase)
+                    || s.Contains("error", StringComparison.OrdinalIgnoreCase)
+                    || s.Contains("denied", StringComparison.OrdinalIgnoreCase)
+                    || s.Contains("notattached", StringComparison.OrdinalIgnoreCase)
+                    || s.Contains("not attached", StringComparison.OrdinalIgnoreCase)
+                    || s.Contains("not_injected", StringComparison.OrdinalIgnoreCase)
+                    || s.Contains("not injected", StringComparison.OrdinalIgnoreCase)
+                    || s.Contains("notinject", StringComparison.OrdinalIgnoreCase))
+                {
+                    error = s;
+                    return false;
+                }
+
                 return true;
             }
 
@@ -702,6 +935,16 @@ namespace Executor
                     if (name.Contains("fail", StringComparison.OrdinalIgnoreCase)
                         || name.Contains("error", StringComparison.OrdinalIgnoreCase)
                         || name.Contains("denied", StringComparison.OrdinalIgnoreCase))
+                    {
+                        error = $"ExecuteScript returned {vt.Name}: {name}";
+                        return false;
+                    }
+
+                    if (name.Contains("notattached", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("not attached", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("not_injected", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("not injected", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("notinject", StringComparison.OrdinalIgnoreCase))
                     {
                         error = $"ExecuteScript returned {vt.Name}: {name}";
                         return false;
@@ -1211,18 +1454,51 @@ namespace Executor
         {
             try
             {
-                Exception root = ex;
-                if (root is TargetInvocationException tie && tie.InnerException != null)
+                var parts = new List<string>();
+
+                void Add(Exception e)
                 {
-                    root = tie.InnerException;
-                }
-                var baseEx = root.GetBaseException();
-                if (baseEx != null)
-                {
-                    root = baseEx;
+                    var msg = e.Message ?? string.Empty;
+                    parts.Add(msg.Length == 0 ? e.GetType().Name : e.GetType().Name + ": " + msg);
                 }
 
-                return root.GetType().Name + ": " + root.Message;
+                void Walk(Exception e)
+                {
+                    if (e is TargetInvocationException tie && tie.InnerException != null)
+                    {
+                        Walk(tie.InnerException);
+                        return;
+                    }
+
+                    if (e is AggregateException ae)
+                    {
+                        var flat = ae.Flatten();
+                        foreach (var inner in flat.InnerExceptions)
+                        {
+                            Walk(inner);
+                        }
+                        return;
+                    }
+
+                    Add(e);
+                    if (e.InnerException != null)
+                    {
+                        Walk(e.InnerException);
+                    }
+                }
+
+                Walk(ex);
+
+                var filtered = new List<string>(parts.Count);
+                foreach (var p in parts)
+                {
+                    if (filtered.Count == 0 || !string.Equals(filtered[filtered.Count - 1], p, StringComparison.Ordinal))
+                    {
+                        filtered.Add(p);
+                    }
+                }
+
+                return string.Join(" | ", filtered);
             }
             catch
             {

@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Executor;
 
 namespace Executor.WaveUI.WaveViews
 {
@@ -16,6 +17,7 @@ namespace Executor.WaveUI.WaveViews
         private static readonly TimeSpan PulseRunDuration = TimeSpan.FromMilliseconds(220);
 
         public event Action? LoadCompleted;
+        public event Action? SkipRequested;
 
         public LoadView()
         {
@@ -26,6 +28,9 @@ namespace Executor.WaveUI.WaveViews
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            ApplyLanguage();
+            ApplySkipVisibility();
+
             ProgressFill.BeginAnimation(FrameworkElement.WidthProperty, null);
             ProgressFill.Width = 0;
 
@@ -41,6 +46,38 @@ namespace Executor.WaveUI.WaveViews
         {
             _sequenceTimer?.Stop();
             _sequenceTimer = null;
+        }
+
+        private void ApplyLanguage()
+        {
+            try
+            {
+                if (SkipButtonText != null)
+                {
+                    SkipButtonText.Text = LocalizationManager.T("WaveUI.Common.Skip");
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void ApplySkipVisibility()
+        {
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var raw = ConfigManager.Get(cfg, "skip_load_app");
+                var enabled = string.Equals(raw?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
+
+                if (SkipButton != null)
+                {
+                    SkipButton.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+            catch
+            {
+            }
         }
 
         private void RunToTenPercent()
@@ -133,6 +170,33 @@ namespace Executor.WaveUI.WaveViews
             try
             {
                 w.DragMove();
+            }
+            catch
+            {
+            }
+        }
+
+        private void SkipButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_finished)
+            {
+                return;
+            }
+
+            _finished = true;
+
+            try
+            {
+                _sequenceTimer?.Stop();
+                _sequenceTimer = null;
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                SkipRequested?.Invoke();
             }
             catch
             {

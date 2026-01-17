@@ -17,10 +17,12 @@
     "Common": {
       "Info": "資訊",
       "Open": "開啟",
+      "Skip": "跳過",
       "Execute": "執行",
       "Clear": "清除",
       "Save": "儲存",
       "Copy": "複製",
+      "Copied": "已複製",
       "SelectAll": "全選",
       "Untitled": "未命名",
       "Yes": "是",
@@ -89,11 +91,14 @@
         "AppDirectory": {
           "Title": "程式目錄"
         },
+        "ApisFolder": {
+          "Title": "APIs 資料夾"
+        },
         "Monaco": {
           "Title": "Monaco"
         },
         "WaveUiImages": {
-          "Title": "WaveUI 圖片"
+          "Title": "WaveUI 資源"
         },
         "OpenConfigFolder": {
           "Title": "開啟設定資料夾",
@@ -114,6 +119,20 @@
         },
         "Debug": {
           "Title": "除錯",
+          "SkipLoadApp": {
+            "Title": "跳過載入畫面",
+            "Desc": "在 Load/KeySystem 顯示跳過按鈕"
+          },
+          "TestPrompt": {
+            "Title": "測試提示框",
+            "Desc": "測試 toast/prompt",
+            "Button": "測試",
+            "Prompt": "這是一個測試提示框。",
+            "Toast": {
+              "Yes": "你按了 是。",
+              "No": "你按了 否。"
+            }
+          },
           "IsAttached": "已附加",
           "IsRobloxOpen": "Roblox 已開啟"
         },
@@ -126,7 +145,8 @@
         "Application": "應用程式",
         "Appearance": "外觀",
         "Data": "資料",
-        "APIs": "API"
+        "APIs": "API",
+        "Debug": "除錯"
       }
     },
     "Editor": {
@@ -140,7 +160,15 @@
       "Explorer": {
         "Title": "EXPLORER",
         "Subtitle": "瀏覽你儲存的所有腳本",
-        "SavedScripts": "已儲存的腳本"
+        "SavedScripts": "已儲存的腳本",
+        "Empty": "沒有已儲存的腳本"
+      },
+      "NewScript": {
+        "Title": "新增腳本",
+        "NameLabel": "名稱",
+        "ContentLabel": "內容",
+        "Cancel": "取消",
+        "Create": "建立"
       },
       "TabMenu": {
         "Pin": "釘選",
@@ -154,7 +182,11 @@
         "MonacoAssetsNotFound": "找不到 Monaco 資源（Assets\\WaveUI\\Monaco、Assets\\Monaco、Assets\\waveUI\\Monaco、或 waveUI\\Monaco1）。",
         "MonacoInitFailed": "Monaco 初始化失敗：{0}",
         "RobloxKilled": "Roblox 已關閉。",
-        "ScriptEmpty": "腳本為空。"
+        "ScriptEmpty": "腳本為空。",
+        "ScriptNameEmpty": "請輸入腳本名稱。",
+        "ScriptNameInvalid": "腳本名稱包含不允許的字元。",
+        "ScriptExtensionInvalid": "只允許 .luau 或 .txt 檔案。",
+        "ScriptExists": "已存在相同名稱的腳本。"
       },
       "DefaultScript": "歡迎使用 Wave！",
       "Untitled": "未命名 {0}"
@@ -167,6 +199,18 @@
       "Card": {
         "Copy": "複製",
         "Execute": "執行"
+      },
+      "Status": {
+        "KeyLabel": "Key = ",
+        "ModeLabel": "Mode = ",
+        "VerifyLabel": "Verify = ",
+        "KeyRequired": "需要",
+        "KeyNotRequired": "不需要",
+        "ModeFree": "免費",
+        "ModePaid": "付費",
+        "Verified": "已驗證",
+        "Unverified": "未驗證",
+        "Unknown": "-"
       },
       "Toast": {
         "ScriptEmpty": "腳本為空。",

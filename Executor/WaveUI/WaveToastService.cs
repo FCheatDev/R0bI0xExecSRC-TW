@@ -7,6 +7,20 @@ namespace Executor.WaveUI
     {
         private static WaveToastWindow? _window;
 
+        private static string NormalizeNewlines(string? text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text ?? string.Empty;
+            }
+
+            return text
+                .Replace("\\\\r\\\\n", "\r\n", StringComparison.Ordinal)
+                .Replace("\\\\n", "\n", StringComparison.Ordinal)
+                .Replace("\\r\\n", "\r\n", StringComparison.Ordinal)
+                .Replace("\\n", "\n", StringComparison.Ordinal);
+        }
+
         internal static void Show(string title, string message)
         {
             if (Application.Current == null)
@@ -23,7 +37,6 @@ namespace Executor.WaveUI
                     _window.Closed += (_, _) => _window = null;
                 }
 
-                // ⚠️ 關鍵修復：不設置 Owner！
                 // 因為視窗已經是 Topmost，設置 Owner 會導致衝突
                 // 移除這段：
                 // if (Application.Current.MainWindow != null && _window.Owner != Application.Current.MainWindow)
@@ -31,7 +44,7 @@ namespace Executor.WaveUI
                 //     _window.Owner = Application.Current.MainWindow;
                 // }
 
-                _window.ShowToast(title, message);
+                _window.ShowToast(NormalizeNewlines(title), NormalizeNewlines(message));
             });
         }
 
@@ -50,7 +63,13 @@ namespace Executor.WaveUI
                     _window.Closed += (_, _) => _window = null;
                 }
 
-                _window.ShowPrompt(title, message, yesText, noText, onYes, onNo);
+                _window.ShowPrompt(
+                    NormalizeNewlines(title),
+                    NormalizeNewlines(message),
+                    NormalizeNewlines(yesText),
+                    NormalizeNewlines(noText),
+                    onYes,
+                    onNo);
             });
         }
     }

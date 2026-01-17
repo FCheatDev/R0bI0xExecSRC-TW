@@ -146,7 +146,22 @@ namespace Executor
                 return "";
             }
 
-            return _strings.TryGetValue(key, out var value) ? value : key;
+            var text = _strings.TryGetValue(key, out var value) ? value : key;
+            return NormalizeNewlines(text);
+        }
+
+        private static string NormalizeNewlines(string? text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text ?? "";
+            }
+
+            return text
+                .Replace("\\\\r\\\\n", "\r\n", StringComparison.Ordinal)
+                .Replace("\\\\n", "\n", StringComparison.Ordinal)
+                .Replace("\\r\\n", "\r\n", StringComparison.Ordinal)
+                .Replace("\\n", "\n", StringComparison.Ordinal);
         }
 
         internal static string F(string key, params object[] args)

@@ -1,0 +1,87 @@
+using System;
+using System.IO;
+using System.IO.Pipes;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+
+namespace coms
+{
+	// Token: 0x02000004 RID: 4
+	internal class NamedPipes
+	{
+		// Token: 0x0600000C RID: 12
+		[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		private static extern bool WaitNamedPipe(string name, int timeout);
+
+		// Token: 0x0600000D RID: 13 RVA: 0x000024E0 File Offset: 0x000006E0
+		public static bool NamedPipeExist(string pipeName)
+		{
+			bool result;
+			try
+			{
+				bool flag = !NamedPipes.WaitNamedPipe("\\\\.\\pipe\\" + pipeName, 0);
+				if (flag)
+				{
+					int lastWin32Error = Marshal.GetLastWin32Error();
+					int num = lastWin32Error;
+					if (num == 0)
+					{
+						return false;
+					}
+					if (num == 2)
+					{
+						return false;
+					}
+				}
+				result = true;
+			}
+			catch (Exception ex)
+			{
+				result = false;
+			}
+			return result;
+		}
+
+		// Token: 0x0600000E RID: 14 RVA: 0x0000254C File Offset: 0x0000074C
+		public static void LuaPipe(string script, int pid)
+		{
+			DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(0, 2);
+			defaultInterpolatedStringHandler.AppendFormatted(NamedPipes.luapipename);
+			defaultInterpolatedStringHandler.AppendFormatted<int>(pid);
+			bool flag = !NamedPipes.NamedPipeExist(defaultInterpolatedStringHandler.ToStringAndClear());
+			if (!flag)
+			{
+				new Thread(delegate()
+				{
+					try
+					{
+						string serverName = ".";
+						DefaultInterpolatedStringHandler defaultInterpolatedStringHandler2 = new DefaultInterpolatedStringHandler(0, 2);
+						defaultInterpolatedStringHandler2.AppendFormatted(NamedPipes.luapipename);
+						defaultInterpolatedStringHandler2.AppendFormatted<int>(pid);
+						using (NamedPipeClientStream namedPipeClientStream = new NamedPipeClientStream(serverName, defaultInterpolatedStringHandler2.ToStringAndClear(), PipeDirection.Out))
+						{
+							namedPipeClientStream.Connect();
+							using (StreamWriter streamWriter = new StreamWriter(namedPipeClientStream, Encoding.Default, 999999))
+							{
+								streamWriter.Write(script);
+							}
+						}
+					}
+					catch (IOException ex)
+					{
+					}
+					catch (Exception ex2)
+					{
+					}
+				}).Start();
+			}
+		}
+
+		// Token: 0x0400000E RID: 14
+		public static string luapipename = "uoQcySKXSUxxJNpVQyatpHQwYoGfhcbh";
+	}
+}

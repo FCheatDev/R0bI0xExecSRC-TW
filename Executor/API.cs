@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace Executor
 {
@@ -19,6 +21,8 @@ namespace Executor
         private const string VelocityKey = "velocity";
         private const string XenoKey = "xeno";
 
+        private static readonly ConcurrentDictionary<string, byte> _pidDiagLogged = new();
+
         private static readonly object AttachLock = new();
         private static Task<ApiResult>? _inflightAttach;
         private static int _inflightAttachPid;
@@ -29,16 +33,29 @@ namespace Executor
 
         private sealed class StaThreadWorker
         {
-            private readonly BlockingCollection<Action> _queue = new();
             private readonly Thread _thread;
+            private readonly TaskCompletionSource<Dispatcher> _dispatcherTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
             public StaThreadWorker()
             {
                 _thread = new Thread(() =>
                 {
-                    foreach (var work in _queue.GetConsumingEnumerable())
+                    try
                     {
-                        try { work(); } catch { }
+                        var dispatcher = Dispatcher.CurrentDispatcher;
+                        try
+                        {
+                            SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(dispatcher));
+                        }
+                        catch
+                        {
+                        }
+                        _dispatcherTcs.TrySetResult(dispatcher);
+                        Dispatcher.Run();
+                    }
+                    catch (Exception ex)
+                    {
+                        _dispatcherTcs.TrySetException(ex);
                     }
                 });
 
@@ -51,7 +68,25 @@ namespace Executor
             {
                 var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-                _queue.Add(() =>
+                if (ct.IsCancellationRequested)
+                {
+                    tcs.TrySetCanceled(ct);
+                    return tcs.Task;
+                }
+
+                Dispatcher dispatcher;
+                try
+                {
+                    dispatcher = _dispatcherTcs.Task.GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    tcs.TrySetException(ex);
+                    return tcs.Task;
+                }
+
+                var reg = ct.Register(() => tcs.TrySetCanceled(ct));
+                dispatcher.BeginInvoke(new Action(() =>
                 {
                     try
                     {
@@ -68,7 +103,11 @@ namespace Executor
                     {
                         tcs.TrySetException(ex);
                     }
-                });
+                    finally
+                    {
+                        reg.Dispose();
+                    }
+                }));
 
                 return tcs.Task;
             }
@@ -148,6 +187,146 @@ namespace Executor
             return new ApiResult(false, GetProviderName(), code, message, ex);
         }
 
+        private sealed class TopmostSuspendScope : IDisposable
+        {
+            private readonly bool _previous;
+            private readonly bool _changed;
+
+            private TopmostSuspendScope(bool previous, bool changed)
+            {
+                _previous = previous;
+                _changed = changed;
+            }
+
+            public static TopmostSuspendScope? TryEnter()
+            {
+                try
+                {
+                    var app = Application.Current;
+                    if (app == null)
+                    {
+                        return null;
+                    }
+
+                    bool previous = false;
+                    var dispatcher = app.Dispatcher;
+                    if (dispatcher == null)
+                    {
+                        return null;
+                    }
+
+                    var hasMain = dispatcher.Invoke(() =>
+                    {
+                        var w = app.MainWindow;
+                        if (w == null)
+                        {
+                            return false;
+                        }
+
+                        previous = w.Topmost;
+                        if (w.Topmost)
+                        {
+                            w.Topmost = false;
+                            return true;
+                        }
+
+                        return true;
+                    });
+
+                    if (!hasMain)
+                    {
+                        return null;
+                    }
+
+                    return new TopmostSuspendScope(previous, changed: previous);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            public void Dispose()
+            {
+                if (!_changed)
+                {
+                    return;
+                }
+
+                try
+                {
+                    var app = Application.Current;
+                    if (app == null)
+                    {
+                        return;
+                    }
+
+                    var dispatcher = app.Dispatcher;
+                    if (dispatcher == null)
+                    {
+                        return;
+                    }
+
+                    dispatcher.Invoke(() =>
+                    {
+                        try
+                        {
+                            var w = app.MainWindow;
+                            if (w != null)
+                            {
+                                w.Topmost = _previous;
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    });
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private static string GetApiLogTag()
+        {
+            return string.Equals(GetProviderName(), "Xeno", StringComparison.OrdinalIgnoreCase) ? "XENO" : "VELOCITY";
+        }
+
+        private static void LogPidDiag(string phase, int pid)
+        {
+            if (pid <= 0)
+            {
+                return;
+            }
+
+            var key = phase + ":" + pid;
+            if (!_pidDiagLogged.TryAdd(key, 0))
+            {
+                return;
+            }
+
+            try
+            {
+                using var p = Process.GetProcessById(pid);
+                string title;
+                try { title = p.MainWindowTitle ?? string.Empty; } catch { title = string.Empty; }
+                string name;
+                try { name = p.ProcessName ?? string.Empty; } catch { name = string.Empty; }
+                Logger.Info(GetApiLogTag(), $"PID diag ({phase}): pid={pid}, name={name}, title={title}");
+            }
+            catch
+            {
+                try
+                {
+                    Logger.Info(GetApiLogTag(), $"PID diag ({phase}): pid={pid}");
+                }
+                catch
+                {
+                }
+            }
+        }
+
         public static bool IsAttached()
         {
             if (!SpashApiInvoker.IsRobloxProcessRunning())
@@ -164,6 +343,8 @@ namespace Executor
             {
                 pid = 0;
             }
+
+            LogPidDiag("attach", pid);
 
             lock (AttachLock)
             {
@@ -252,6 +433,8 @@ namespace Executor
 
         private static ApiResult AttachCoreSync(int pid, CancellationToken ct)
         {
+            using var topmostScope = TopmostSuspendScope.TryEnter();
+
             if (!SpashApiInvoker.IsRobloxProcessRunning())
             {
                 return Fail("NoProcessFound", "Roblox is not open.");
@@ -371,11 +554,23 @@ namespace Executor
                 }
             }
 
+            try
+            {
+                if (RobloxRuntime.TryGetRobloxProcessId(out var pid))
+                {
+                    LogPidDiag("execute", pid);
+                }
+            }
+            catch
+            {
+            }
+
             (bool ok, string? err) execAttempt;
             if (IsVelocityProvider())
             {
                 execAttempt = await RunOnStaThreadAsync(() =>
                 {
+                    using var topmostScope = TopmostSuspendScope.TryEnter();
                     string? err;
                     var ok = SpashApiInvoker.TryExecuteScript(script, out err);
                     return (ok, err);
@@ -385,6 +580,7 @@ namespace Executor
             {
                 execAttempt = await Task.Run(() =>
                 {
+                    using var topmostScope = TopmostSuspendScope.TryEnter();
                     string? err;
                     var ok = SpashApiInvoker.TryExecuteScript(script, out err);
                     return (ok, err);

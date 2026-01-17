@@ -19,6 +19,38 @@ namespace Executor.WaveUI.WaveViews
         private DispatcherTimer? _autoVerifyDelayTimer;
         private bool _isVerifying;
 
+        private void ApplyLanguage()
+        {
+            try
+            {
+                if (SkipButtonText != null)
+                {
+                    SkipButtonText.Text = LocalizationManager.T("WaveUI.Common.Skip");
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void ApplySkipVisibility()
+        {
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var raw = ConfigManager.Get(cfg, "skip_load_app");
+                var enabled = string.Equals(raw?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
+
+                if (SkipButton != null)
+                {
+                    SkipButton.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private bool ValidateKey(out string? error)
         {
             error = null;
@@ -207,6 +239,9 @@ namespace Executor.WaveUI.WaveViews
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            ApplyLanguage();
+            ApplySkipVisibility();
+
             var rt = new RotateTransform(0, 26, 26);
             SpinnerArc.RenderTransform = rt;
 
@@ -221,6 +256,41 @@ namespace Executor.WaveUI.WaveViews
             rt.BeginAnimation(RotateTransform.AngleProperty, anim);
 
             TryAutoVerifyFromConfig();
+        }
+
+        private void SkipButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _verifyTimer?.Stop();
+                _verifyTimer = null;
+
+                _postVerifyTimer?.Stop();
+                _postVerifyTimer = null;
+
+                _autoVerifyDelayTimer?.Stop();
+                _autoVerifyDelayTimer = null;
+
+                _isVerifying = false;
+
+                if (VerifyOverlay != null)
+                {
+                    VerifyOverlay.BeginAnimation(OpacityProperty, null);
+                    VerifyOverlay.Opacity = 0;
+                    VerifyOverlay.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                _onVerified();
+            }
+            catch
+            {
+            }
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)

@@ -787,6 +787,16 @@ private static bool IsRobloxProcessRunning()
             }
 
             _loadHooked = true;
+
+            load.SkipRequested += () =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _loadCompleted = true;
+                    OnKeyVerified();
+                });
+            };
+
             load.LoadCompleted += () =>
             {
                 if (_loadCompleted)

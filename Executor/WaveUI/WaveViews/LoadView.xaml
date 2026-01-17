@@ -7,6 +7,60 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
 
+    <UserControl.Resources>
+        <Style x:Key="UnderlineTextButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#EDEDED" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <ContentPresenter x:Name="ContentHost" HorizontalAlignment="Left" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                                <Rectangle x:Name="Underline" Height="2" Fill="#EDEDED" HorizontalAlignment="Left" Margin="0,2,0,-4"
+                                           Width="{Binding ActualWidth, ElementName=ContentHost}" RenderTransformOrigin="0,0.5">
+                                    <Rectangle.RenderTransform>
+                                        <ScaleTransform x:Name="UnderlineScale" ScaleX="0" ScaleY="1" />
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                            </StackPanel>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Underline" Property="Fill" Value="White" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="UnderlineScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.28" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="UnderlineScale" Storyboard.TargetProperty="ScaleX" To="0" Duration="0:0:0.28" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.9" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Background="#000000" MouseLeftButtonDown="Root_OnMouseLeftButtonDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -14,12 +68,16 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <Button x:Name="SkipButton" Grid.Row="2" Style="{StaticResource UnderlineTextButtonStyle}" Click="SkipButton_OnClick" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,10" Visibility="Collapsed">
+            <TextBlock x:Name="SkipButtonText" Text="Skip" FontWeight="SemiBold" FontSize="16" />
+        </Button>
+
         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
             <wave:WaveIcon IconName="splash_logo" Width="190" Height="190" Stretch="Uniform" Margin="0,0,0,18" />
 
             <Grid Width="220" Height="10">
-                <Rectangle RadiusX="5" RadiusY="5" Fill="#1A1A1A" Height="6" VerticalAlignment="Center" />
-                <Border x:Name="ProgressFill" Background="#1DA1F2" Height="6" Width="0" HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="5" />
+                <Rectangle RadiusX="5" RadiusY="5" Fill="#233549" Height="6" VerticalAlignment="Center" />
+                <Border x:Name="ProgressFill" Background="#5EA1DE" Height="6" Width="0" HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="5" />
             </Grid>
         </StackPanel>
     </Grid>

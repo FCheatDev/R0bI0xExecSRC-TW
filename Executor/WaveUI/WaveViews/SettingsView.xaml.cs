@@ -40,6 +40,17 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private void SkipLoadAppCheckBox_OnChanged(object sender, RoutedEventArgs e)
+        {
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            var enabled = SkipLoadAppCheckBox.IsChecked == true;
+            SaveConfigValue(SkipLoadAppKey, enabled.ToString().ToLowerInvariant());
+        }
+
         private void OpenAppDirectory_OnClick(object sender, RoutedEventArgs e)
         {
             OpenFolder(AppPaths.AppDirectory);
@@ -53,6 +64,31 @@ namespace Executor.WaveUI.WaveViews
         private void OpenWaveUiDirectory_OnClick(object sender, RoutedEventArgs e)
         {
             OpenFolder(Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI"));
+        }
+
+        private void OpenApisDirectory_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenFolder(ApisDirectoryPath);
+        }
+
+        private void CopyAppDirectory_OnClick(object sender, RoutedEventArgs e)
+        {
+            CopyPath(AppDirectoryPath, AppDirectoryCopyToolTip, sender as FrameworkElement);
+        }
+
+        private void CopyMonacoDirectory_OnClick(object sender, RoutedEventArgs e)
+        {
+            CopyPath(MonacoDirectoryPath, MonacoCopyToolTip, sender as FrameworkElement);
+        }
+
+        private void CopyWaveUiResources_OnClick(object sender, RoutedEventArgs e)
+        {
+            CopyPath(WaveUiResourcesPath, WaveUiResourcesCopyToolTip, sender as FrameworkElement);
+        }
+
+        private void CopyApisDirectory_OnClick(object sender, RoutedEventArgs e)
+        {
+            CopyPath(ApisDirectoryPath, ApisDirectoryCopyToolTip, sender as FrameworkElement);
         }
 
         private static void OpenFolder(string dir)
@@ -73,17 +109,73 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private void CopyPath(string? path, ToolTip? toolTip, FrameworkElement? owner)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    WaveToastService.Show("Error", path ?? string.Empty);
+                    return;
+                }
+
+                Clipboard.SetText(path);
+                ShowCopyFeedback(toolTip, owner);
+            }
+            catch (Exception ex)
+            {
+                WaveToastService.Show("Error", ex.Message);
+            }
+        }
+
+        private void ShowCopyFeedback(ToolTip? toolTip, FrameworkElement? owner)
+        {
+            if (toolTip == null)
+            {
+                return;
+            }
+
+            if (owner != null)
+            {
+                toolTip.PlacementTarget = owner;
+            }
+
+            var originalStaysOpen = toolTip.StaysOpen;
+            toolTip.StaysOpen = true;
+
+            toolTip.Content = LocalizationManager.T("WaveUI.Common.Copied");
+            toolTip.IsOpen = false;
+            toolTip.IsOpen = true;
+
+            var timer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(1000),
+            };
+
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                toolTip.IsOpen = false;
+                toolTip.Content = LocalizationManager.T("WaveUI.Common.Copy");
+                toolTip.StaysOpen = originalStaysOpen;
+            };
+
+            timer.Start();
+        }
+
         public ObservableCollection<ApiEntry> ApiItems { get; } = new();
 
         public string AppDirectoryPath => AppPaths.AppDirectory;
 
+        public string ApisDirectoryPath => Path.Combine(AppPaths.AppDirectory, "APIs");
+
         public string MonacoDirectoryPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI", "Monaco");
 
-        public string WaveUiPngPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI", "*.png");
+        public string WaveUiResourcesPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI");
 
         public string MonacoDirectoryPathDisplay => TruncateAfterAssets(MonacoDirectoryPath);
 
-        public string WaveUiPngPathDisplay => TruncateAfterAssets(WaveUiPngPath);
+        public string WaveUiResourcesPathDisplay => TruncateAfterAssets(WaveUiResourcesPath);
 
         private static string TruncateAfterAssets(string path)
         {
@@ -146,6 +238,7 @@ namespace Executor.WaveUI.WaveViews
         private const string TopmostKey = "topmost";
         private const string StartupKey = "start_on_boot";
         private const string OpacityKey = "opacity";
+        private const string SkipLoadAppKey = "skip_load_app";
 
         private const string StartupRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
         private const string StartupRegistryValueName = "Wave";
@@ -153,14 +246,19 @@ namespace Executor.WaveUI.WaveViews
         private bool _isApiModalAnimating;
         private bool _suppressSettingEvents;
         private int _scrollAnimationId;
+        private int _navScrollRequestId;
+        private DispatcherOperation? _pendingNavScrollOperation;
         private string? _activeNavTag;
         private string? _targetNavTag;
+        private string? _lockedNavTag;
         private bool _isScrollAnimating; // 新增：標記是否正在動畫滾動
         private bool _initialized;
 
         private DispatcherTimer? _apiDebugTimer;
         private bool? _lastApiDebugIsAttached;
         private bool? _lastApiDebugIsRobloxOpen;
+        private int _apiDebugPollId;
+        private bool _apiDebugPollRunning;
 
         public SettingsView()
         {
@@ -225,6 +323,7 @@ namespace Executor.WaveUI.WaveViews
             AppearanceSection.Text = LocalizationManager.T("WaveUI.Settings.Section.Appearance");
             DataSection.Text = LocalizationManager.T("WaveUI.Settings.Section.Data");
             ApisSection.Text = LocalizationManager.T("WaveUI.Settings.Section.APIs");
+            ApiDebugSection.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.Title");
 
             TopmostTitleText.Text = LocalizationManager.T("WaveUI.Settings.Application.Topmost.Title");
             TopmostDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.Topmost.Desc");
@@ -243,6 +342,7 @@ namespace Executor.WaveUI.WaveViews
             ThemeDescText.Text = LocalizationManager.T("WaveUI.Settings.Appearance.Theme.Desc");
 
             AppDirectoryTitleText.Text = LocalizationManager.T("WaveUI.Settings.Data.AppDirectory.Title");
+            ApisDirectoryTitleText.Text = LocalizationManager.T("WaveUI.Settings.Data.ApisFolder.Title");
             MonacoTitleText.Text = LocalizationManager.T("WaveUI.Settings.Data.Monaco.Title");
             WaveUiImagesTitleText.Text = LocalizationManager.T("WaveUI.Settings.Data.WaveUiImages.Title");
 
@@ -259,12 +359,25 @@ namespace Executor.WaveUI.WaveViews
             OpenVersionFileButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
 
             OpenAppDirectoryButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
+            OpenApisDirectoryButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
             OpenMonacoDirectoryButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
             OpenWaveUiDirectoryButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
+
+            AppDirectoryCopyToolTip.Content = LocalizationManager.T("WaveUI.Common.Copy");
+            ApisDirectoryCopyToolTip.Content = LocalizationManager.T("WaveUI.Common.Copy");
+            MonacoCopyToolTip.Content = LocalizationManager.T("WaveUI.Common.Copy");
+            WaveUiResourcesCopyToolTip.Content = LocalizationManager.T("WaveUI.Common.Copy");
 
             ChooseApisTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Choose.Title");
             ApiModalTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Choose.Title");
             ApiModalCurrentLabelText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Current");
+
+            SkipLoadAppTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.SkipLoadApp.Title");
+            SkipLoadAppDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.SkipLoadApp.Desc");
+
+            TestPromptTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Title");
+            TestPromptDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Desc");
+            TestPromptButtonText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Button");
 
             NavApplicationTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Application");
             NavApplicationTextActive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Application");
@@ -275,7 +388,38 @@ namespace Executor.WaveUI.WaveViews
             NavApisTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.APIs");
             NavApisTextActive.Text = LocalizationManager.T("WaveUI.Settings.Nav.APIs");
 
+            NavDebugTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Debug");
+            NavDebugTextActive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Debug");
+
             UpdateApiDebugStatus(force: true);
+        }
+
+        private void TestPromptButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                WaveToastService.ShowPrompt(
+                    LocalizationManager.T("WaveUI.Common.Info"),
+                    LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Prompt"),
+                    LocalizationManager.T("WaveUI.Common.Yes"),
+                    LocalizationManager.T("WaveUI.Common.No"),
+                    () =>
+                    {
+                        WaveToastService.Show(
+                            LocalizationManager.T("WaveUI.Common.Info"),
+                            LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Toast.Yes"));
+                    },
+                    () =>
+                    {
+                        WaveToastService.Show(
+                            LocalizationManager.T("WaveUI.Common.Info"),
+                            LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Toast.No"));
+                    });
+            }
+            catch (Exception ex)
+            {
+                WaveToastService.Show("Error", ex.Message);
+            }
         }
 
         private void EnsureApiDebugTimer()
@@ -303,38 +447,81 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
-            var isRobloxOpen = SafeReadBool(() => SpashApiInvoker.IsRobloxProcessRunning());
-
-            bool? isAttached = null;
-            if (isRobloxOpen == false)
-            {
-                isAttached = false;
-            }
-            else if (SpashApiInvoker.IsInitializedForDebug())
-            {
-                isAttached = SafeReadBool(() => API.IsAttached());
-            }
-
-            var changed = force
-                          || _lastApiDebugIsAttached != isAttached
-                          || _lastApiDebugIsRobloxOpen != isRobloxOpen;
-
-            if (!changed)
+            if (_apiDebugPollRunning)
             {
                 return;
             }
 
-            _lastApiDebugIsAttached = isAttached;
-            _lastApiDebugIsRobloxOpen = isRobloxOpen;
+            _apiDebugPollRunning = true;
+            _apiDebugPollId++;
+            var pollId = _apiDebugPollId;
 
-            try
+            _ = Task.Run(() =>
             {
-                ApiDebugIsAttachedValueText.Text = FormatBoolStatus(isAttached);
-                ApiDebugIsRobloxOpenValueText.Text = FormatBoolStatus(isRobloxOpen);
-            }
-            catch
-            {
-            }
+                bool? isRobloxOpen = null;
+                bool? isAttached = null;
+
+                try
+                {
+                    isRobloxOpen = SafeReadBool(() => SpashApiInvoker.IsRobloxProcessRunning());
+                }
+                catch
+                {
+                    isRobloxOpen = null;
+                }
+
+                try
+                {
+                    if (isRobloxOpen == false)
+                    {
+                        isAttached = false;
+                    }
+                    else if (SpashApiInvoker.IsInitializedForDebug())
+                    {
+                        isAttached = SafeReadBool(() => API.IsAttached());
+                    }
+                }
+                catch
+                {
+                    isAttached = null;
+                }
+
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (!IsLoaded)
+                    {
+                        _apiDebugPollRunning = false;
+                        return;
+                    }
+
+                    if (pollId != _apiDebugPollId)
+                    {
+                        _apiDebugPollRunning = false;
+                        return;
+                    }
+
+                    var changed = force
+                                  || _lastApiDebugIsAttached != isAttached
+                                  || _lastApiDebugIsRobloxOpen != isRobloxOpen;
+
+                    if (changed)
+                    {
+                        _lastApiDebugIsAttached = isAttached;
+                        _lastApiDebugIsRobloxOpen = isRobloxOpen;
+
+                        try
+                        {
+                            ApiDebugIsAttachedValueText.Text = FormatBoolStatus(isAttached);
+                            ApiDebugIsRobloxOpenValueText.Text = FormatBoolStatus(isRobloxOpen);
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    _apiDebugPollRunning = false;
+                }), DispatcherPriority.Background);
+            });
         }
 
         private static bool? SafeReadBool(Func<bool> func)
@@ -384,10 +571,16 @@ private void UpdateNavHighlightFromScroll()
         return;
     }
 
-    // 如果正在進行導航點擊的滾動,使用目標區塊而不是計算
-    if (_isScrollAnimating && !string.IsNullOrWhiteSpace(_targetNavTag))
+    // 如果正在進行導航點擊,使用目標區塊而不是計算(避免高亮框在動畫開始前被 ScrollChanged 覆蓋)
+    if (!string.IsNullOrWhiteSpace(_targetNavTag))
     {
         SetActiveNav(_targetNavTag);
+        return;
+    }
+
+    if (!string.IsNullOrWhiteSpace(_lockedNavTag))
+    {
+        SetActiveNav(_lockedNavTag);
         return;
     }
 
@@ -538,6 +731,9 @@ private void UpdateNavHighlightFromScroll()
 
                 var theme = (ConfigManager.Get(cfg, "theme") ?? string.Empty).Trim();
                 SelectThemeCombo(theme);
+
+                var skipLoad = ParseBool(ConfigManager.Get(cfg, SkipLoadAppKey), fallback: false);
+                SkipLoadAppCheckBox.IsChecked = skipLoad;
             }
             catch
             {
@@ -899,34 +1095,61 @@ private void RightNavItem_OnMouseLeftButtonDown(object sender, MouseButtonEventA
 
     // 記錄目標區塊,在動畫期間保持此高亮
     _targetNavTag = tag;
+    _lockedNavTag = tag;
     
     // 立即設置導航高亮
     SetActiveNav(tag);
 
-    Dispatcher.BeginInvoke(new Action(() => SmoothScrollToSection(target)));
+    _navScrollRequestId++;
+    var requestId = _navScrollRequestId;
+
+    try
+    {
+        _pendingNavScrollOperation?.Abort();
+    }
+    catch
+    {
+    }
+
+    _pendingNavScrollOperation = Dispatcher.BeginInvoke(new Action(() =>
+    {
+        if (requestId != _navScrollRequestId)
+        {
+            return;
+        }
+
+        SmoothScrollToSection(target, requestId);
+    }), DispatcherPriority.Background);
 }
 
-        private void SmoothScrollToSection(FrameworkElement target)
+        private void SmoothScrollToSection(FrameworkElement target, int requestId)
         {
             if (SettingsScrollViewer == null)
             {
-                return;
-            }
-
-            if (SettingsScrollViewer.Content is not FrameworkElement content)
-            {
+                if (requestId == _navScrollRequestId)
+                {
+                    _targetNavTag = null;
+                }
                 return;
             }
 
             double targetOffset;
             try
             {
-                var p = target.TransformToAncestor(content).Transform(new Point(0, 0));
-                targetOffset = p.Y;
+                var p = target.TransformToAncestor(SettingsScrollViewer).Transform(new Point(0, 0));
+                targetOffset = SettingsScrollViewer.VerticalOffset + p.Y;
             }
             catch
             {
-                target.BringIntoView();
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (requestId != _navScrollRequestId)
+                    {
+                        return;
+                    }
+
+                    SmoothScrollToSection(target, requestId);
+                }), DispatcherPriority.ContextIdle);
                 return;
             }
 
@@ -942,10 +1165,10 @@ private void RightNavItem_OnMouseLeftButtonDown(object sender, MouseButtonEventA
                 targetOffset = max;
             }
 
-            AnimateScrollTo(targetOffset);
+            AnimateScrollTo(targetOffset, requestId);
         }
 
-private void AnimateScrollTo(double targetOffset)
+private void AnimateScrollTo(double targetOffset, int requestId)
 {
     _scrollAnimationId++;
     var animationId = _scrollAnimationId;
@@ -956,7 +1179,11 @@ private void AnimateScrollTo(double targetOffset)
     if (Math.Abs(delta) < 0.5)
     {
         SettingsScrollViewer.ScrollToVerticalOffset(targetOffset);
-        _targetNavTag = null; // 清除目標標記
+
+        if (requestId == _navScrollRequestId && animationId == _scrollAnimationId)
+        {
+            _targetNavTag = null; // 清除目標標記
+        }
         return;
     }
 
@@ -976,8 +1203,6 @@ private void AnimateScrollTo(double targetOffset)
         if (animationId != _scrollAnimationId)
         {
             timer.Stop();
-            _isScrollAnimating = false;
-            _targetNavTag = null;
             return;
         }
 
@@ -990,6 +1215,11 @@ private void AnimateScrollTo(double targetOffset)
             // 延遲更長時間再解除動畫標記,確保滾動完全穩定
             Dispatcher.BeginInvoke(new Action(() =>
             {
+                if (animationId != _scrollAnimationId || requestId != _navScrollRequestId)
+                {
+                    return;
+                }
+
                 _isScrollAnimating = false;
                 // 清除目標標記,恢復正常的滾動檢測
                 _targetNavTag = null;

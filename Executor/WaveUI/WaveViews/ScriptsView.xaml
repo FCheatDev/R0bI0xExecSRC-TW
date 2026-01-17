@@ -130,8 +130,34 @@
         <Border Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Background="Black" BorderBrush="#202020" 
                 Margin="0">
             <Grid Margin="14">
-                <TextBlock Text="{Binding ElementName=Root, Path=ScriptsRightTitle}" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
-                <TextBlock Text="{Binding ElementName=Root, Path=ScriptsRightSubtitle}" Foreground="#9AA0A6" FontSize="12" Margin="0,20,0,0" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="{Binding ElementName=Root, Path=ScriptsRightTitle}" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
+                <TextBlock Grid.Row="1" Text="{Binding ElementName=Root, Path=ScriptsRightSubtitle}" Foreground="#9AA0A6" FontSize="12" Margin="0,20,0,0" TextWrapping="Wrap" />
+                <Border Grid.Row="2"
+                        Background="#0C0C0C"
+                        BorderBrush="#202020"
+                        BorderThickness="1"
+                        Margin="0,16,0,0"
+                        Padding="12">
+                    <StackPanel>
+                        <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas" Margin="0,0,0,6">
+                            <Run Text="{Binding ElementName=Root, Path=ScriptStatusKeyLabel, Mode=OneWay}" />
+                            <Run Text="{Binding ElementName=Root, Path=SelectedScriptKeyStatus, Mode=OneWay}" FontWeight="SemiBold" />
+                        </TextBlock>
+                        <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas" Margin="0,0,0,6">
+                            <Run Text="{Binding ElementName=Root, Path=ScriptStatusModeLabel, Mode=OneWay}" />
+                            <Run Text="{Binding ElementName=Root, Path=SelectedScriptModeStatus, Mode=OneWay}" FontWeight="SemiBold" />
+                        </TextBlock>
+                        <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas">
+                            <Run Text="{Binding ElementName=Root, Path=ScriptStatusVerifyLabel, Mode=OneWay}" />
+                            <Run Text="{Binding ElementName=Root, Path=SelectedScriptVerifyStatus, Mode=OneWay}" FontWeight="SemiBold" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
@@ -152,6 +178,7 @@
                                 Margin="0,0,12,12" 
                                 Cursor="Hand" 
                                 x:Name="CardRoot"
+                                PreviewMouseLeftButtonDown="ScriptCard_OnMouseLeftButtonDown"
                                 >
                             <Border CornerRadius="5" ClipToBounds="True">
                                 <Grid>
