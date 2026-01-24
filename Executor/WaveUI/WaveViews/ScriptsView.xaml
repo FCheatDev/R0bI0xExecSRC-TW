@@ -80,30 +80,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Column="0" Grid.Row="0" Margin="0,0,10,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <Border Background="#FF111111" BorderBrush="#202020" BorderThickness="1" CornerRadius="10" Height="36" Padding="12,0" VerticalAlignment="Center" Margin="10,5,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBox x:Name="SearchBox"
-                             Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                             Background="Transparent" Foreground="#EDEDED" BorderThickness="0"
-                             CaretBrush="#FFFFFF"
-                             VerticalContentAlignment="Center" FontSize="12"
-                             KeyDown="SearchBox_OnKeyDown" FontFamily="Arial Black" />
-                    <Button Grid.Column="1" Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="None" IsHitTestVisible="False" Focusable="False">
-                        <wave:WaveTintIcon IconName="search" Width="14" Height="14" Opacity="0.85" TintBrush="#EDEDED" IsHitTestVisible="False" />
-                    </Button>
-                </Grid>
-            </Border>
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,5,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,5,0,0">
                 <Button Width="36" Height="36" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" Cursor="Hand" Click="PrevPage_OnClick">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
@@ -135,29 +112,22 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="{Binding ElementName=Root, Path=ScriptsRightTitle}" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="Arial Black" />
+                <TextBlock Grid.Row="0" Text="{Binding ElementName=Root, Path=ScriptsRightTitle}" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=Root, Path=ScriptsRightSubtitle}" Foreground="#9AA0A6" FontSize="12" Margin="0,20,0,0" TextWrapping="Wrap" />
-                <Border Grid.Row="2"
-                        Background="#0C0C0C"
-                        BorderBrush="#202020"
-                        BorderThickness="1"
-                        Margin="0,16,0,0"
-                        Padding="12">
-                    <StackPanel>
-                        <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas" Margin="0,0,0,6">
-                            <Run Text="{Binding ElementName=Root, Path=ScriptStatusKeyLabel, Mode=OneWay}" />
-                            <Run Text="{Binding ElementName=Root, Path=SelectedScriptKeyStatus, Mode=OneWay}" FontWeight="SemiBold" />
-                        </TextBlock>
-                        <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas" Margin="0,0,0,6">
-                            <Run Text="{Binding ElementName=Root, Path=ScriptStatusModeLabel, Mode=OneWay}" />
-                            <Run Text="{Binding ElementName=Root, Path=SelectedScriptModeStatus, Mode=OneWay}" FontWeight="SemiBold" />
-                        </TextBlock>
-                        <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas">
-                            <Run Text="{Binding ElementName=Root, Path=ScriptStatusVerifyLabel, Mode=OneWay}" />
-                            <Run Text="{Binding ElementName=Root, Path=SelectedScriptVerifyStatus, Mode=OneWay}" FontWeight="SemiBold" />
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Row="2" Margin="0,16,0,0">
+                    <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="{DynamicResource WaveMonoFontFamily}" Margin="0,0,0,6">
+                        <Run Text="{Binding ElementName=Root, Path=ScriptStatusKeyLabel, Mode=OneWay}" />
+                        <Run Text="{Binding ElementName=Root, Path=SelectedScriptKeyStatus, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas" Margin="0,0,0,6">
+                        <Run Text="{Binding ElementName=Root, Path=ScriptStatusModeLabel, Mode=OneWay}" />
+                        <Run Text="{Binding ElementName=Root, Path=SelectedScriptModeStatus, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="{DynamicResource WaveMonoFontFamily}">
+                        <Run Text="{Binding ElementName=Root, Path=ScriptStatusVerifyLabel, Mode=OneWay}" />
+                        <Run Text="{Binding ElementName=Root, Path=SelectedScriptVerifyStatus, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -209,14 +179,14 @@
                                         <Grid>
                                             <Image x:Name="MissingImage" Source="pack://siteoforigin:,,,/assets/waveUI/404.png" Stretch="UniformToFill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ImageFailed="MissingImage_OnImageFailed" />
                                             <wave:WaveIcon x:Name="MissingFallbackIcon" IconName="404" Width="80" Height="80" Stretch="Uniform" Opacity="0.9" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
-                                            <TextBlock x:Name="MissingFallbackText" Text="404" Foreground="#EDEDED" FontSize="26" FontFamily="Arial Black" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.15" Visibility="Collapsed" />
+                                            <TextBlock x:Name="MissingFallbackText" Text="404" Foreground="#EDEDED" FontSize="26" FontFamily="{DynamicResource WaveTitleFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.15" Visibility="Collapsed" />
                                         </Grid>
                                     </Border>
 
                                     <Border VerticalAlignment="Bottom" Background="#80000000" Padding="14">
                                         <StackPanel>
-                                            <TextBlock Text="{Binding Title}" Foreground="#EDEDED" FontSize="12" TextTrimming="CharacterEllipsis" FontFamily="Arial Black" />
-                                            <TextBlock Text="{Binding GameName}" Foreground="#9AA0A6" FontSize="11" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" FontFamily="Roboto" />
+                                            <TextBlock Text="{Binding Title}" Foreground="#EDEDED" FontSize="12" TextTrimming="CharacterEllipsis" FontFamily="{DynamicResource WaveTitleFontFamily}" />
+                                            <TextBlock Text="{Binding GameName}" Foreground="#9AA0A6" FontSize="11" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
                                         </StackPanel>
                                     </Border>
 

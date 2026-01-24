@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -44,6 +44,18 @@
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
+      }
+
+      .monaco-scrollable-element > .scrollbar > .slider {
+        background: rgba(255, 255, 255, 0.7) !important;
+      }
+
+      .monaco-scrollable-element > .scrollbar > .slider:hover {
+        background: rgba(255, 255, 255, 0.9) !important;
+      }
+
+      .monaco-scrollable-element > .scrollbar > .slider.active {
+        background: #ffffff !important;
       }
     </style>
     <meta charset="utf-8" />
@@ -478,7 +490,7 @@
                   },
                 },
               },
-            ]
+            ],
           );
         };
 

@@ -4,5 +4,10 @@
              xmlns:local="clr-namespace:Executor">
     <Application.Resources>
         <FontFamily x:Key="WaveFontFamily">Segoe UI</FontFamily>
+        <FontFamily x:Key="WaveHeadingFontFamily">Comic Sans MS</FontFamily>
+        <FontFamily x:Key="WaveTitleFontFamily">Arial Black</FontFamily>
+        <FontFamily x:Key="WaveMonoFontFamily">Consolas</FontFamily>
+        <FontFamily x:Key="WaveSubtitleFontFamily">Bahnschrift</FontFamily>
+        <FontFamily x:Key="WaveBodyAltFontFamily">Roboto</FontFamily>
     </Application.Resources>
 </Application>

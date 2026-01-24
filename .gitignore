@@ -7,3 +7,4 @@ Executor/**/obj/
 *.suo
 *.userosscache
 *.sln.docstates
+node_modules

@@ -6,8 +6,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -30,16 +32,30 @@ namespace Executor.WaveUI.WaveViews
         public bool IsMonacoReady => MonacoView?.CoreWebView2 != null;
 
         private const int MaxTabs = 30;
+        private const string UnlimitedTabsKey = "unlimited_tabs";
+        private const string ClosePromptPreferenceKey = "WaveUI_close_unsaved_tabs";
+        private const string TabsStateFileName = "editor_tabs.json";
         public ObservableCollection<TabEntry> Tabs { get; } = new();
         private TabEntry _activeTab = null!;
+        private ClosePromptPreference _closePromptPreference = ClosePromptPreference.Ask;
+        private bool _isClosePromptOpen;
+        private bool _isClosePromptAnimating;
+        private TaskCompletionSource<ClosePromptResult>? _closePromptTcs;
 
         private const double SavedScriptsExpandedAngle = 90;
         private const double SavedScriptsCollapsedAngle = 0;
+        private const double SavedScriptsMaxHeight = 260;
+        private const double SavedScriptsCollapsedTranslateY = -8;
         private bool _isSavedScriptsExpanded;
         private bool _isSavedScriptsAnimating;
         private bool _isNewScriptModalOpen;
         private bool _isNewScriptModalAnimating;
         private readonly string _workspaceDirectory;
+        private readonly string _tabsStatePath;
+        private readonly DispatcherTimer _workspaceRefreshTimer;
+        private readonly DispatcherTimer _savedScriptsSearchTimer;
+        private FileSystemWatcher? _workspaceWatcher;
+        private string _savedScriptsSearchText = string.Empty;
 
         public ObservableCollection<WorkspaceScriptEntry> WorkspaceScripts { get; } = new();
 
@@ -54,7 +70,23 @@ namespace Executor.WaveUI.WaveViews
             _toast = toast;
 
             _workspaceDirectory = ResolveWorkspaceDirectory();
+            _tabsStatePath = Path.Combine(_workspaceDirectory, TabsStateFileName);
+            _closePromptPreference = LoadClosePromptPreference();
             _isSavedScriptsExpanded = false;
+
+            _workspaceRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+            _workspaceRefreshTimer.Tick += (_, _) =>
+            {
+                _workspaceRefreshTimer.Stop();
+                LoadWorkspaceScripts();
+            };
+
+            _savedScriptsSearchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _savedScriptsSearchTimer.Tick += (_, _) =>
+            {
+                _savedScriptsSearchTimer.Stop();
+                ApplySavedScriptsFilter();
+            };
 
             DataContext = this;
 
@@ -67,9 +99,21 @@ namespace Executor.WaveUI.WaveViews
             Unloaded += EditorView_OnUnloaded;
         }
 
-        private void EditorView_OnUnloaded(object sender, RoutedEventArgs e)
+        private async void EditorView_OnUnloaded(object sender, RoutedEventArgs e)
         {
             LocalizationManager.LanguageChanged -= OnLanguageChanged;
+            StopWorkspaceWatcher();
+
+            _workspaceRefreshTimer.Stop();
+            _savedScriptsSearchTimer.Stop();
+
+            try
+            {
+                await SaveTabsStateAsync();
+            }
+            catch
+            {
+            }
         }
 
         private void OnLanguageChanged()
@@ -124,9 +168,9 @@ namespace Executor.WaveUI.WaveViews
                 ExplorerSavedScriptsText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SavedScripts");
             }
 
-            if (SavedScriptsEmptyText != null)
+            if (SavedScriptsSearchPlaceholderText != null)
             {
-                SavedScriptsEmptyText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.Empty");
+                SavedScriptsSearchPlaceholderText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SearchHint");
             }
 
             if (NewScriptTitleText != null)
@@ -153,14 +197,205 @@ namespace Executor.WaveUI.WaveViews
             {
                 NewScriptCreateText.Text = LocalizationManager.T("WaveUI.Editor.NewScript.Create");
             }
+
+            if (ClosePromptTitleText != null)
+            {
+                ClosePromptTitleText.Text = LocalizationManager.T("WaveUI.Editor.ClosePrompt.Title");
+            }
+
+            if (ClosePromptMessageText != null)
+            {
+                ClosePromptMessageText.Text = LocalizationManager.T("WaveUI.Editor.ClosePrompt.Message");
+            }
+
+            if (ClosePromptRememberText != null)
+            {
+                ClosePromptRememberText.Text = LocalizationManager.T("WaveUI.Editor.ClosePrompt.Remember");
+            }
+
+            if (ClosePromptCancelText != null)
+            {
+                ClosePromptCancelText.Text = LocalizationManager.T("WaveUI.Editor.ClosePrompt.Cancel");
+            }
+
+            if (ClosePromptConfirmText != null)
+            {
+                ClosePromptConfirmText.Text = LocalizationManager.T("WaveUI.Editor.ClosePrompt.Confirm");
+            }
+
+            UpdateSavedScriptsEmptyState();
+        }
+
+        private async System.Threading.Tasks.Task CloseAllUnpinnedTabsAsync()
+        {
+            if (Tabs.Count == 0)
+            {
+                return;
+            }
+
+            EndRenameAll(commit: true);
+
+            var tabsToClose = Tabs.Where(t => !t.IsPinned).ToList();
+            if (tabsToClose.Count == 0)
+            {
+                return;
+            }
+
+            if (tabsToClose.Count == Tabs.Count)
+            {
+                tabsToClose.Remove(_activeTab);
+                if (tabsToClose.Count == 0)
+                {
+                    return;
+                }
+            }
+
+            if (await ShouldCancelTabsCloseAsync(tabsToClose))
+            {
+                return;
+            }
+
+            try
+            {
+                if (MonacoView?.CoreWebView2 != null)
+                {
+                    _activeTab.Content = await GetEditorTextAsync();
+                }
+            }
+            catch
+            {
+            }
+
+            foreach (var tab in tabsToClose)
+            {
+                Tabs.Remove(tab);
+            }
+
+            if (!Tabs.Contains(_activeTab))
+            {
+                _activeTab.IsActive = false;
+                _activeTab = Tabs[0];
+                _activeTab.IsActive = true;
+
+                try
+                {
+                    if (MonacoView?.CoreWebView2 != null)
+                    {
+                        await SetEditorTextAsync(_activeTab.Content);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            try
+            {
+                await SaveTabsStateAsync();
+            }
+            catch
+            {
+            }
+        }
+
+        private void MonacoView_OnGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            EndRenameAll(commit: true);
+        }
+
+        private void StartWorkspaceWatcher()
+        {
+            if (_workspaceWatcher != null)
+            {
+                return;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(_workspaceDirectory);
+                _workspaceWatcher = new FileSystemWatcher(_workspaceDirectory)
+                {
+                    Filter = "*.*",
+                    IncludeSubdirectories = false,
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                    EnableRaisingEvents = true,
+                };
+
+                _workspaceWatcher.Created += WorkspaceWatcher_OnChanged;
+                _workspaceWatcher.Deleted += WorkspaceWatcher_OnChanged;
+                _workspaceWatcher.Changed += WorkspaceWatcher_OnChanged;
+                _workspaceWatcher.Renamed += WorkspaceWatcher_OnRenamed;
+            }
+            catch (Exception ex)
+            {
+                _toast(ex.Message);
+            }
+        }
+
+        private void StopWorkspaceWatcher()
+        {
+            if (_workspaceWatcher == null)
+            {
+                return;
+            }
+
+            try
+            {
+                _workspaceWatcher.EnableRaisingEvents = false;
+                _workspaceWatcher.Created -= WorkspaceWatcher_OnChanged;
+                _workspaceWatcher.Deleted -= WorkspaceWatcher_OnChanged;
+                _workspaceWatcher.Changed -= WorkspaceWatcher_OnChanged;
+                _workspaceWatcher.Renamed -= WorkspaceWatcher_OnRenamed;
+                _workspaceWatcher.Dispose();
+            }
+            catch
+            {
+            }
+
+            _workspaceWatcher = null;
+        }
+
+        private void WorkspaceWatcher_OnChanged(object sender, FileSystemEventArgs e)
+        {
+            if (!HasSupportedScriptExtension(e.FullPath))
+            {
+                return;
+            }
+
+            ScheduleWorkspaceRefresh();
+        }
+
+        private void WorkspaceWatcher_OnRenamed(object sender, RenamedEventArgs e)
+        {
+            if (!HasSupportedScriptExtension(e.FullPath) && !HasSupportedScriptExtension(e.OldFullPath))
+            {
+                return;
+            }
+
+            ScheduleWorkspaceRefresh();
+        }
+
+        private void ScheduleWorkspaceRefresh()
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(ScheduleWorkspaceRefresh));
+                return;
+            }
+
+            _workspaceRefreshTimer.Stop();
+            _workspaceRefreshTimer.Start();
         }
 
         private void InitializeTabs()
         {
+            if (LoadTabsState())
+            {
+                return;
+            }
+
             Tabs.Clear();
-
             Tabs.Add(new TabEntry(CreateTabId(), FormatUntitledTitle(1), LocalizationManager.T("WaveUI.Editor.DefaultScript")));
-
             _activeTab = Tabs[^1];
             _activeTab.IsActive = true;
         }
@@ -175,6 +410,89 @@ namespace Executor.WaveUI.WaveViews
             return LocalizationManager.F("WaveUI.Editor.Untitled", n);
         }
 
+        private static bool IsUnlimitedTabsEnabled()
+        {
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var raw = ConfigManager.Get(cfg, UnlimitedTabsKey);
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    return false;
+                }
+
+                return bool.TryParse(raw.Trim(), out var enabled) && enabled;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static ClosePromptPreference LoadClosePromptPreference()
+        {
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var raw = ConfigManager.Get(cfg, ClosePromptPreferenceKey);
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    return ClosePromptPreference.Ask;
+                }
+
+                var value = raw.Trim();
+                if (value.Equals("close", StringComparison.OrdinalIgnoreCase)
+                    || value.Equals("true", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ClosePromptPreference.AlwaysClose;
+                }
+
+                if (value.Equals("cancel", StringComparison.OrdinalIgnoreCase)
+                    || value.Equals("keep", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ClosePromptPreference.AlwaysCancel;
+                }
+
+                return ClosePromptPreference.Ask;
+            }
+            catch
+            {
+                return ClosePromptPreference.Ask;
+            }
+        }
+
+        private static void SaveClosePromptPreference(ClosePromptPreference preference)
+        {
+            try
+            {
+                var value = preference switch
+                {
+                    ClosePromptPreference.AlwaysClose => "close",
+                    ClosePromptPreference.AlwaysCancel => "cancel",
+                    _ => "ask",
+                };
+
+                var cfg = ConfigManager.ReadConfig();
+                ConfigManager.Set(cfg, ClosePromptPreferenceKey, value);
+                ConfigManager.WriteConfig(cfg);
+            }
+            catch
+            {
+            }
+        }
+
+        private bool IsTabLimitReached()
+        {
+            return !IsUnlimitedTabsEnabled() && Tabs.Count >= MaxTabs;
+        }
+
+        private static readonly string[] SupportedExtensions =
+        {
+            ".luau",
+            ".lua",
+            ".txt",
+        };
+
         private static bool IsSupportedScriptExtension(string? ext)
         {
             if (string.IsNullOrWhiteSpace(ext))
@@ -182,13 +500,24 @@ namespace Executor.WaveUI.WaveViews
                 return false;
             }
 
-            return ext.Equals(".luau", StringComparison.OrdinalIgnoreCase)
-                   || ext.Equals(".txt", StringComparison.OrdinalIgnoreCase);
+            return SupportedExtensions.Any(candidate => ext.Equals(candidate, StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool HasSupportedScriptExtension(string path)
         {
             return IsSupportedScriptExtension(Path.GetExtension(path));
+        }
+
+        private string GetSelectedScriptExtension()
+        {
+            if (NewScriptExtensionCombo?.SelectedItem is ComboBoxItem item
+                && item.Tag is string tag
+                && !string.IsNullOrWhiteSpace(tag))
+            {
+                return tag.Trim();
+            }
+
+            return ".luau";
         }
 
         private static string ResolveWorkspaceDirectory()
@@ -202,6 +531,120 @@ namespace Executor.WaveUI.WaveViews
             {
             }
             return dir;
+        }
+
+        private bool LoadTabsState()
+        {
+            try
+            {
+                if (!File.Exists(_tabsStatePath))
+                {
+                    return false;
+                }
+
+                var json = File.ReadAllText(_tabsStatePath);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return false;
+                }
+
+                var state = JsonSerializer.Deserialize<TabsState>(json);
+                if (state == null || state.Tabs.Count == 0)
+                {
+                    return false;
+                }
+
+                Tabs.Clear();
+                TabEntry? activeTab = null;
+
+                foreach (var entry in state.Tabs)
+                {
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    var tabId = string.IsNullOrWhiteSpace(entry.Id) ? CreateTabId() : entry.Id;
+                    var title = string.IsNullOrWhiteSpace(entry.Title)
+                        ? FormatUntitledTitle(Tabs.Count + 1)
+                        : entry.Title;
+                    var tab = new TabEntry(tabId, title, entry.Content ?? string.Empty)
+                    {
+                        IsPinned = entry.IsPinned,
+                        FilePath = entry.FilePath,
+                    };
+                    Tabs.Add(tab);
+
+                    if (!string.IsNullOrWhiteSpace(state.ActiveTabId)
+                        && string.Equals(state.ActiveTabId, tab.Id, StringComparison.Ordinal))
+                    {
+                        activeTab = tab;
+                    }
+                }
+
+                if (Tabs.Count == 0)
+                {
+                    return false;
+                }
+
+                _activeTab = activeTab ?? Tabs[0];
+                foreach (var tab in Tabs)
+                {
+                    tab.IsActive = ReferenceEquals(tab, _activeTab);
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async System.Threading.Tasks.Task SaveTabsStateAsync()
+        {
+            try
+            {
+                if (MonacoView?.CoreWebView2 != null)
+                {
+                    _activeTab.Content = await GetEditorTextAsync();
+                }
+            }
+            catch
+            {
+            }
+
+            SaveTabsState();
+        }
+
+        private void SaveTabsState()
+        {
+            try
+            {
+                Directory.CreateDirectory(_workspaceDirectory);
+                var state = new TabsState
+                {
+                    ActiveTabId = _activeTab?.Id,
+                };
+
+                foreach (var tab in Tabs)
+                {
+                    state.Tabs.Add(new TabStateEntry
+                    {
+                        Id = tab.Id,
+                        Title = tab.Title,
+                        Content = tab.Content ?? string.Empty,
+                        IsPinned = tab.IsPinned,
+                        FilePath = tab.FilePath,
+                    });
+                }
+
+                var json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(_tabsStatePath, json);
+            }
+            catch
+            {
+            }
         }
 
         private void LoadWorkspaceScripts()
@@ -231,8 +674,7 @@ namespace Executor.WaveUI.WaveViews
                 WorkspaceScripts.Add(new WorkspaceScriptEntry(name, file));
             }
 
-            UpdateSavedScriptsEmptyState();
-            ApplySavedScriptsState(animated: false);
+            ApplySavedScriptsFilter();
         }
 
         private void UpdateSavedScriptsEmptyState()
@@ -242,25 +684,79 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
-            SavedScriptsEmptyText.Visibility = WorkspaceScripts.Count == 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+            var view = CollectionViewSource.GetDefaultView(WorkspaceScripts);
+            var hasItems = view?.Cast<object>().Any() ?? WorkspaceScripts.Count > 0;
+
+            var emptyKey = string.IsNullOrWhiteSpace(_savedScriptsSearchText)
+                ? "WaveUI.Editor.Explorer.Empty"
+                : "WaveUI.Editor.Explorer.EmptySearch";
+            SavedScriptsEmptyText.Text = LocalizationManager.T(emptyKey);
+
+            SavedScriptsEmptyText.Visibility = hasItems ? Visibility.Collapsed : Visibility.Visible;
+            if (SavedScriptsScrollViewer != null)
+            {
+                SavedScriptsScrollViewer.Visibility = hasItems ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void ApplySavedScriptsFilter()
+        {
+            var view = CollectionViewSource.GetDefaultView(WorkspaceScripts);
+            if (view == null)
+            {
+                UpdateSavedScriptsEmptyState();
+                return;
+            }
+
+            view.Filter = obj =>
+            {
+                if (obj is not WorkspaceScriptEntry entry)
+                {
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(_savedScriptsSearchText))
+                {
+                    return true;
+                }
+
+                return entry.Name.IndexOf(_savedScriptsSearchText, StringComparison.OrdinalIgnoreCase) >= 0;
+            };
+
+            view.Refresh();
+            UpdateSavedScriptsEmptyState();
+            ApplySavedScriptsState(animated: false);
         }
 
         private double CalculateSavedScriptsHeight()
         {
-            if (SavedScriptsListContent == null)
+            var maxHeight = SavedScriptsMaxHeight;
+
+            if (SavedScriptsSection != null && SavedScriptsHeader != null)
             {
-                return 0;
+                var availableHeight = SavedScriptsSection.ActualHeight - SavedScriptsHeader.ActualHeight;
+                if (availableHeight > 0)
+                {
+                    maxHeight = availableHeight;
+                }
             }
 
-            SavedScriptsListContent.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            return Math.Max(0, SavedScriptsListContent.DesiredSize.Height);
+            return Math.Max(0, maxHeight);
+        }
+
+        private void SavedScriptsSection_OnSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (!_isSavedScriptsExpanded)
+            {
+                return;
+            }
+
+            ApplySavedScriptsState(animated: false);
         }
 
         private void ApplySavedScriptsState(bool animated)
         {
-            if (SavedScriptsListHost == null || SavedScriptsToggleRotate == null)
+            if (SavedScriptsListHost == null || SavedScriptsToggleRotate == null || SavedScriptsListTranslate == null)
             {
                 return;
             }
@@ -268,16 +764,19 @@ namespace Executor.WaveUI.WaveViews
             var targetHeight = _isSavedScriptsExpanded ? CalculateSavedScriptsHeight() : 0;
             var targetOpacity = _isSavedScriptsExpanded ? 1 : 0;
             var targetAngle = _isSavedScriptsExpanded ? SavedScriptsExpandedAngle : SavedScriptsCollapsedAngle;
+            var targetTranslate = _isSavedScriptsExpanded ? 0 : SavedScriptsCollapsedTranslateY;
 
             if (!animated)
             {
                 SavedScriptsListHost.BeginAnimation(Border.MaxHeightProperty, null);
                 SavedScriptsListHost.BeginAnimation(UIElement.OpacityProperty, null);
                 SavedScriptsToggleRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+                SavedScriptsListTranslate.BeginAnimation(TranslateTransform.YProperty, null);
 
                 SavedScriptsListHost.MaxHeight = targetHeight;
                 SavedScriptsListHost.Opacity = targetOpacity;
                 SavedScriptsToggleRotate.Angle = targetAngle;
+                SavedScriptsListTranslate.Y = targetTranslate;
                 return;
             }
 
@@ -334,9 +833,25 @@ namespace Executor.WaveUI.WaveViews
                 SavedScriptsToggleRotate.Angle = targetAngle;
             };
 
+            var translateAnim = new DoubleAnimation
+            {
+                From = SavedScriptsListTranslate.Y,
+                To = targetTranslate,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            translateAnim.Completed += (_, _) =>
+            {
+                SavedScriptsListTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+                SavedScriptsListTranslate.Y = targetTranslate;
+            };
+
             SavedScriptsListHost.BeginAnimation(Border.MaxHeightProperty, heightAnim);
             SavedScriptsListHost.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
             SavedScriptsToggleRotate.BeginAnimation(RotateTransform.AngleProperty, rotateAnim);
+            SavedScriptsListTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
         }
 
         private async void EditorView_OnLoaded(object sender, RoutedEventArgs e)
@@ -344,7 +859,9 @@ namespace Executor.WaveUI.WaveViews
             LocalizationManager.LanguageChanged -= OnLanguageChanged;
             LocalizationManager.LanguageChanged += OnLanguageChanged;
             ApplyLanguage();
+            _savedScriptsSearchText = SavedScriptsSearchBox?.Text ?? string.Empty;
             LoadWorkspaceScripts();
+            StartWorkspaceWatcher();
 
             if (_monacoInitialized)
             {
@@ -425,10 +942,16 @@ namespace Executor.WaveUI.WaveViews
             ApplySavedScriptsState(animated: true);
         }
 
-        private void SavedScriptsAdd_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void SavedScriptsAdd_OnClick(object sender, RoutedEventArgs e)
         {
-            e.Handled = true;
             ShowNewScriptModal();
+        }
+
+        private void SavedScriptsSearchBox_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _savedScriptsSearchText = SavedScriptsSearchBox?.Text ?? string.Empty;
+            _savedScriptsSearchTimer.Stop();
+            _savedScriptsSearchTimer.Start();
         }
 
         private void SavedScriptItem_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -469,12 +992,15 @@ namespace Executor.WaveUI.WaveViews
             if (NewScriptModalOverlay == null || NewScriptModalScale == null || NewScriptModalTranslate == null)
             {
                 _isNewScriptModalAnimating = false;
+                _isNewScriptModalOpen = false;
                 return;
             }
 
+            SetMonacoModalState(true);
+
             if (NewScriptNameBox != null)
             {
-                NewScriptNameBox.Text = string.Empty;
+                NewScriptNameBox.Text = LocalizationManager.T("WaveUI.Common.Untitled");
             }
 
             if (NewScriptContentBox != null)
@@ -565,6 +1091,9 @@ namespace Executor.WaveUI.WaveViews
 
             if (NewScriptModalOverlay == null || NewScriptModalScale == null || NewScriptModalTranslate == null)
             {
+                _isNewScriptModalAnimating = false;
+                _isNewScriptModalOpen = false;
+                SetMonacoModalState(false);
                 return;
             }
 
@@ -586,6 +1115,7 @@ namespace Executor.WaveUI.WaveViews
                 NewScriptModalOverlay.Visibility = Visibility.Collapsed;
                 _isNewScriptModalAnimating = false;
                 _isNewScriptModalOpen = false;
+                SetMonacoModalState(false);
             };
 
             var scaleAnim = new DoubleAnimation
@@ -626,6 +1156,17 @@ namespace Executor.WaveUI.WaveViews
             NewScriptModalTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
         }
 
+        private void SetMonacoModalState(bool isModalOpen)
+        {
+            if (MonacoView == null)
+            {
+                return;
+            }
+
+            MonacoView.IsHitTestVisible = !isModalOpen;
+            MonacoView.Visibility = isModalOpen ? Visibility.Hidden : Visibility.Visible;
+        }
+
         private void NewScriptOverlay_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (NewScriptModalPanel != null
@@ -644,6 +1185,266 @@ namespace Executor.WaveUI.WaveViews
             HideNewScriptModal();
         }
 
+        private System.Threading.Tasks.Task<ClosePromptResult> ShowClosePromptAsync()
+        {
+            if (_isClosePromptAnimating || _isClosePromptOpen)
+            {
+                return _closePromptTcs?.Task ?? System.Threading.Tasks.Task.FromResult(ClosePromptResult.Cancel);
+            }
+
+            if (ClosePromptModalOverlay == null
+                || ClosePromptModalScale == null
+                || ClosePromptModalTranslate == null)
+            {
+                return System.Threading.Tasks.Task.FromResult(ClosePromptResult.Cancel);
+            }
+
+            _isClosePromptOpen = true;
+            _isClosePromptAnimating = true;
+            _closePromptTcs = new TaskCompletionSource<ClosePromptResult>();
+
+            SetMonacoModalState(true);
+
+            if (ClosePromptRememberCheckBox != null)
+            {
+                ClosePromptRememberCheckBox.IsChecked = false;
+            }
+
+            ClosePromptModalOverlay.Visibility = Visibility.Visible;
+            ClosePromptModalOverlay.BeginAnimation(OpacityProperty, null);
+            ClosePromptModalOverlay.Opacity = 0;
+
+            ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            ClosePromptModalTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+
+            ClosePromptModalScale.ScaleX = 0.96;
+            ClosePromptModalScale.ScaleY = 0.96;
+            ClosePromptModalTranslate.Y = 8;
+
+            var fadeIn = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(160),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            fadeIn.Completed += (_, _) =>
+            {
+                ClosePromptModalOverlay.BeginAnimation(OpacityProperty, null);
+                ClosePromptModalOverlay.Opacity = 1;
+                _isClosePromptAnimating = false;
+            };
+
+            var scaleAnim = new DoubleAnimation
+            {
+                From = 0.96,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(160),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            var translateAnim = new DoubleAnimation
+            {
+                From = 8,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(160),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            scaleAnim.Completed += (_, _) =>
+            {
+                ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                ClosePromptModalScale.ScaleX = 1;
+                ClosePromptModalScale.ScaleY = 1;
+            };
+
+            translateAnim.Completed += (_, _) =>
+            {
+                ClosePromptModalTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+                ClosePromptModalTranslate.Y = 0;
+            };
+
+            ClosePromptModalOverlay.BeginAnimation(OpacityProperty, fadeIn);
+            ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            ClosePromptModalTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+
+            return _closePromptTcs.Task;
+        }
+
+        private void ClosePromptOverlay_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (ClosePromptModalPanel != null
+                && e.OriginalSource is DependencyObject obj
+                && IsDescendantOf(obj, ClosePromptModalPanel))
+            {
+                return;
+            }
+
+            e.Handled = true;
+            CompleteClosePrompt(ClosePromptResult.Cancel);
+        }
+
+        private void ClosePromptCancel_OnClick(object sender, RoutedEventArgs e)
+        {
+            CompleteClosePrompt(ClosePromptResult.Cancel);
+        }
+
+        private void ClosePromptConfirm_OnClick(object sender, RoutedEventArgs e)
+        {
+            CompleteClosePrompt(ClosePromptResult.Close);
+        }
+
+        private void CompleteClosePrompt(ClosePromptResult result)
+        {
+            if (ClosePromptRememberCheckBox?.IsChecked == true)
+            {
+                _closePromptPreference = result == ClosePromptResult.Close
+                    ? ClosePromptPreference.AlwaysClose
+                    : ClosePromptPreference.AlwaysCancel;
+                SaveClosePromptPreference(_closePromptPreference);
+            }
+
+            HideClosePromptModal(result);
+        }
+
+        private void HideClosePromptModal(ClosePromptResult result)
+        {
+            if (ClosePromptModalOverlay == null || ClosePromptModalScale == null || ClosePromptModalTranslate == null)
+            {
+                _closePromptTcs?.TrySetResult(result);
+                _closePromptTcs = null;
+                _isClosePromptOpen = false;
+                _isClosePromptAnimating = false;
+                SetMonacoModalState(false);
+                return;
+            }
+
+            if (_isClosePromptAnimating || !_isClosePromptOpen)
+            {
+                _closePromptTcs?.TrySetResult(result);
+                _closePromptTcs = null;
+                return;
+            }
+
+            _isClosePromptAnimating = true;
+
+            ClosePromptModalOverlay.BeginAnimation(OpacityProperty, null);
+            var fadeOut = new DoubleAnimation
+            {
+                From = ClosePromptModalOverlay.Opacity,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            fadeOut.Completed += (_, _) =>
+            {
+                ClosePromptModalOverlay.BeginAnimation(OpacityProperty, null);
+                ClosePromptModalOverlay.Opacity = 0;
+                ClosePromptModalOverlay.Visibility = Visibility.Collapsed;
+                _isClosePromptAnimating = false;
+                _isClosePromptOpen = false;
+                SetMonacoModalState(false);
+                _closePromptTcs?.TrySetResult(result);
+                _closePromptTcs = null;
+            };
+
+            var scaleAnim = new DoubleAnimation
+            {
+                From = ClosePromptModalScale.ScaleX,
+                To = 0.96,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            var translateAnim = new DoubleAnimation
+            {
+                From = ClosePromptModalTranslate.Y,
+                To = 8,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop,
+            };
+
+            scaleAnim.Completed += (_, _) =>
+            {
+                ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                ClosePromptModalScale.ScaleX = 0.96;
+                ClosePromptModalScale.ScaleY = 0.96;
+            };
+
+            translateAnim.Completed += (_, _) =>
+            {
+                ClosePromptModalTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+                ClosePromptModalTranslate.Y = 8;
+            };
+
+            ClosePromptModalOverlay.BeginAnimation(OpacityProperty, fadeOut);
+            ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            ClosePromptModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            ClosePromptModalTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+        }
+
+        private System.Threading.Tasks.Task<bool> ShouldCancelTabCloseAsync(TabEntry tab)
+        {
+            return ShouldCancelTabsCloseAsync(new[] { tab });
+        }
+
+        private async System.Threading.Tasks.Task<bool> ShouldCancelTabsCloseAsync(IReadOnlyCollection<TabEntry> tabsToClose)
+        {
+            if (tabsToClose.Count == 0)
+            {
+                return false;
+            }
+
+            var hasUnsavedContent = false;
+            foreach (var tab in tabsToClose)
+            {
+                if (ReferenceEquals(tab, _activeTab) && MonacoView?.CoreWebView2 != null)
+                {
+                    try
+                    {
+                        tab.Content = await GetEditorTextAsync();
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(tab.Content))
+                {
+                    hasUnsavedContent = true;
+                    break;
+                }
+            }
+
+            if (!hasUnsavedContent)
+            {
+                return false;
+            }
+
+            if (_closePromptPreference == ClosePromptPreference.AlwaysClose)
+            {
+                return false;
+            }
+
+            if (_closePromptPreference == ClosePromptPreference.AlwaysCancel)
+            {
+                return true;
+            }
+
+            var result = await ShowClosePromptAsync();
+            return result != ClosePromptResult.Close;
+        }
+
         private void NewScriptCreate_OnClick(object sender, RoutedEventArgs e)
         {
             var rawName = NewScriptNameBox?.Text?.Trim() ?? string.Empty;
@@ -653,22 +1454,36 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
-            if (rawName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            var trimmedName = rawName.TrimEnd('.', ' ');
+            if (string.IsNullOrWhiteSpace(trimmedName))
+            {
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptNameEmpty"));
+                return;
+            }
+
+            if (trimmedName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
                 _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptNameInvalid"));
                 return;
             }
 
-            var extension = Path.GetExtension(rawName);
-            var fileName = string.IsNullOrWhiteSpace(extension)
-                ? $"{rawName}.luau"
-                : rawName;
-
-            if (!IsSupportedScriptExtension(Path.GetExtension(fileName)))
+            var baseName = trimmedName;
+            foreach (var supported in SupportedExtensions)
             {
-                _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptExtensionInvalid"));
+                if (baseName.EndsWith(supported, StringComparison.OrdinalIgnoreCase))
+                {
+                    baseName = baseName[..^supported.Length].TrimEnd('.', ' ');
+                    break;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(baseName))
+            {
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.ScriptNameEmpty"));
                 return;
             }
+
+            var fileName = $"{baseName}{GetSelectedScriptExtension()}";
 
             var path = Path.Combine(_workspaceDirectory, fileName);
             if (File.Exists(path))
@@ -789,6 +1604,79 @@ namespace Executor.WaveUI.WaveViews
             }
             catch
             {
+            }
+
+            try
+            {
+                _ = Dispatcher.BeginInvoke(new Action(() => ScrollTabIntoView(tab)), DispatcherPriority.Background);
+            }
+            catch
+            {
+            }
+        }
+
+        private void ScrollTabIntoView(TabEntry tab)
+        {
+            if (TabScrollViewer == null || TabsItems == null)
+            {
+                return;
+            }
+
+            try
+            {
+                TabsItems.UpdateLayout();
+            }
+            catch
+            {
+            }
+
+            if (TabsItems.ItemContainerGenerator.ContainerFromItem(tab) is not FrameworkElement container)
+            {
+                return;
+            }
+
+            try
+            {
+                container.UpdateLayout();
+            }
+            catch
+            {
+            }
+
+            Rect bounds;
+            try
+            {
+                bounds = container.TransformToAncestor(TabScrollViewer)
+                    .TransformBounds(new Rect(0, 0, container.ActualWidth, container.ActualHeight));
+            }
+            catch
+            {
+                return;
+            }
+
+            var viewportWidth = TabScrollViewer.ViewportWidth;
+            if (viewportWidth <= 0)
+            {
+                return;
+            }
+
+            var left = bounds.Left;
+            var right = bounds.Right;
+            var offset = TabScrollViewer.HorizontalOffset;
+            var target = offset;
+
+            if (left < 0)
+            {
+                target = Math.Max(0, offset + left);
+            }
+            else if (right > viewportWidth)
+            {
+                target = offset + (right - viewportWidth);
+            }
+
+            if (Math.Abs(target - offset) > 0.5)
+            {
+                TabScrollViewer.ScrollToHorizontalOffset(target);
             }
         }
 
@@ -959,7 +1847,18 @@ namespace Executor.WaveUI.WaveViews
             {
             }
 
-            if (Tabs.Count >= MaxTabs)
+            if (!string.IsNullOrWhiteSpace(filePath))
+            {
+                var existing = Tabs.FirstOrDefault(t => !string.IsNullOrWhiteSpace(t.FilePath)
+                                                        && string.Equals(t.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    await SwitchToTabAsync(existing);
+                    return;
+                }
+            }
+
+            if (IsTabLimitReached())
             {
                 _toast(LocalizationManager.F("WaveUI.Editor.Toast.MaxTabs", MaxTabs));
                 return;
@@ -1002,7 +1901,7 @@ namespace Executor.WaveUI.WaveViews
 
         private async System.Threading.Tasks.Task AddTabAsync()
         {
-            if (Tabs.Count >= MaxTabs)
+            if (IsTabLimitReached())
             {
                 _toast(LocalizationManager.F("WaveUI.Editor.Toast.MaxTabs", MaxTabs));
                 return;
@@ -1049,6 +1948,11 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
+            if (await ShouldCancelTabCloseAsync(tab))
+            {
+                return;
+            }
+
             try
             {
                 if (ReferenceEquals(tab, _activeTab) && MonacoView?.CoreWebView2 != null)
@@ -1079,6 +1983,14 @@ namespace Executor.WaveUI.WaveViews
                     tabRoot.BeginAnimation(UIElement.OpacityProperty, null);
                     tabRoot.BeginAnimation(UIElement.RenderTransformProperty, null);
 
+                    TranslateTransform? translate = null;
+                    if (tabRoot.RenderTransform is TransformGroup group
+                        && group.Children.Count > 1
+                        && group.Children[1] is TranslateTransform translateTransform)
+                    {
+                        translate = translateTransform;
+                    }
+
                     var fade = new DoubleAnimation
                     {
                         From = tabRoot.Opacity,
@@ -1089,7 +2001,21 @@ namespace Executor.WaveUI.WaveViews
                     };
                     tabRoot.BeginAnimation(UIElement.OpacityProperty, fade);
 
-                    await System.Threading.Tasks.Task.Delay(150);
+                    if (translate != null)
+                    {
+                        translate.BeginAnimation(TranslateTransform.XProperty, null);
+                        var slideOut = new DoubleAnimation
+                        {
+                            From = translate.X,
+                            To = 10,
+                            Duration = TimeSpan.FromMilliseconds(180),
+                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                            FillBehavior = FillBehavior.HoldEnd,
+                        };
+                        translate.BeginAnimation(TranslateTransform.XProperty, slideOut);
+                    }
+
+                    await System.Threading.Tasks.Task.Delay(180);
                 }
                 catch
                 {
@@ -1119,6 +2045,14 @@ namespace Executor.WaveUI.WaveViews
                 {
                     await SetEditorTextAsync(_activeTab.Content);
                 }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                await SaveTabsStateAsync();
             }
             catch
             {
@@ -1182,6 +2116,34 @@ namespace Executor.WaveUI.WaveViews
             };
             pinItem.Click += (_, _) => TogglePin(tab);
             menu.Items.Add(pinItem);
+
+            var renameItem = new MenuItem
+            {
+                Header = LocalizationManager.T("WaveUI.Editor.TabMenu.Rename"),
+                Icon = new WaveIcon { IconName = "rename", Width = 14, Height = 14, Stretch = Stretch.Uniform },
+                Style = (Style)FindResource("TabContextMenuItemStyle"),
+            };
+            renameItem.Click += async (_, _) =>
+            {
+                await SwitchToTabAsync(tab);
+                BeginRename(tab);
+            };
+            menu.Items.Add(renameItem);
+
+            var separator = new Separator
+            {
+                Style = (Style)FindResource("TabContextMenuSeparatorStyle"),
+            };
+            menu.Items.Add(separator);
+
+            var closeAllItem = new MenuItem
+            {
+                Header = LocalizationManager.T("WaveUI.Editor.TabMenu.CloseAll"),
+                Icon = new WaveIcon { IconName = "remove", Width = 14, Height = 14, Stretch = Stretch.Uniform },
+                Style = (Style)FindResource("TabContextMenuItemStyle"),
+            };
+            closeAllItem.Click += async (_, _) => await CloseAllUnpinnedTabsAsync();
+            menu.Items.Add(closeAllItem);
 
             el.ContextMenu = menu;
             menu.IsOpen = true;
@@ -1528,7 +2490,7 @@ namespace Executor.WaveUI.WaveViews
 
                 var dlg = new OpenFileDialog
                 {
-                    Filter = "Script Files (*.luau;*.txt)|*.luau;*.txt|All Files (*.*)|*.*",
+                    Filter = "Script Files (*.luau;*.lua;*.txt)|*.luau;*.lua;*.txt|All Files (*.*)|*.*",
                     CheckFileExists = true,
                     Multiselect = false,
                     Title = "Open",
@@ -1572,7 +2534,7 @@ namespace Executor.WaveUI.WaveViews
                 {
                     var dlg = new SaveFileDialog
                     {
-                        Filter = "Luau (*.luau)|*.luau|Text (*.txt)|*.txt|All Files (*.*)|*.*",
+                        Filter = "Luau (*.luau)|*.luau|Lua (*.lua)|*.lua|Text (*.txt)|*.txt|All Files (*.*)|*.*",
                         Title = "Save",
                         FileName = _activeTab.Title,
                         AddExtension = true,
@@ -1734,6 +2696,34 @@ namespace Executor.WaveUI.WaveViews
 
             public string Name { get; }
             public string FullPath { get; }
+        }
+
+        private sealed class TabsState
+        {
+            public string? ActiveTabId { get; set; }
+            public List<TabStateEntry> Tabs { get; } = new();
+        }
+
+        private sealed class TabStateEntry
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Title { get; set; } = string.Empty;
+            public string Content { get; set; } = string.Empty;
+            public bool IsPinned { get; set; }
+            public string? FilePath { get; set; }
+        }
+
+        private enum ClosePromptPreference
+        {
+            Ask,
+            AlwaysClose,
+            AlwaysCancel,
+        }
+
+        private enum ClosePromptResult
+        {
+            Cancel,
+            Close,
         }
     }
 }

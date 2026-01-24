@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -25,6 +25,7 @@ namespace Executor.WaveUI
         private bool _isWindowAnimating;
         private Rect? _restoreBounds;
         private bool _isZoomed;
+        private WaveMinimizeWindow? _minimizeWindow;
         private bool _loadHooked;
         private bool _loadCompleted;
         private bool _mainPagesPreloadStarted;
@@ -72,6 +73,20 @@ namespace Executor.WaveUI
             try
             {
                 _robloxPollTimer?.Stop();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                if (_minimizeWindow != null)
+                {
+                    _minimizeWindow.SavePosition();
+                    _minimizeWindow.RestoreRequested -= OnMinimizeBallRestoreRequested;
+                    _minimizeWindow.Close();
+                    _minimizeWindow = null;
+                }
             }
             catch
             {
@@ -1068,10 +1083,97 @@ private static bool IsRobloxProcessRunning()
 
             sb.Completed += (_, _) =>
             {
-                w.Close();
+                Application.Current?.Shutdown();
             };
 
             sb.Begin();
+        }
+
+        private async void MinimizeWave_OnClick(object sender, RoutedEventArgs e)
+        {
+            var w = Window.GetWindow(this);
+            if (w == null || _isWindowAnimating)
+            {
+                return;
+            }
+
+            _isWindowAnimating = true;
+
+            try
+            {
+                var ball = EnsureMinimizeWindow();
+                ball.ShowAtDefaultPosition();
+
+                await FadeWindowOpacityAsync(w, 0, 500);
+
+                w.Hide();
+                w.BeginAnimation(Window.OpacityProperty, null);
+                w.Opacity = 1;
+
+                if (!ball.IsVisible)
+                {
+                    ball.Opacity = 0;
+                    ball.Show();
+                }
+                else
+                {
+                    ball.Opacity = 0;
+                }
+
+                await ball.FadeInAsync();
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _isWindowAnimating = false;
+            }
+        }
+
+        private async void OnMinimizeBallRestoreRequested(object? sender, EventArgs e)
+        {
+            var w = Window.GetWindow(this);
+            if (w == null || _isWindowAnimating)
+            {
+                return;
+            }
+
+            _isWindowAnimating = true;
+
+            try
+            {
+                if (_minimizeWindow != null)
+                {
+                    _minimizeWindow.SavePosition();
+                    await _minimizeWindow.FadeOutAsync();
+                    _minimizeWindow.Hide();
+                }
+
+                w.BeginAnimation(Window.OpacityProperty, null);
+                w.Opacity = 0;
+
+                if (!w.IsVisible)
+                {
+                    w.Show();
+                }
+
+                if (w.WindowState == WindowState.Minimized)
+                {
+                    w.WindowState = WindowState.Normal;
+                }
+
+                var targetOpacity = w is MainWindow mw ? mw.TargetOpacity : 1.0;
+                await FadeWindowOpacityAsync(w, targetOpacity, 500);
+                w.Activate();
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _isWindowAnimating = false;
+            }
         }
 
         private void Minimize_OnClick(object sender, RoutedEventArgs e)
@@ -1187,10 +1289,12 @@ private static bool IsRobloxProcessRunning()
                 w.BeginAnimation(Window.OpacityProperty, null);
                 w.Opacity = 0;
 
+                var targetOpacity = w is MainWindow mw ? mw.TargetOpacity : 1.0;
+
                 var fadeIn = new DoubleAnimation
                 {
                     From = 0,
-                    To = 1,
+                    To = targetOpacity,
                     Duration = TimeSpan.FromMilliseconds(halfMs),
                     EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
                     FillBehavior = FillBehavior.HoldEnd,
@@ -1199,7 +1303,7 @@ private static bool IsRobloxProcessRunning()
                 fadeIn.Completed += (_, _) =>
                 {
                     w.BeginAnimation(Window.OpacityProperty, null);
-                    w.Opacity = 1;
+                    w.Opacity = targetOpacity;
                     _isZoomed = !_isZoomed;
                     _isWindowAnimating = false;
                 };
@@ -1208,6 +1312,44 @@ private static bool IsRobloxProcessRunning()
             };
 
             sb.Begin();
+        }
+
+        private WaveMinimizeWindow EnsureMinimizeWindow()
+        {
+            if (_minimizeWindow != null)
+            {
+                return _minimizeWindow;
+            }
+
+            _minimizeWindow = new WaveMinimizeWindow();
+            _minimizeWindow.RestoreRequested += OnMinimizeBallRestoreRequested;
+            return _minimizeWindow;
+        }
+
+        private static Task FadeWindowOpacityAsync(Window w, double to, int durationMs)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+
+            w.BeginAnimation(Window.OpacityProperty, null);
+
+            var anim = new DoubleAnimation
+            {
+                From = w.Opacity,
+                To = to,
+                Duration = TimeSpan.FromMilliseconds(durationMs),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.HoldEnd,
+            };
+
+            anim.Completed += (_, _) =>
+            {
+                w.BeginAnimation(Window.OpacityProperty, null);
+                w.Opacity = to;
+                tcs.TrySetResult(true);
+            };
+
+            w.BeginAnimation(Window.OpacityProperty, anim);
+            return tcs.Task;
         }
 
         private static (ScaleTransform scale, TranslateTransform translate) EnsureWindowTransforms(Window w)

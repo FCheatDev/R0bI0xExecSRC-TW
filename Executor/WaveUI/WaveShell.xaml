@@ -336,6 +336,9 @@
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0">
+                    <Button Style="{StaticResource Win11CaptionButton}" Click="MinimizeWave_OnClick">
+                        <wave:WaveIcon IconName="minimize_wave" Width="16" Height="16" Stretch="Uniform" Opacity="0.9" />
+                    </Button>
                     <Button Style="{StaticResource Win11CaptionButton}" Click="Minimize_OnClick">
                         <Viewbox Width="10" Height="10" Stretch="Uniform" SnapsToDevicePixels="True" UseLayoutRounding="True">
                             <Path Stroke="White" StrokeThickness="1" Data="M 1,5.5 H 9" SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased" />

@@ -2,6 +2,7 @@
 using System.Data;
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -14,6 +15,67 @@ namespace Executor
     /// </summary>
     public partial class App : Application
     {
+        internal const string DefaultWaveFontFamily = "Segoe UI";
+        internal const string DefaultWaveHeadingFontFamily = "Comic Sans MS";
+        internal const string DefaultWaveTitleFontFamily = "Arial Black";
+        internal const string DefaultWaveMonoFontFamily = "Consolas";
+        internal const string DefaultWaveSubtitleFontFamily = "Bahnschrift";
+        internal const string DefaultWaveBodyAltFontFamily = "Roboto";
+        private const string MultiInstanceKey = "allow_multi_instance";
+        private const string SingleInstanceMutexName = "Wave.Executor.SingleInstance";
+        private static Mutex? _singleInstanceMutex;
+
+        internal static void ApplyWaveFont(string? fontName)
+        {
+            var hasCustom = !string.IsNullOrWhiteSpace(fontName);
+            var resolved = hasCustom
+                ? fontName!.Trim()
+                : DefaultWaveFontFamily;
+            var heading = hasCustom ? resolved : DefaultWaveHeadingFontFamily;
+            var title = hasCustom ? resolved : DefaultWaveTitleFontFamily;
+            var mono = hasCustom ? resolved : DefaultWaveMonoFontFamily;
+            var subtitle = hasCustom ? resolved : DefaultWaveSubtitleFontFamily;
+            var alt = hasCustom ? resolved : DefaultWaveBodyAltFontFamily;
+
+            try
+            {
+                if (Current == null)
+                {
+                    return;
+                }
+
+                ApplyFontResource(Current, "WaveFontFamily", resolved);
+                ApplyFontResource(Current, "WaveHeadingFontFamily", heading);
+                ApplyFontResource(Current, "WaveTitleFontFamily", title);
+                ApplyFontResource(Current, "WaveMonoFontFamily", mono);
+                ApplyFontResource(Current, "WaveSubtitleFontFamily", subtitle);
+                ApplyFontResource(Current, "WaveBodyAltFontFamily", alt);
+            }
+            catch
+            {
+                try
+                {
+                    if (Current != null)
+                    {
+                        ApplyFontResource(Current, "WaveFontFamily", DefaultWaveFontFamily);
+                        ApplyFontResource(Current, "WaveHeadingFontFamily", DefaultWaveHeadingFontFamily);
+                        ApplyFontResource(Current, "WaveTitleFontFamily", DefaultWaveTitleFontFamily);
+                        ApplyFontResource(Current, "WaveMonoFontFamily", DefaultWaveMonoFontFamily);
+                        ApplyFontResource(Current, "WaveSubtitleFontFamily", DefaultWaveSubtitleFontFamily);
+                        ApplyFontResource(Current, "WaveBodyAltFontFamily", DefaultWaveBodyAltFontFamily);
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private static void ApplyFontResource(Application app, string key, string value)
+        {
+            app.Resources[key] = new FontFamily(value);
+        }
+
         protected override void OnStartup(StartupEventArgs e)
         {
             Logger.Initialize();
@@ -70,9 +132,45 @@ namespace Executor
 
             var cfg = ConfigManager.ReadConfig();
             var lang = ConfigManager.Get(cfg, "language");
-            var theme = ConfigManager.Get(cfg, "theme");
-
+            var fontRaw = ConfigManager.Get(cfg, "font");
+            ApplyWaveFont(fontRaw);
             LocalizationManager.Load(lang);
+
+            var allowMultiInstance = ParseBool(ConfigManager.Get(cfg, MultiInstanceKey), fallback: false);
+            if (!TryAcquireSingleInstance(allowMultiInstance))
+            {
+                try
+                {
+                    var prompt = new MultiInstanceWindow
+                    {
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    };
+                    prompt.ShowDialog();
+                }
+                catch
+                {
+                }
+
+                Shutdown();
+                return;
+            }
+
+            var theme = ConfigManager.Get(cfg, "theme");
+            var opacityRaw = ConfigManager.Get(cfg, "opacity");
+            var topmostRaw = ConfigManager.Get(cfg, "topmost");
+            var targetOpacity = 1.0;
+            if (!string.IsNullOrWhiteSpace(opacityRaw)
+                && double.TryParse(opacityRaw.Trim(), out var parsedOpacity))
+            {
+                targetOpacity = Math.Max(0.1, Math.Min(1.0, parsedOpacity));
+            }
+
+            var targetTopmost = false;
+            if (!string.IsNullOrWhiteSpace(topmostRaw)
+                && bool.TryParse(topmostRaw.Trim(), out var parsedTopmost))
+            {
+                targetTopmost = parsedTopmost;
+            }
 
             if (string.IsNullOrWhiteSpace(lang) || string.IsNullOrWhiteSpace(theme))
             {
@@ -94,7 +192,11 @@ namespace Executor
                 LocalizationManager.Load(lang);
             }
 
-            var main = new MainWindow();
+            var main = new MainWindow
+            {
+                TargetOpacity = targetOpacity,
+            };
+            main.Topmost = targetTopmost;
             MainWindow = main;
 
             if (!Dispatcher.HasShutdownStarted && !Dispatcher.HasShutdownFinished)
@@ -128,7 +230,7 @@ namespace Executor
                 var fadeIn = new DoubleAnimation
                 {
                     From = 0,
-                    To = 1,
+                    To = targetOpacity,
                     Duration = System.TimeSpan.FromMilliseconds(220),
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
                 };
@@ -173,7 +275,7 @@ namespace Executor
                 sb.Completed += (_, _) =>
                 {
                     main.BeginAnimation(Window.OpacityProperty, null);
-                    main.Opacity = 1;
+                    main.Opacity = targetOpacity;
 
                     scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
                     scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
@@ -190,6 +292,64 @@ namespace Executor
             main.Loaded += onLoaded;
 
             main.Show();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            try
+            {
+                if (_singleInstanceMutex != null)
+                {
+                    _singleInstanceMutex.ReleaseMutex();
+                    _singleInstanceMutex.Dispose();
+                    _singleInstanceMutex = null;
+                }
+            }
+            catch
+            {
+            }
+
+            base.OnExit(e);
+        }
+
+        private static bool TryAcquireSingleInstance(bool allowMultiInstance)
+        {
+            if (allowMultiInstance)
+            {
+                return true;
+            }
+
+            try
+            {
+                var mutex = new Mutex(true, SingleInstanceMutexName, out var createdNew);
+                if (!createdNew)
+                {
+                    mutex.Dispose();
+                    return false;
+                }
+
+                _singleInstanceMutex = mutex;
+                return true;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private static bool ParseBool(string? value, bool fallback)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return fallback;
+            }
+
+            if (bool.TryParse(value.Trim(), out var parsed))
+            {
+                return parsed;
+            }
+
+            return fallback;
         }
     }
 

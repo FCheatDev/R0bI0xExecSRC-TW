@@ -33,6 +33,11 @@
         "Open": "Roblox 未開啟，是否要現在打開 Roblox？"
       }
     },
+    "MultiInstancePrompt": {
+      "Title": "已阻擋多開",
+      "Message": "當前不可開啟多個 Wave\n可以在設定的 Debug 更改",
+      "Confirm": "確定"
+    },
     "Shell": {
       "Tab": {
         "Home": "首頁",
@@ -54,6 +59,7 @@
       },
       "Section": {
         "Application": "應用程式",
+        "SmallWave": "Wave懸浮球",
         "Appearance": "外觀",
         "Data": "資料",
         "APIs": "API"
@@ -77,14 +83,30 @@
           "Button": "重新載入"
         }
       },
+      "SmallWave": {
+        "Opacity": {
+          "Title": "懸浮球透明度",
+          "Desc": "調整懸浮球透明度"
+        },
+        "Effect": {
+          "Title": "懸浮球特效",
+          "Desc": "切換懸浮球動畫效果",
+          "Pulse": "脈衝",
+          "Fade": "淡入淡出"
+        }
+      },
       "Appearance": {
         "Language": {
           "Title": "語言",
-          "Desc": "變更介面語言"
+          "Desc": "更改介面語言"
         },
         "Theme": {
           "Title": "主題",
           "Desc": "變更介面主題"
+        },
+        "Font": {
+          "Title": "字體",
+          "Desc": "變更介面字體"
         }
       },
       "Data": {
@@ -111,6 +133,10 @@
         "OpenVersionFile": {
           "Title": "開啟 version.json",
           "Desc": "開啟版本檔"
+        },
+        "OpenLogFolder": {
+          "Title": "Log 資料夾",
+          "Desc": "開啟日誌資料夾"
         }
       },
       "APIs": {
@@ -122,6 +148,20 @@
           "SkipLoadApp": {
             "Title": "跳過載入畫面",
             "Desc": "在 Load/KeySystem 顯示跳過按鈕"
+          },
+          "MultiInstance": {
+            "Title": "軟體同時開啟",
+            "Desc": "允許同時開啟多個 Wave 視窗",
+            "Allowed": "允許",
+            "NotAllowed": "不允許"
+          },
+          "UnlimitedTabs": {
+            "Title": "解除分頁上限",
+            "Desc": "移除編輯器分頁上限"
+          },
+          "SmallWaveFps": {
+            "Title": "懸浮球偵數",
+            "Desc": "調整懸浮球偵數"
           },
           "TestPrompt": {
             "Title": "測試提示框",
@@ -143,10 +183,17 @@
       },
       "Nav": {
         "Application": "應用程式",
+        "SmallWave": "懸浮球",
         "Appearance": "外觀",
         "Data": "資料",
         "APIs": "API",
         "Debug": "除錯"
+      }
+    },
+    "SmallWave": {
+      "Menu": {
+        "Open": "開啟軟體",
+        "Close": "關閉軟體"
       }
     },
     "Editor": {
@@ -161,18 +208,29 @@
         "Title": "EXPLORER",
         "Subtitle": "瀏覽你儲存的所有腳本",
         "SavedScripts": "已儲存的腳本",
-        "Empty": "沒有已儲存的腳本"
+        "Empty": "沒有已儲存的腳本",
+        "EmptySearch": "沒有符合的腳本",
+        "SearchHint": "搜尋..."
       },
       "NewScript": {
-        "Title": "新增腳本",
+        "Title": "輸入腳本名稱：",
         "NameLabel": "名稱",
         "ContentLabel": "內容",
         "Cancel": "取消",
-        "Create": "建立"
+        "Create": "確認"
+      },
+      "ClosePrompt": {
+        "Title": "尚未儲存的內容",
+        "Message": "此分頁有未儲存的內容，確定要關閉嗎？",
+        "Remember": "記住我的選擇",
+        "Cancel": "取消",
+        "Confirm": "關閉"
       },
       "TabMenu": {
         "Pin": "釘選",
-        "Unpin": "取消釘選"
+        "Unpin": "取消釘選",
+        "Rename": "重新命名",
+        "CloseAll": "關閉所有分頁"
       },
       "Toast": {
         "MonacoNotReady": "Monaco 尚未就緒。",
@@ -194,7 +252,7 @@
     "Scripts": {
       "Right": {
         "Title": "SCRIPTS",
-        "Subtitle": "自訂篩選條件"
+        "Subtitle": "瀏覽最新的社群腳本"
       },
       "Card": {
         "Copy": "複製",

@@ -18,6 +18,8 @@ namespace Executor.WaveUI.WaveViews
         private DispatcherTimer? _postVerifyTimer;
         private DispatcherTimer? _autoVerifyDelayTimer;
         private bool _isVerifying;
+        private const string SkipLoadAppKey = "WaveUI_skip_load_app";
+        private const string WaveKey = "WaveUI_key";
 
         private void ApplyLanguage()
         {
@@ -38,7 +40,7 @@ namespace Executor.WaveUI.WaveViews
             try
             {
                 var cfg = ConfigManager.ReadConfig();
-                var raw = ConfigManager.Get(cfg, "skip_load_app");
+                var raw = ConfigManager.Get(cfg, SkipLoadAppKey);
                 var enabled = string.Equals(raw?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
 
                 if (SkipButton != null)
@@ -64,7 +66,7 @@ namespace Executor.WaveUI.WaveViews
             try
             {
                 var cfg = ConfigManager.ReadConfig();
-                var expected = ConfigManager.Get(cfg, "license_key") ?? ConfigManager.Get(cfg, "key");
+                var expected = ConfigManager.Get(cfg, "license_key") ?? ConfigManager.Get(cfg, WaveKey);
                 if (!string.IsNullOrWhiteSpace(expected))
                 {
                     if (!string.Equals(expected.Trim(), entered, StringComparison.Ordinal))
@@ -99,13 +101,13 @@ namespace Executor.WaveUI.WaveViews
                     return;
                 }
 
-                var existing = ConfigManager.Get(cfg, "key") ?? "";
+                var existing = ConfigManager.Get(cfg, WaveKey) ?? "";
                 if (string.Equals(existing, entered, StringComparison.Ordinal))
                 {
                     return;
                 }
 
-                ConfigManager.Set(cfg, "key", entered);
+                ConfigManager.Set(cfg, WaveKey, entered);
                 ConfigManager.WriteConfig(cfg);
             }
             catch
@@ -202,7 +204,7 @@ namespace Executor.WaveUI.WaveViews
             try
             {
                 var cfg = ConfigManager.ReadConfig();
-                var expected = ConfigManager.Get(cfg, "license_key") ?? ConfigManager.Get(cfg, "key");
+                var expected = ConfigManager.Get(cfg, "license_key") ?? ConfigManager.Get(cfg, WaveKey);
                 if (string.IsNullOrWhiteSpace(expected))
                 {
                     return;

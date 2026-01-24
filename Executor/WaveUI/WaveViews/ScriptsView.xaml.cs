@@ -23,14 +23,10 @@ namespace Executor.WaveUI.WaveViews
         private readonly Action<string, string> _openInEditor;
         private readonly Action<string, string>? _executeInEditor;
 
-        private readonly DispatcherTimer _searchDebounceTimer;
-
         private bool _loaded;
         private bool _isLoading;
         private int _page = 1;
         private int _totalPages = 1;
-
-        private string _searchQuery = string.Empty;
 
         private string _scriptsRightTitle = "SCRIPTS";
         private string _scriptsRightSubtitle = "";
@@ -200,29 +196,6 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
-        public string SearchQuery
-        {
-            get => _searchQuery;
-            set
-            {
-                if (value == _searchQuery)
-                {
-                    return;
-                }
-
-                _searchQuery = value;
-                OnPropertyChanged();
-
-                if (!_loaded)
-                {
-                    return;
-                }
-
-                _searchDebounceTimer.Stop();
-                _searchDebounceTimer.Start();
-            }
-        }
-
         public ObservableCollection<ScriptCard> Scripts { get; } = new();
 
         public ScriptsView(Action<string> toast, Action<string, string> openInEditor, Action<string, string>? executeInEditor = null)
@@ -232,16 +205,6 @@ namespace Executor.WaveUI.WaveViews
             _toast = toast;
             _openInEditor = openInEditor;
             _executeInEditor = executeInEditor;
-
-            _searchDebounceTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(0.5),
-            };
-            _searchDebounceTimer.Tick += (_, _) =>
-            {
-                _searchDebounceTimer.Stop();
-                _ = RefreshAsync(resetPage: true);
-            };
 
             DataContext = this;
 
@@ -475,11 +438,7 @@ namespace Executor.WaveUI.WaveViews
                     UpdateSelectedScriptStatus(null);
                 }
 
-                var q = (SearchQuery ?? string.Empty).Trim();
-
-                var url = string.IsNullOrWhiteSpace(q)
-                    ? BuildFetchUrl(_page, MaxPerPage)
-                    : BuildSearchUrl(q, _page, MaxPerPage);
+                var url = BuildFetchUrl(_page, MaxPerPage);
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, url);
                 req.Headers.UserAgent.ParseAdd("Executor/1.0");
@@ -578,16 +537,6 @@ namespace Executor.WaveUI.WaveViews
             return new Uri(sb.ToString());
         }
 
-        private static Uri BuildSearchUrl(string query, int page, int max)
-        {
-            var sb = new StringBuilder();
-            sb.Append("https://scriptblox.com/api/script/search?");
-            sb.Append("q=").Append(Uri.EscapeDataString(query));
-            sb.Append("&page=").Append(Math.Max(1, page));
-            sb.Append("&max=").Append(Math.Clamp(max, 1, MaxPerPage));
-            return new Uri(sb.ToString());
-        }
-
         private static string NormalizeImageUrl(string? url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -668,24 +617,6 @@ namespace Executor.WaveUI.WaveViews
             UpdateSelectedScriptStatus(card);
         }
 
-
-        private void SearchButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            _searchDebounceTimer.Stop();
-            _ = RefreshAsync(resetPage: true);
-        }
-
-        private void SearchBox_OnKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key != Key.Enter)
-            {
-                return;
-            }
-
-            e.Handled = true;
-            _searchDebounceTimer.Stop();
-            _ = RefreshAsync(resetPage: true);
-        }
 
         private void ScriptImage_OnImageFailed(object sender, ExceptionRoutedEventArgs e)
         {

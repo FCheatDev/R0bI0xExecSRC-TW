@@ -33,6 +33,11 @@
         "Open": "Roblox is not open. Open Roblox now?"
       }
     },
+    "MultiInstancePrompt": {
+      "Title": "Multiple instances blocked",
+      "Message": "Only one Wave instance can run at a time.\nChange this in Settings → Debug.",
+      "Confirm": "OK"
+    },
     "Shell": {
       "Tab": {
         "Home": "Home",
@@ -54,6 +59,7 @@
       },
       "Section": {
         "Application": "Application",
+        "SmallWave": "Wave Floating Ball",
         "Appearance": "Appearance",
         "Data": "Data",
         "APIs": "APIs"
@@ -77,6 +83,18 @@
           "Button": "Reload"
         }
       },
+      "SmallWave": {
+        "Opacity": {
+          "Title": "Small Wave Transparency",
+          "Desc": "Adjust small Wave opacity"
+        },
+        "Effect": {
+          "Title": "Small Wave Effect",
+          "Desc": "Switch the small Wave animation",
+          "Pulse": "Pulse",
+          "Fade": "Fade"
+        }
+      },
       "Appearance": {
         "Language": {
           "Title": "Language",
@@ -85,6 +103,10 @@
         "Theme": {
           "Title": "Theme",
           "Desc": "Change UI theme"
+        },
+        "Font": {
+          "Title": "Font",
+          "Desc": "Change UI font"
         }
       },
       "Data": {
@@ -111,6 +133,10 @@
         "OpenVersionFile": {
           "Title": "Open version.json",
           "Desc": "Open the version file"
+        },
+        "OpenLogFolder": {
+          "Title": "Log Folder",
+          "Desc": "Open the log folder"
         }
       },
       "APIs": {
@@ -122,6 +148,20 @@
           "SkipLoadApp": {
             "Title": "Skip load screen",
             "Desc": "Show skip button in Load/KeySystem"
+          },
+          "MultiInstance": {
+            "Title": "Multiple Instances",
+            "Desc": "Allow running multiple Wave windows",
+            "Allowed": "Allowed",
+            "NotAllowed": "Not Allowed"
+          },
+          "UnlimitedTabs": {
+            "Title": "Unlimited Tabs",
+            "Desc": "Remove editor tab limit"
+          },
+          "SmallWaveFps": {
+            "Title": "Small Wave FPS",
+            "Desc": "Adjust small Wave frame rate"
           },
           "TestPrompt": {
             "Title": "Test prompt",
@@ -143,10 +183,17 @@
       },
       "Nav": {
         "Application": "Application",
+        "SmallWave": "Floating Ball",
         "Appearance": "Appearance",
         "Data": "Data",
         "APIs": "APIs",
         "Debug": "Debug"
+      }
+    },
+    "SmallWave": {
+      "Menu": {
+        "Open": "Open Software",
+        "Close": "Close Software"
       }
     },
     "Editor": {
@@ -161,18 +208,29 @@
         "Title": "EXPLORER",
         "Subtitle": "Explore all your saved scripts",
         "SavedScripts": "Saved Scripts",
-        "Empty": "No saved scripts"
+        "Empty": "No saved scripts",
+        "EmptySearch": "No matching scripts",
+        "SearchHint": "Search..."
       },
       "NewScript": {
-        "Title": "New Script",
+        "Title": "Enter script name:",
         "NameLabel": "Name",
         "ContentLabel": "Content",
         "Cancel": "Cancel",
-        "Create": "Create"
+        "Create": "Confirm"
+      },
+      "ClosePrompt": {
+        "Title": "Unsaved changes",
+        "Message": "This tab has unsaved content. Close it?",
+        "Remember": "Remember my choice",
+        "Cancel": "Cancel",
+        "Confirm": "Close"
       },
       "TabMenu": {
         "Pin": "Pin",
-        "Unpin": "Unpin"
+        "Unpin": "Unpin",
+        "Rename": "Rename",
+        "CloseAll": "Close all tabs"
       },
       "Toast": {
         "MonacoNotReady": "Monaco is not ready.",
@@ -194,7 +252,7 @@
     "Scripts": {
       "Right": {
         "Title": "SCRIPTS",
-        "Subtitle": "Customize the filter to your liking"
+        "Subtitle": "Browse the latest community scripts"
       },
       "Card": {
         "Copy": "Copy",

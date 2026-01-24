@@ -93,13 +93,13 @@
 
             <wave:WaveIcon x:Name="LockIcon" IconName="lock" Width="28" Height="28" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,14" />
 
-            <TextBlock Grid.Row="1" Text="Wave Key System" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="18" HorizontalAlignment="Center" FontFamily="Comic Sans MS" />
-            <TextBlock Grid.Row="2" Text="Purchase a key from our official&#x0a;store, or from one of our resellers." Foreground="#9AA0A6" TextAlignment="Center" FontSize="12" Margin="0,12,0,0" FontFamily="Bahnschrift" />
+            <TextBlock Grid.Row="1" Text="Wave Key System" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="18" HorizontalAlignment="Center" FontFamily="{DynamicResource WaveHeadingFontFamily}" />
+            <TextBlock Grid.Row="2" Text="Purchase a key from our official&#x0a;store, or from one of our resellers." Foreground="#9AA0A6" TextAlignment="Center" FontSize="12" Margin="0,12,0,0" FontFamily="{DynamicResource WaveSubtitleFontFamily}" />
 
             <Grid Grid.Row="3" Margin="0,18,0,0">
                 <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Height="34">
                     <Grid>
-                        <TextBox x:Name="KeyBox" Background="Transparent" Foreground="#EDEDED" CaretBrush="#FFFFFF" BorderThickness="0" Margin="10,0,29,0" FontSize="12" VerticalContentAlignment="Center" FontFamily="Comic Sans MS" FontWeight="Bold" />
+                        <TextBox x:Name="KeyBox" Background="Transparent" Foreground="#EDEDED" CaretBrush="#FFFFFF" BorderThickness="0" Margin="10,0,29,0" FontSize="12" VerticalContentAlignment="Center" FontFamily="{DynamicResource WaveHeadingFontFamily}" FontWeight="Bold" />
                         <wave:WaveIcon IconName="key" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" />
                     </Grid>
                 </Border>
@@ -109,7 +109,7 @@
                 <Button x:Name="LoginButton" Width="86" Height="30" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Login_OnClick" FontFamily="Arial Black" FontSize="14">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                         </ControlTemplate>
@@ -120,7 +120,7 @@
                 <Button Width="86" Height="30" Background="#1A1A1A" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" FontSize="14" FontFamily="Arial Black">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                         </ControlTemplate>

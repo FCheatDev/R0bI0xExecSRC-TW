@@ -23,6 +23,7 @@ namespace Executor
     public partial class MainWindow : Window
     {
         private const int ResizeBorderThicknessDip = 6;
+        public double TargetOpacity { get; set; } = 1.0;
 
         public MainWindow()
         {
@@ -46,7 +47,7 @@ namespace Executor
                 var fade = new DoubleAnimation
                 {
                     From = Opacity,
-                    To = 1,
+                    To = TargetOpacity,
                     Duration = TimeSpan.FromMilliseconds(500),
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
                     FillBehavior = FillBehavior.HoldEnd,
@@ -54,13 +55,13 @@ namespace Executor
                 fade.Completed += (_, _) =>
                 {
                     BeginAnimation(OpacityProperty, null);
-                    Opacity = 1;
+                    Opacity = TargetOpacity;
                 };
                 BeginAnimation(OpacityProperty, fade);
             }
             catch
             {
-                Opacity = 1;
+                Opacity = TargetOpacity;
             }
         }
 

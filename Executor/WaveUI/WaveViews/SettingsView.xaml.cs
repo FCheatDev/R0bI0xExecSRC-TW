@@ -1,12 +1,17 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Executor;
@@ -40,6 +45,141 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        public sealed class FontOption
+        {
+            public FontOption(string name, FontFamily fontFamily, bool isDefault)
+            {
+                Name = name;
+                FontFamily = fontFamily;
+                IsDefault = isDefault;
+                Value = isDefault ? string.Empty : name;
+            }
+
+            public string Name { get; }
+            public FontFamily FontFamily { get; }
+            public bool IsDefault { get; }
+            public string Value { get; }
+        }
+
+        private void FontCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            if (FontCombo.SelectedItem is not FontOption item)
+            {
+                return;
+            }
+
+            var fontName = item.Value;
+
+            ApplyUiFont(fontName);
+            SaveConfigValue(UiFontKey, fontName);
+        }
+
+        private void FontCombo_OnDropDownOpened(object sender, EventArgs e)
+        {
+            if (sender is not ComboBox combo)
+            {
+                return;
+            }
+
+            var searchBox = combo.Template.FindName("FontSearchBox", combo) as TextBox;
+            var placeholder = combo.Template.FindName("FontSearchPlaceholderText", combo) as TextBlock;
+            _fontSearchText = string.Empty;
+
+            if (searchBox != null)
+            {
+                if (!string.IsNullOrEmpty(searchBox.Text))
+                {
+                    searchBox.Text = string.Empty;
+                }
+
+                searchBox.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    searchBox.Focus();
+                    searchBox.SelectAll();
+                }), DispatcherPriority.Background);
+            }
+
+            if (placeholder != null)
+            {
+                placeholder.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SearchHint");
+            }
+
+            ApplyFontSearchFilter();
+        }
+
+        private void FontSearchBox_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _fontSearchText = (sender as TextBox)?.Text ?? string.Empty;
+            ApplyFontSearchFilter();
+        }
+
+        private void ApplyFontSearchFilter()
+        {
+            try
+            {
+                var view = CollectionViewSource.GetDefaultView(FontItems);
+                if (view == null)
+                {
+                    return;
+                }
+
+                view.Filter = FontFilterMatch;
+                view.Refresh();
+            }
+            catch
+            {
+            }
+        }
+
+        private static void ApplySmallWaveFrameRate(int fps)
+        {
+            try
+            {
+                if (Application.Current == null)
+                {
+                    return;
+                }
+
+                foreach (Window window in Application.Current.Windows)
+                {
+                    if (window is WaveMinimizeWindow wave)
+                    {
+                        wave.ApplyFrameRate(fps);
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private bool FontFilterMatch(object obj)
+        {
+            if (obj is not FontOption option)
+            {
+                return false;
+            }
+
+            var query = _fontSearchText;
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return true;
+            }
+
+            if (option.IsDefault)
+            {
+                return true;
+            }
+
+            return option.Name.IndexOf(query.Trim(), StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void SkipLoadAppCheckBox_OnChanged(object sender, RoutedEventArgs e)
         {
             if (_suppressSettingEvents)
@@ -49,6 +189,29 @@ namespace Executor.WaveUI.WaveViews
 
             var enabled = SkipLoadAppCheckBox.IsChecked == true;
             SaveConfigValue(SkipLoadAppKey, enabled.ToString().ToLowerInvariant());
+        }
+
+        private void MultiInstanceCheckBox_OnChanged(object sender, RoutedEventArgs e)
+        {
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            var enabled = MultiInstanceCheckBox.IsChecked == true;
+            SaveConfigValue(MultiInstanceKey, enabled.ToString().ToLowerInvariant());
+            UpdateMultiInstanceValueText();
+        }
+
+        private void UnlimitedTabsCheckBox_OnChanged(object sender, RoutedEventArgs e)
+        {
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            var enabled = UnlimitedTabsCheckBox.IsChecked == true;
+            SaveConfigValue(UnlimitedTabsKey, enabled.ToString().ToLowerInvariant());
         }
 
         private void OpenAppDirectory_OnClick(object sender, RoutedEventArgs e)
@@ -109,6 +272,23 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private void SmallWaveEffectCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            if (SmallWaveEffectCombo.SelectedItem is not ComboBoxItem item)
+            {
+                return;
+            }
+
+            var effect = (item.Tag as string) ?? WaveMinimizeWindow.EffectPulse;
+            SaveConfigValue(SmallWaveEffectKey, effect);
+            ApplySmallWaveEffect(effect);
+        }
+
         private void CopyPath(string? path, ToolTip? toolTip, FrameworkElement? owner)
         {
             try
@@ -163,6 +343,33 @@ namespace Executor.WaveUI.WaveViews
             timer.Start();
         }
 
+        private void LoadFontItems()
+        {
+            try
+            {
+                FontItems.Clear();
+
+                var defaultFamily = new FontFamily(App.DefaultWaveFontFamily);
+                FontItems.Add(new FontOption("Default", defaultFamily, isDefault: true));
+
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var family in Fonts.SystemFontFamilies.OrderBy(font => font.Source))
+                {
+                    var name = family.Source?.Trim();
+                    if (string.IsNullOrWhiteSpace(name) || !seen.Add(name))
+                    {
+                        continue;
+                    }
+
+                    FontItems.Add(new FontOption(name, family, isDefault: false));
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        public ObservableCollection<FontOption> FontItems { get; } = new();
         public ObservableCollection<ApiEntry> ApiItems { get; } = new();
 
         public string AppDirectoryPath => AppPaths.AppDirectory;
@@ -236,9 +443,15 @@ namespace Executor.WaveUI.WaveViews
 
         private const string SelectedApiKey = "selected_api";
         private const string TopmostKey = "topmost";
-        private const string StartupKey = "start_on_boot";
+        private const string StartupKey = "WaveUI_start_on_boot";
         private const string OpacityKey = "opacity";
-        private const string SkipLoadAppKey = "skip_load_app";
+        private const string SmallWaveOpacityKey = "WaveUI_small_wave_opacity";
+        private const string SmallWaveEffectKey = "WaveUI_small_wave_effect";
+        private const string SmallWaveFpsKey = "WaveUI_small_wave_fps";
+        private const string UiFontKey = "font";
+        private const string SkipLoadAppKey = "WaveUI_skip_load_app";
+        private const string MultiInstanceKey = "allow_multi_instance";
+        private const string UnlimitedTabsKey = "unlimited_tabs";
 
         private const string StartupRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
         private const string StartupRegistryValueName = "Wave";
@@ -253,6 +466,16 @@ namespace Executor.WaveUI.WaveViews
         private string? _lockedNavTag;
         private bool _isScrollAnimating; // 新增：標記是否正在動畫滾動
         private bool _initialized;
+        private bool _isOpacityEditing;
+        private bool _isSmallWaveOpacityEditing;
+        private string _fontSearchText = string.Empty;
+        private string _settingsSearchText = string.Empty;
+        private readonly List<TextBlock> _settingsSearchTargets = new();
+        private readonly Dictionary<TextBlock, string> _settingsSearchBaseText = new();
+
+        private const int SmallWaveFpsDefault = 60;
+        private const int SmallWaveFpsMin = 30;
+        private const int SmallWaveFpsMax = 120;
 
         private DispatcherTimer? _apiDebugTimer;
         private bool? _lastApiDebugIsAttached;
@@ -282,6 +505,29 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private static void ApplySmallWaveOpacity(double opacity)
+        {
+            try
+            {
+                if (Application.Current == null)
+                {
+                    return;
+                }
+
+                foreach (Window window in Application.Current.Windows)
+                {
+                    if (window is WaveMinimizeWindow wave)
+                    {
+                        wave.ApplyOpacity(opacity);
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             LocalizationManager.LanguageChanged -= OnLanguageChanged;
@@ -304,6 +550,12 @@ namespace Executor.WaveUI.WaveViews
             UpdateApiDebugStatus(force: true);
         }
 
+        private void SettingsSearchBox_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _settingsSearchText = (sender as TextBox)?.Text ?? string.Empty;
+            ApplySettingsSearchHighlight();
+        }
+
         private void OnLanguageChanged()
         {
             Dispatcher.BeginInvoke(new Action(ApplyLanguage));
@@ -320,6 +572,7 @@ namespace Executor.WaveUI.WaveViews
             SettingsRightSubtitleText.Text = LocalizationManager.T("WaveUI.Settings.Right.Subtitle");
 
             ApplicationSection.Text = LocalizationManager.T("WaveUI.Settings.Section.Application");
+            SmallWaveSection.Text = LocalizationManager.T("WaveUI.Settings.Section.SmallWave");
             AppearanceSection.Text = LocalizationManager.T("WaveUI.Settings.Section.Appearance");
             DataSection.Text = LocalizationManager.T("WaveUI.Settings.Section.Data");
             ApisSection.Text = LocalizationManager.T("WaveUI.Settings.Section.APIs");
@@ -340,6 +593,8 @@ namespace Executor.WaveUI.WaveViews
             LanguageDescText.Text = LocalizationManager.T("WaveUI.Settings.Appearance.Language.Desc");
             ThemeTitleText.Text = LocalizationManager.T("WaveUI.Settings.Appearance.Theme.Title");
             ThemeDescText.Text = LocalizationManager.T("WaveUI.Settings.Appearance.Theme.Desc");
+            FontTitleText.Text = LocalizationManager.T("WaveUI.Settings.Appearance.Font.Title");
+            FontDescText.Text = LocalizationManager.T("WaveUI.Settings.Appearance.Font.Desc");
 
             AppDirectoryTitleText.Text = LocalizationManager.T("WaveUI.Settings.Data.AppDirectory.Title");
             ApisDirectoryTitleText.Text = LocalizationManager.T("WaveUI.Settings.Data.ApisFolder.Title");
@@ -358,6 +613,10 @@ namespace Executor.WaveUI.WaveViews
             OpenVersionFileDescText.Text = LocalizationManager.T("WaveUI.Settings.Data.OpenVersionFile.Desc");
             OpenVersionFileButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
 
+            OpenLogFolderTitleText.Text = LocalizationManager.T("WaveUI.Settings.Data.OpenLogFolder.Title");
+            OpenLogFolderDescText.Text = LocalizationManager.T("WaveUI.Settings.Data.OpenLogFolder.Desc");
+            OpenLogFolderButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
+
             OpenAppDirectoryButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
             OpenApisDirectoryButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
             OpenMonacoDirectoryButtonText.Text = LocalizationManager.T("WaveUI.Common.Open");
@@ -375,12 +634,21 @@ namespace Executor.WaveUI.WaveViews
             SkipLoadAppTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.SkipLoadApp.Title");
             SkipLoadAppDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.SkipLoadApp.Desc");
 
+            MultiInstanceTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.MultiInstance.Title");
+            MultiInstanceDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.MultiInstance.Desc");
+            UpdateMultiInstanceValueText();
+
+            UnlimitedTabsTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.UnlimitedTabs.Title");
+            UnlimitedTabsDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.UnlimitedTabs.Desc");
+
             TestPromptTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Title");
             TestPromptDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Desc");
             TestPromptButtonText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.TestPrompt.Button");
 
             NavApplicationTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Application");
             NavApplicationTextActive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Application");
+            NavSmallWaveTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.SmallWave");
+            NavSmallWaveTextActive.Text = LocalizationManager.T("WaveUI.Settings.Nav.SmallWave");
             NavAppearanceTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Appearance");
             NavAppearanceTextActive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Appearance");
             NavDataTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Data");
@@ -390,6 +658,21 @@ namespace Executor.WaveUI.WaveViews
 
             NavDebugTextInactive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Debug");
             NavDebugTextActive.Text = LocalizationManager.T("WaveUI.Settings.Nav.Debug");
+
+            SmallWaveOpacityTitleText.Text = LocalizationManager.T("WaveUI.Settings.SmallWave.Opacity.Title");
+            SmallWaveOpacityDescText.Text = LocalizationManager.T("WaveUI.Settings.SmallWave.Opacity.Desc");
+            SmallWaveEffectTitleText.Text = LocalizationManager.T("WaveUI.Settings.SmallWave.Effect.Title");
+            SmallWaveEffectDescText.Text = LocalizationManager.T("WaveUI.Settings.SmallWave.Effect.Desc");
+            SmallWaveEffectPulseItem.Content = LocalizationManager.T("WaveUI.Settings.SmallWave.Effect.Pulse");
+            SmallWaveEffectFadeItem.Content = LocalizationManager.T("WaveUI.Settings.SmallWave.Effect.Fade");
+
+            SmallWaveFpsTitleText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.SmallWaveFps.Title");
+            SmallWaveFpsDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.SmallWaveFps.Desc");
+
+            SettingsSearchPlaceholderText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SearchHint");
+
+            RefreshSettingsSearchBaseText();
+            ApplySettingsSearchHighlight();
 
             UpdateApiDebugStatus(force: true);
         }
@@ -559,83 +842,90 @@ namespace Executor.WaveUI.WaveViews
             UpdateNavHighlightFromScroll();
         }
 
-private void UpdateNavHighlightFromScroll()
-{
-    if (!IsLoaded || SettingsScrollViewer == null)
-    {
-        return;
-    }
+        private void UpdateNavHighlightFromScroll()
+        {
+            if (!IsLoaded || SettingsScrollViewer == null)
+            {
+                return;
+            }
 
-    if (SettingsScrollViewer.Content is not FrameworkElement content)
-    {
-        return;
-    }
+            if (SettingsScrollViewer.Content is not FrameworkElement content)
+            {
+                return;
+            }
 
-    // 如果正在進行導航點擊,使用目標區塊而不是計算(避免高亮框在動畫開始前被 ScrollChanged 覆蓋)
-    if (!string.IsNullOrWhiteSpace(_targetNavTag))
-    {
-        SetActiveNav(_targetNavTag);
-        return;
-    }
+            // 如果正在進行導航點擊,使用目標區塊而不是計算(避免高亮框在動畫開始前被 ScrollChanged 覆蓋)
+            if (!string.IsNullOrWhiteSpace(_targetNavTag))
+            {
+                SetActiveNav(_targetNavTag);
+                return;
+            }
 
-    if (!string.IsNullOrWhiteSpace(_lockedNavTag))
-    {
-        SetActiveNav(_lockedNavTag);
-        return;
-    }
+            if (!string.IsNullOrWhiteSpace(_lockedNavTag))
+            {
+                SetActiveNav(_lockedNavTag);
+                return;
+            }
 
-    var viewport = SettingsScrollViewer.ViewportHeight;
-    var bias = viewport > 1 ? (viewport * 0.35) : 60;
-    var current = SettingsScrollViewer.VerticalOffset + bias;
+            var viewport = SettingsScrollViewer.ViewportHeight;
+            var bias = viewport > 1 ? (viewport * 0.35) : 60;
+            var current = SettingsScrollViewer.VerticalOffset + bias;
 
-    double appY = 0;
-    double appearanceY = 0;
-    double dataY = 0;
-    double apisY = 0;
-    double debugY = 0;
+            double appY = 0;
+            double smallWaveY = 0;
+            double appearanceY = 0;
+            double dataY = 0;
+            double apisY = 0;
+            double debugY = 0;
 
-    try
-    {
-        appY = ApplicationSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-        appearanceY = AppearanceSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-        dataY = DataSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-        apisY = ApisSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-        debugY = ApiDebugSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-    }
-    catch
-    {
-        return;
-    }
+            try
+            {
+                appY = ApplicationSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
+                smallWaveY = SmallWaveSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
+                appearanceY = AppearanceSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
+                dataY = DataSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
+                apisY = ApisSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
+                debugY = ApiDebugSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
+            }
+            catch
+            {
+                return;
+            }
 
-    var appMid = (appY + appearanceY) / 2.0;
-    var appearanceMid = (appearanceY + dataY) / 2.0;
-    var dataMid = (dataY + apisY) / 2.0;
-    var apisMid = (apisY + debugY) / 2.0;
+            var appMid = (appY + smallWaveY) / 2.0;
+            var smallWaveMid = (smallWaveY + appearanceY) / 2.0;
+            var appearanceMid = (appearanceY + dataY) / 2.0;
+            var dataMid = (dataY + apisY) / 2.0;
+            var apisMid = (apisY + debugY) / 2.0;
 
-    var tag = "Application";
-    if (current >= apisMid)
-    {
-        tag = "Debug";
-    }
-    else if (current >= dataMid)
-    {
-        tag = "APIs";
-    }
-    else if (current >= appearanceMid)
-    {
-        tag = "Data";
-    }
-    else if (current >= appMid)
-    {
-        tag = "Appearance";
-    }
-    else
-    {
-        tag = "Application";
-    }
+            var tag = "Application";
+            if (current >= apisMid)
+            {
+                tag = "Debug";
+            }
+            else if (current >= dataMid)
+            {
+                tag = "APIs";
+            }
+            else if (current >= appearanceMid)
+            {
+                tag = "Data";
+            }
+            else if (current >= smallWaveMid)
+            {
+                tag = "Appearance";
+            }
+            else if (current >= appMid)
+            {
+                tag = "SmallWave";
+            }
+            else
+            {
+                tag = "Application";
+            }
 
-    SetActiveNav(tag);
-}
+            SetActiveNav(tag);
+        }
 
         private void SetActiveNav(string tag)
         {
@@ -651,6 +941,12 @@ private void UpdateNavHighlightFromScroll()
                 activeBg: NavApplicationActiveBg,
                 activeText: NavApplicationTextActive,
                 inactiveText: NavApplicationTextInactive);
+
+            SetNavVisualState(
+                isActive: string.Equals(tag, "SmallWave", StringComparison.OrdinalIgnoreCase),
+                activeBg: NavSmallWaveActiveBg,
+                activeText: NavSmallWaveTextActive,
+                inactiveText: NavSmallWaveTextInactive);
 
             SetNavVisualState(
                 isActive: string.Equals(tag, "Appearance", StringComparison.OrdinalIgnoreCase),
@@ -711,6 +1007,7 @@ private void UpdateNavHighlightFromScroll()
             _suppressSettingEvents = true;
             try
             {
+                LoadFontItems();
                 var cfg = ConfigManager.ReadConfig();
 
                 var topmost = ParseBool(ConfigManager.Get(cfg, TopmostKey), fallback: false);
@@ -724,7 +1021,31 @@ private void UpdateNavHighlightFromScroll()
                 opacity = Clamp(opacity, 0.1, 1.0);
                 OpacitySlider.Value = opacity;
                 OpacityValueText.Text = opacity.ToString("0.0");
+                if (OpacityValueEditBox != null)
+                {
+                    OpacityValueEditBox.Text = opacity.ToString("0.0");
+                }
                 ApplyOpacity(opacity);
+
+                var smallWaveOpacity = ParseDouble(ConfigManager.Get(cfg, SmallWaveOpacityKey), fallback: 1.0);
+                smallWaveOpacity = Clamp(smallWaveOpacity, 0.1, 1.0);
+                SmallWaveOpacitySlider.Value = smallWaveOpacity;
+                SmallWaveOpacityValueText.Text = smallWaveOpacity.ToString("0.0");
+                if (SmallWaveOpacityValueEditBox != null)
+                {
+                    SmallWaveOpacityValueEditBox.Text = smallWaveOpacity.ToString("0.0");
+                }
+                ApplySmallWaveOpacity(smallWaveOpacity);
+
+                var effect = ConfigManager.Get(cfg, SmallWaveEffectKey) ?? WaveMinimizeWindow.EffectPulse;
+                SelectSmallWaveEffectCombo(effect);
+                ApplySmallWaveEffect(effect);
+
+                var smallWaveFps = ParseInt(ConfigManager.Get(cfg, SmallWaveFpsKey), fallback: SmallWaveFpsDefault);
+                smallWaveFps = ClampInt(smallWaveFps, SmallWaveFpsMin, SmallWaveFpsMax);
+                SmallWaveFpsSlider.Value = smallWaveFps;
+                SmallWaveFpsValueText.Text = smallWaveFps.ToString(CultureInfo.InvariantCulture);
+                ApplySmallWaveFrameRate(smallWaveFps);
 
                 var lang = (ConfigManager.Get(cfg, "language") ?? "zh").Trim().ToLowerInvariant();
                 SelectLanguageCombo(lang);
@@ -732,8 +1053,19 @@ private void UpdateNavHighlightFromScroll()
                 var theme = (ConfigManager.Get(cfg, "theme") ?? string.Empty).Trim();
                 SelectThemeCombo(theme);
 
+                var fontName = ConfigManager.Get(cfg, UiFontKey);
+                SelectFontCombo(fontName);
+                ApplyUiFont(fontName);
+
                 var skipLoad = ParseBool(ConfigManager.Get(cfg, SkipLoadAppKey), fallback: false);
                 SkipLoadAppCheckBox.IsChecked = skipLoad;
+
+                var allowMultiInstance = ParseBool(ConfigManager.Get(cfg, MultiInstanceKey), fallback: false);
+                MultiInstanceCheckBox.IsChecked = allowMultiInstance;
+                UpdateMultiInstanceValueText();
+
+                var unlimitedTabs = ParseBool(ConfigManager.Get(cfg, UnlimitedTabsKey), fallback: false);
+                UnlimitedTabsCheckBox.IsChecked = unlimitedTabs;
             }
             catch
             {
@@ -757,6 +1089,36 @@ private void UpdateNavHighlightFromScroll()
             }
 
             return fallback;
+        }
+
+        private static int ParseInt(string? value, int fallback)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return fallback;
+            }
+
+            if (int.TryParse(value.Trim(), out var parsed))
+            {
+                return parsed;
+            }
+
+            return fallback;
+        }
+
+        private static int ClampInt(int v, int min, int max)
+        {
+            if (v < min)
+            {
+                return min;
+            }
+
+            if (v > max)
+            {
+                return max;
+            }
+
+            return v;
         }
 
         private static double ParseDouble(string? value, double fallback)
@@ -811,7 +1173,12 @@ private void UpdateNavHighlightFromScroll()
                 var w = Window.GetWindow(this);
                 if (w != null)
                 {
-                    w.Opacity = Clamp(opacity, 0.1, 1.0);
+                    var clamped = Clamp(opacity, 0.1, 1.0);
+                    w.Opacity = clamped;
+                    if (w is MainWindow mw)
+                    {
+                        mw.TargetOpacity = clamped;
+                    }
                 }
             }
             catch
@@ -909,6 +1276,83 @@ private void UpdateNavHighlightFromScroll()
             }
         }
 
+        private void SelectFontCombo(string? fontName)
+        {
+            var target = (fontName ?? string.Empty).Trim();
+            var useDefault = string.IsNullOrWhiteSpace(target);
+
+            var selected = useDefault
+                ? FontItems.FirstOrDefault(item => item.IsDefault)
+                : FontItems.FirstOrDefault(item => string.Equals(item.Name, target, StringComparison.OrdinalIgnoreCase));
+
+            if (selected != null)
+            {
+                FontCombo.SelectedItem = selected;
+                return;
+            }
+
+            var fallback = FontItems.FirstOrDefault(item => item.IsDefault) ?? FontItems.FirstOrDefault();
+            if (fallback != null)
+            {
+                FontCombo.SelectedItem = fallback;
+            }
+        }
+
+        private void SelectSmallWaveEffectCombo(string effect)
+        {
+            var target = (effect ?? WaveMinimizeWindow.EffectPulse).Trim();
+
+            foreach (var item in SmallWaveEffectCombo.Items)
+            {
+                if (item is not ComboBoxItem cbi)
+                {
+                    continue;
+                }
+
+                if (string.Equals(cbi.Tag as string, target, StringComparison.OrdinalIgnoreCase))
+                {
+                    SmallWaveEffectCombo.SelectedItem = cbi;
+                    return;
+                }
+            }
+
+            SmallWaveEffectCombo.SelectedItem = SmallWaveEffectPulseItem;
+        }
+
+        private static void ApplyUiFont(string? fontName)
+        {
+            try
+            {
+                global::Executor.App.ApplyWaveFont(fontName);
+            }
+            catch
+            {
+            }
+        }
+
+        private static void ApplySmallWaveEffect(string? effect)
+        {
+            try
+            {
+                if (Application.Current == null)
+                {
+                    return;
+                }
+
+                foreach (Window window in Application.Current.Windows)
+                {
+                    if (window is WaveMinimizeWindow wave)
+                    {
+                        wave.ApplyEffect(effect);
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private void TopmostCheckBox_OnChanged(object sender, RoutedEventArgs e)
         {
             if (_suppressSettingEvents)
@@ -954,8 +1398,562 @@ private void UpdateNavHighlightFromScroll()
 
             var opacity = Clamp(OpacitySlider.Value, 0.1, 1.0);
             OpacityValueText.Text = opacity.ToString("0.0");
+            if (OpacityValueEditBox != null)
+            {
+                OpacityValueEditBox.Text = opacity.ToString("0.0");
+            }
             ApplyOpacity(opacity);
             SaveConfigValue(OpacityKey, opacity.ToString("0.0"));
+        }
+
+        private void SmallWaveFpsSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded || SmallWaveFpsSlider == null || SmallWaveFpsValueText == null)
+            {
+                return;
+            }
+
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            var fps = ClampInt((int)Math.Round(SmallWaveFpsSlider.Value), SmallWaveFpsMin, SmallWaveFpsMax);
+            SmallWaveFpsValueText.Text = fps.ToString(CultureInfo.InvariantCulture);
+            ApplySmallWaveFrameRate(fps);
+            SaveConfigValue(SmallWaveFpsKey, fps.ToString(CultureInfo.InvariantCulture));
+        }
+
+        private void RefreshSettingsSearchBaseText()
+        {
+            EnsureSettingsSearchTargets();
+            _settingsSearchBaseText.Clear();
+
+            foreach (var target in _settingsSearchTargets)
+            {
+                if (target == null)
+                {
+                    continue;
+                }
+
+                _settingsSearchBaseText[target] = target.Text ?? string.Empty;
+            }
+        }
+
+        private void EnsureSettingsSearchTargets()
+        {
+            if (_settingsSearchTargets.Count > 0)
+            {
+                return;
+            }
+
+            AddSettingsSearchTarget(SettingsRightTitleText);
+            AddSettingsSearchTarget(SettingsRightSubtitleText);
+            AddSettingsSearchTarget(ApplicationSection);
+            AddSettingsSearchTarget(TopmostTitleText);
+            AddSettingsSearchTarget(TopmostDescText);
+            AddSettingsSearchTarget(SkipLoadAppTitleText);
+            AddSettingsSearchTarget(SkipLoadAppDescText);
+            AddSettingsSearchTarget(BootTitleText);
+            AddSettingsSearchTarget(BootDescText);
+            AddSettingsSearchTarget(OpacityTitleText);
+            AddSettingsSearchTarget(OpacityDescText);
+            AddSettingsSearchTarget(ReloadAppTitleText);
+            AddSettingsSearchTarget(ReloadAppDescText);
+            AddSettingsSearchTarget(ReloadAppButtonText);
+
+            AddSettingsSearchTarget(SmallWaveSection);
+            AddSettingsSearchTarget(SmallWaveOpacityTitleText);
+            AddSettingsSearchTarget(SmallWaveOpacityDescText);
+            AddSettingsSearchTarget(SmallWaveEffectTitleText);
+            AddSettingsSearchTarget(SmallWaveEffectDescText);
+
+            AddSettingsSearchTarget(AppearanceSection);
+            AddSettingsSearchTarget(LanguageTitleText);
+            AddSettingsSearchTarget(LanguageDescText);
+            AddSettingsSearchTarget(ThemeTitleText);
+            AddSettingsSearchTarget(ThemeDescText);
+            AddSettingsSearchTarget(FontTitleText);
+            AddSettingsSearchTarget(FontDescText);
+
+            AddSettingsSearchTarget(DataSection);
+            AddSettingsSearchTarget(AppDirectoryTitleText);
+            AddSettingsSearchTarget(ApisDirectoryTitleText);
+            AddSettingsSearchTarget(MonacoTitleText);
+            AddSettingsSearchTarget(WaveUiImagesTitleText);
+            AddSettingsSearchTarget(OpenConfigFolderTitleText);
+            AddSettingsSearchTarget(OpenConfigFolderDescText);
+            AddSettingsSearchTarget(OpenConfigFolderButtonText);
+            AddSettingsSearchTarget(OpenConfigFileTitleText);
+            AddSettingsSearchTarget(OpenConfigFileDescText);
+            AddSettingsSearchTarget(OpenConfigFileButtonText);
+            AddSettingsSearchTarget(OpenVersionFileTitleText);
+            AddSettingsSearchTarget(OpenVersionFileDescText);
+            AddSettingsSearchTarget(OpenVersionFileButtonText);
+            AddSettingsSearchTarget(OpenLogFolderTitleText);
+            AddSettingsSearchTarget(OpenLogFolderDescText);
+            AddSettingsSearchTarget(OpenLogFolderButtonText);
+
+            AddSettingsSearchTarget(ApisSection);
+            AddSettingsSearchTarget(ChooseApisTitleText);
+            AddSettingsSearchTarget(ApiDebugSection);
+            AddSettingsSearchTarget(MultiInstanceTitleText);
+            AddSettingsSearchTarget(MultiInstanceDescText);
+            AddSettingsSearchTarget(MultiInstanceValueText);
+            AddSettingsSearchTarget(UnlimitedTabsTitleText);
+            AddSettingsSearchTarget(UnlimitedTabsDescText);
+            AddSettingsSearchTarget(SmallWaveFpsTitleText);
+            AddSettingsSearchTarget(SmallWaveFpsDescText);
+            AddSettingsSearchTarget(TestPromptTitleText);
+            AddSettingsSearchTarget(TestPromptDescText);
+            AddSettingsSearchTarget(TestPromptButtonText);
+        }
+
+        private void UpdateMultiInstanceValueText()
+        {
+            if (MultiInstanceValueText == null)
+            {
+                return;
+            }
+
+            var allowed = MultiInstanceCheckBox?.IsChecked == true;
+            var key = allowed
+                ? "WaveUI.Settings.APIs.Debug.MultiInstance.Allowed"
+                : "WaveUI.Settings.APIs.Debug.MultiInstance.NotAllowed";
+            MultiInstanceValueText.Text = LocalizationManager.T(key);
+        }
+
+        private void AddSettingsSearchTarget(TextBlock? target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            _settingsSearchTargets.Add(target);
+        }
+
+        private void ApplySettingsSearchHighlight()
+        {
+            EnsureSettingsSearchTargets();
+
+            var query = _settingsSearchText?.Trim() ?? string.Empty;
+            foreach (var target in _settingsSearchTargets)
+            {
+                if (!_settingsSearchBaseText.TryGetValue(target, out var baseText))
+                {
+                    baseText = target.Text ?? string.Empty;
+                }
+
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    ResetSettingsSearchHighlight(target, baseText);
+                    continue;
+                }
+
+                HighlightTextBlock(target, baseText, query);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                ScrollToSettingsSearchMatch(query);
+            }
+        }
+
+        private void ScrollToSettingsSearchMatch(string query)
+        {
+            if (SettingsScrollViewer == null)
+            {
+                return;
+            }
+
+            EnsureSettingsSearchTargets();
+
+            foreach (var target in _settingsSearchTargets)
+            {
+                if (target == null)
+                {
+                    continue;
+                }
+
+                if (!_settingsSearchBaseText.TryGetValue(target, out var baseText))
+                {
+                    baseText = target.Text ?? string.Empty;
+                }
+
+                if (string.IsNullOrWhiteSpace(baseText))
+                {
+                    continue;
+                }
+
+                if (baseText.IndexOf(query, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+
+                if (!TryGetSearchTargetOffset(target, out var targetOffset))
+                {
+                    continue;
+                }
+
+                _targetNavTag = null;
+                _lockedNavTag = null;
+                AnimateSearchScrollTo(targetOffset);
+                break;
+            }
+        }
+
+        private bool TryGetSearchTargetOffset(FrameworkElement target, out double targetOffset)
+        {
+            targetOffset = 0;
+            if (SettingsScrollViewer == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                var p = target.TransformToAncestor(SettingsScrollViewer).Transform(new Point(0, 0));
+                targetOffset = SettingsScrollViewer.VerticalOffset + p.Y;
+            }
+            catch
+            {
+                return false;
+            }
+
+            var centered = targetOffset + (target.ActualHeight / 2.0) - (SettingsScrollViewer.ViewportHeight / 2.0);
+            targetOffset = Clamp(centered, 0, SettingsScrollViewer.ScrollableHeight);
+            return true;
+        }
+
+        private void AnimateSearchScrollTo(double targetOffset)
+        {
+            if (SettingsScrollViewer == null)
+            {
+                return;
+            }
+
+            _scrollAnimationId++;
+            var animationId = _scrollAnimationId;
+
+            var startOffset = SettingsScrollViewer.VerticalOffset;
+            var delta = targetOffset - startOffset;
+
+            if (Math.Abs(delta) < 0.5)
+            {
+                SettingsScrollViewer.ScrollToVerticalOffset(targetOffset);
+                _isScrollAnimating = false;
+                UpdateNavHighlightFromScroll();
+                return;
+            }
+
+            _isScrollAnimating = true;
+
+            var durationMs = 320.0;
+            var sw = Stopwatch.StartNew();
+
+            var timer = new DispatcherTimer(DispatcherPriority.Render)
+            {
+                Interval = TimeSpan.FromMilliseconds(16),
+            };
+
+            timer.Tick += (_, _) =>
+            {
+                if (animationId != _scrollAnimationId)
+                {
+                    timer.Stop();
+                    return;
+                }
+
+                var t = sw.Elapsed.TotalMilliseconds / durationMs;
+                if (t >= 1)
+                {
+                    SettingsScrollViewer.ScrollToVerticalOffset(targetOffset);
+                    timer.Stop();
+
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (animationId != _scrollAnimationId)
+                        {
+                            return;
+                        }
+
+                        _isScrollAnimating = false;
+                        UpdateNavHighlightFromScroll();
+                    }), DispatcherPriority.ContextIdle);
+                    return;
+                }
+
+                var eased = EaseOutQuad(t);
+                SettingsScrollViewer.ScrollToVerticalOffset(startOffset + (delta * eased));
+            };
+
+            timer.Start();
+        }
+
+        private static void ResetSettingsSearchHighlight(TextBlock target, string baseText)
+        {
+            target.Inlines.Clear();
+            target.Text = baseText;
+        }
+
+        private static void HighlightTextBlock(TextBlock target, string baseText, string query)
+        {
+            if (string.IsNullOrEmpty(baseText) || string.IsNullOrEmpty(query))
+            {
+                target.Inlines.Clear();
+                target.Text = baseText;
+                return;
+            }
+
+            var index = 0;
+            var comparison = StringComparison.OrdinalIgnoreCase;
+            var highlightBrush = new SolidColorBrush(Color.FromRgb(0x1D, 0xA1, 0xF2));
+            highlightBrush.Freeze();
+
+            target.Inlines.Clear();
+            target.Text = string.Empty;
+
+            while (true)
+            {
+                var match = baseText.IndexOf(query, index, comparison);
+                if (match < 0)
+                {
+                    break;
+                }
+
+                if (match > index)
+                {
+                    target.Inlines.Add(new Run(baseText.Substring(index, match - index)));
+                }
+
+                var highlightRun = new Run(baseText.Substring(match, query.Length))
+                {
+                    Foreground = highlightBrush,
+                };
+                target.Inlines.Add(highlightRun);
+
+                index = match + query.Length;
+            }
+
+            if (index < baseText.Length)
+            {
+                target.Inlines.Add(new Run(baseText.Substring(index)));
+            }
+        }
+
+        private void OpacityValueText_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount < 2)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            BeginOpacityEdit();
+        }
+
+        private void OpacityValueEditBox_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                EndOpacityEdit(commit: true);
+                return;
+            }
+
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                EndOpacityEdit(commit: false);
+            }
+        }
+
+        private void OpacityValueEditBox_OnLostFocus(object sender, RoutedEventArgs e)
+        {
+            EndOpacityEdit(commit: true);
+        }
+
+        private void BeginOpacityEdit()
+        {
+            if (_isOpacityEditing || OpacityValueEditBox == null || OpacityValueText == null)
+            {
+                return;
+            }
+
+            _isOpacityEditing = true;
+            OpacityValueEditBox.Text = OpacityValueText.Text;
+            OpacityValueEditBox.Visibility = Visibility.Visible;
+            OpacityValueText.Visibility = Visibility.Collapsed;
+
+            OpacityValueEditBox.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                OpacityValueEditBox.Focus();
+                OpacityValueEditBox.SelectAll();
+            }), DispatcherPriority.Background);
+        }
+
+        private void EndOpacityEdit(bool commit)
+        {
+            if (!_isOpacityEditing || OpacityValueEditBox == null || OpacityValueText == null || OpacitySlider == null)
+            {
+                return;
+            }
+
+            _isOpacityEditing = false;
+
+            if (commit)
+            {
+                var currentOpacity = Clamp(OpacitySlider.Value, 0.1, 1.0);
+                var opacity = currentOpacity;
+
+                if (TryParseOpacity(OpacityValueEditBox.Text, out var parsed))
+                {
+                    opacity = Clamp(parsed, 0.1, 1.0);
+                }
+
+                try
+                {
+                    _suppressSettingEvents = true;
+                    OpacitySlider.Value = opacity;
+                }
+                finally
+                {
+                    _suppressSettingEvents = false;
+                }
+
+                OpacityValueText.Text = opacity.ToString("0.0");
+                OpacityValueEditBox.Text = opacity.ToString("0.0");
+                ApplyOpacity(opacity);
+                SaveConfigValue(OpacityKey, opacity.ToString("0.0"));
+            }
+
+            OpacityValueEditBox.Visibility = Visibility.Collapsed;
+            OpacityValueText.Visibility = Visibility.Visible;
+        }
+
+        private void SmallWaveOpacitySlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded || SmallWaveOpacitySlider == null || SmallWaveOpacityValueText == null)
+            {
+                return;
+            }
+
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            var opacity = Clamp(SmallWaveOpacitySlider.Value, 0.1, 1.0);
+            SmallWaveOpacityValueText.Text = opacity.ToString("0.0");
+            if (SmallWaveOpacityValueEditBox != null)
+            {
+                SmallWaveOpacityValueEditBox.Text = opacity.ToString("0.0");
+            }
+            ApplySmallWaveOpacity(opacity);
+            SaveConfigValue(SmallWaveOpacityKey, opacity.ToString("0.0"));
+        }
+
+        private void SmallWaveOpacityValueText_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount < 2)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            BeginSmallWaveOpacityEdit();
+        }
+
+        private void SmallWaveOpacityValueEditBox_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                EndSmallWaveOpacityEdit(commit: true);
+                return;
+            }
+
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                EndSmallWaveOpacityEdit(commit: false);
+            }
+        }
+
+        private void SmallWaveOpacityValueEditBox_OnLostFocus(object sender, RoutedEventArgs e)
+        {
+            EndSmallWaveOpacityEdit(commit: true);
+        }
+
+        private void BeginSmallWaveOpacityEdit()
+        {
+            if (_isSmallWaveOpacityEditing || SmallWaveOpacityValueEditBox == null || SmallWaveOpacityValueText == null)
+            {
+                return;
+            }
+
+            _isSmallWaveOpacityEditing = true;
+            SmallWaveOpacityValueEditBox.Text = SmallWaveOpacityValueText.Text;
+            SmallWaveOpacityValueEditBox.Visibility = Visibility.Visible;
+            SmallWaveOpacityValueText.Visibility = Visibility.Collapsed;
+
+            SmallWaveOpacityValueEditBox.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                SmallWaveOpacityValueEditBox.Focus();
+                SmallWaveOpacityValueEditBox.SelectAll();
+            }), DispatcherPriority.Background);
+        }
+
+        private void EndSmallWaveOpacityEdit(bool commit)
+        {
+            if (!_isSmallWaveOpacityEditing || SmallWaveOpacityValueEditBox == null || SmallWaveOpacityValueText == null || SmallWaveOpacitySlider == null)
+            {
+                return;
+            }
+
+            _isSmallWaveOpacityEditing = false;
+
+            if (commit)
+            {
+                var currentOpacity = Clamp(SmallWaveOpacitySlider.Value, 0.1, 1.0);
+                var opacity = currentOpacity;
+
+                if (TryParseOpacity(SmallWaveOpacityValueEditBox.Text, out var parsed))
+                {
+                    opacity = Clamp(parsed, 0.1, 1.0);
+                }
+
+                try
+                {
+                    _suppressSettingEvents = true;
+                    SmallWaveOpacitySlider.Value = opacity;
+                }
+                finally
+                {
+                    _suppressSettingEvents = false;
+                }
+
+                SmallWaveOpacityValueText.Text = opacity.ToString("0.0");
+                SmallWaveOpacityValueEditBox.Text = opacity.ToString("0.0");
+                ApplySmallWaveOpacity(opacity);
+                SaveConfigValue(SmallWaveOpacityKey, opacity.ToString("0.0"));
+            }
+
+            SmallWaveOpacityValueEditBox.Visibility = Visibility.Collapsed;
+            SmallWaveOpacityValueText.Visibility = Visibility.Visible;
+        }
+
+        private static bool TryParseOpacity(string? raw, out double opacity)
+        {
+            opacity = 0;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return false;
+            }
+
+            return double.TryParse(raw.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out opacity)
+                   || double.TryParse(raw.Trim(), NumberStyles.Float, CultureInfo.CurrentCulture, out opacity);
         }
 
         private void LanguageCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1053,6 +2051,32 @@ private void UpdateNavHighlightFromScroll()
             }
         }
 
+        private void OpenLogFolder_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenFolder(ResolveLogDirectory());
+        }
+
+        private static string ResolveLogDirectory()
+        {
+            try
+            {
+                var logPath = Logger.LogFilePath;
+                if (!string.IsNullOrWhiteSpace(logPath))
+                {
+                    var dir = Path.GetDirectoryName(logPath);
+                    if (!string.IsNullOrWhiteSpace(dir))
+                    {
+                        return dir;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return Path.Combine(AppPaths.AppDirectory, "ax-log");
+        }
+
 private void RightNavItem_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 {
     if (sender is not FrameworkElement el)
@@ -1070,6 +2094,10 @@ private void RightNavItem_OnMouseLeftButtonDown(object sender, MouseButtonEventA
     if (string.Equals(tag, "Application", StringComparison.OrdinalIgnoreCase))
     {
         target = ApplicationSection;
+    }
+    else if (string.Equals(tag, "SmallWave", StringComparison.OrdinalIgnoreCase))
+    {
+        target = SmallWaveSection;
     }
     else if (string.Equals(tag, "Appearance", StringComparison.OrdinalIgnoreCase))
     {

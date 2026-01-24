@@ -67,7 +67,7 @@ namespace Executor.WaveUI.WaveViews
             try
             {
                 var cfg = ConfigManager.ReadConfig();
-                var raw = ConfigManager.Get(cfg, "skip_load_app");
+                var raw = ConfigManager.Get(cfg, "WaveUI_skip_load_app");
                 var enabled = string.Equals(raw?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
 
                 if (SkipButton != null)
