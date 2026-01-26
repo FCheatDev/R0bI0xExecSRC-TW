@@ -312,6 +312,46 @@ namespace Executor
             base.OnExit(e);
         }
 
+        internal static void UpdateSingleInstanceLock(bool allowMultiInstance)
+        {
+            if (allowMultiInstance)
+            {
+                try
+                {
+                    if (_singleInstanceMutex != null)
+                    {
+                        _singleInstanceMutex.ReleaseMutex();
+                        _singleInstanceMutex.Dispose();
+                        _singleInstanceMutex = null;
+                    }
+                }
+                catch
+                {
+                }
+                return;
+            }
+
+            if (_singleInstanceMutex != null)
+            {
+                return;
+            }
+
+            try
+            {
+                var mutex = new Mutex(true, SingleInstanceMutexName, out var createdNew);
+                if (!createdNew)
+                {
+                    mutex.Dispose();
+                    return;
+                }
+
+                _singleInstanceMutex = mutex;
+            }
+            catch
+            {
+            }
+        }
+
         private static bool TryAcquireSingleInstance(bool allowMultiInstance)
         {
             if (allowMultiInstance)

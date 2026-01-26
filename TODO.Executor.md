@@ -479,19 +479,82 @@
 
 - [ DONE ] 105.editor,explorer新增腳本的選擇副檔名錯位了,我要放在提示框最左邊,右下角
 
+- [ DONE ] 108.修正多實例不允許時切換設定後仍可開啟多個視窗的問題(改為設定變更立即套用)
+  - [ 錯誤 108-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+
+- [ DONE ] 109.確認關閉分頁的記住我的選擇會寫入 config.cfg 並使用 WaveUI\_ 前綴
+  - [ 錯誤 109-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+
+- [ DONE ] 110.editor新增腳本的副檔名下拉選單下移並對齊取消按鈕
+  - [ 錯誤 110-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+
+- [ DONE ] 111.editor儲存提示訊息補上中英語系
+  - [ 錯誤 111-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+
 - [ 已修正 103-1 ]: ClosePrompt WaveCheckBox 缺少 WaveBlue 資源導致 BorderBrush UnsetValue
 
-- 104.setting的選擇api,當檢測到"../version.json"被刪除時,裡面的對話框顯示說,"version.json丟失,請重新執行Checker.exe"(用紅字顯示),然後下面有一個按鈕就是執行Checker.exe(按鈕放在右下角,按鈕只有在"version.json"被刪除時才顯示,並且點擊後會關閉當前軟體執行Checker.exe),需要中英語言
-- 104-1.Checker.exe路徑是寫死的,在"../Checker.exe",需要中英語言
-- 104-1-1.如果未找到Checker.exe提示"未找到Checker.exe {換行} 請重新下載Checker.exe"並跳轉到"https://axproject.dpdns.org/",需要中英語言
+- [ DONE ] 104.setting的選擇api,當檢測到"../version.json"被刪除時,裡面的對話框顯示說,"version.json丟失,請重新執行Checker.exe"(用紅字顯示),然後下面有一個按鈕就是執行Checker.exe(按鈕放在右下角,按鈕只有在"version.json"被刪除時才顯示,並且點擊後會關閉當前軟體執行Checker.exe),需要中英語言
+  - [ 錯誤 104-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+- [ DONE ] 104-1.Checker.exe路徑是寫死的,在"../Checker.exe",需要中英語言
+  - [ 錯誤 104-1-1 ]: 同上
+- [ DONE ] 104-1-1.如果未找到Checker.exe提示"未找到Checker.exe {換行} 請重新下載Checker.exe"並跳轉到"https://axproject.dpdns.org/",需要中英語言
+  - [ 錯誤 104-1-1-1 ]: 同上
 
-- 105.設定的重新載入下面添加當前軟體版本,目前是1.0.1,樣式一樣也需要線,需要中英語言,然後寫入"../version.json"的AppVersion
+- [ DONE ] 105.設定的重新載入下面添加當前軟體版本,目前是1.0.1,樣式一樣也需要線,需要中英語言,然後寫入"../version.json"的AppVersion
+  - [ 錯誤 105-1 ]: 同上
 
-- 106.設定的重新載入上面添加禁用提示框,旁邊是按鈕,字是"篩選",點開後,會像選擇api時點開一樣,樣式一樣,需要中英語言,寫入config.cfg(前面要加上"WaveUI"),要有動畫
-- 106-1.篩選資訊:
+- [ DONE ] 106.設定的重新載入上面添加禁用提示框,旁邊是按鈕,字是"篩選",點開後,會像選擇api時點開一樣,樣式一樣,需要中英語言,寫入config.cfg(前面要加上"WaveUI"),要有動畫
+  - [ 錯誤 106-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+- [ DONE ] 106-1.篩選資訊:
   - 格式為(類似表格): {勾選框} {名稱} {空白} {switch}
   - switch為: {啟用/禁用}
   - 勾選框預設是沒有然後最上面有個勾選框是"全部",點的話,所有勾選框變成已勾選
   - 此功能用來調整 Executed / 儲存 / KillRoblox ...等(有用到提示框的東西全部都列出來),的提示框(debug的測試提示框可以忽略,並且在debug的測試提示框旁邊寫"不受禁用與啟用提示框影響")
+  - [ 錯誤 106-1-1 ]: 無
 
-- 107.script page的搜索框消失了,請放回去,我要搜索框與功能
+- [ DONE ] 107.script page的搜索框消失了,請放回去,我要搜索框與功能
+  - [ 錯誤 107-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+
+- [ DONE ] 108.設定裡面的重新啟動Wave跟軟體版本之間要有線,跟其他的一樣,不是粗的,info提示框啟用與禁用也要
+  - [ 錯誤 108-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+
+- [ DONE ] 109.禁用與啟用提示框功能無法使用,修復他
+  - [ 錯誤 109-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+- [ DONE ] 109-1.滾輪太粗,讓他變細一點,寬度5px
+  - [ 錯誤 109-1-1 ]: 同上
+- [ DONE ] 109-2.裡面的內容我不要一個一個框,而是變成"{顯示提示框內容} {間隙} {線(樣式跟setting裡面的,但不是粗的)} {間隙} {顯示提示框內容}"
+  - [ 錯誤 109-2-1 ]: 同上
+- [ DONE ] 109-3.全選不要框,只要勾選跟文字
+  - [ 錯誤 109-3-1 ]: 同上
+- [ DONE ] 109-4.當我全部取消勾選後,setting還是會一直顯示SummarySome這個函數
+  - [ 錯誤 109-4-1 ]: 同上
+- [ DONE ] 109-5.請你完成中英語言,他現在還是顯示函數
+  - [ 錯誤 109-5-1 ]: 同上
+- [ DONE ] 109-6.提示框全部關閉仍會跳出,請修復
+  - [ 錯誤 109-6-1 ]: 同上
+- [ DONE ] 109-7.提示框篩選 UI 沒有線,請修復
+  - [ 錯誤 109-7-1 ]: 同上
+
+- [ DONE ] 110.檢查需求104到105使否完成
+  - [ 錯誤 110-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+
+- [ DONE ] 111.設定的"開啟版本檔"跟"Log資料夾"中間的線不該使用粗的,而是細的,請改成細的,而且"開啟資料夾"與"API"的線,距離不正確,要跟"外觀"與"資料"一樣的距離,我記得好像是上面跟線之間空5px,下面也是,"API"與"除錯"也要
+  - [ 錯誤 111-1 ]: 同上
+
+- [ DONE ] 112.動態載入API(.dll),相關文檔可以參考ClaudeAI提供的,檔案為API.DynamicLoad.md 不過文檔後面的不完整,需要你來完成他(以ClaudeAI4.5模型來完成他)
+  - [ 錯誤 112-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+- [ DONE ] 112-1.動態載入API路徑是:
+  /APIs/{api名稱(可以在"../version.json裡面的APIs.SpashAPI - Solara或是類似的...SpashAPI - Salomenu/SpashAPI - Velocity")},然後裡面.dll長SpashAPIVelocity這樣(SpashAPI
+  {會有變化}),可以看API.FileView.png
+  - [ 錯誤 112-1-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+- [ CANCELLED ] 112-2.實踐動態載入：建立 DynamicApi 資料夾與 PluginManager、DynamicApiInvoker 等核心類別
+  - [ 錯誤 112-2-1 ]: 使用者要求還原，未完成實踐
+- [ CANCELLED ] 112-3.更新 SettingsView 邏輯支援動態載入（非同步化、改用 DynamicApiInvoker）
+  - [ 錯誤 112-3-1 ]: 使用者要求還原，未完成實踐
+- 112-4.建立範例 Velocity/Xeno 插件實作（實作 IPlugin 與 IApiService）
+- 112-5.測試動態載入與切換功能
+- 113.MyPlants(動態載入):
+  - API 選擇仍從 version.json 讀取
+  - API 實作則是讀取存放路徑(比如APIs/{version.json的api名稱}/{api名稱(希望軟體能自己找那個dll,因為APIs/{version.json的api名稱}資料夾裡面結構是:Bin資料夾/.dll,這樣)})
+  - 不使用絕對檔名來讀取,而是直接載入dll
+  - 先做SpashAPI,RKO的我在想辦法

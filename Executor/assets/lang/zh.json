@@ -16,6 +16,7 @@
   "WaveUI": {
     "Common": {
       "Info": "資訊",
+      "Error": "錯誤",
       "Open": "開啟",
       "Skip": "跳過",
       "Execute": "執行",
@@ -81,6 +82,20 @@
           "Title": "重新載入",
           "Desc": "重新啟動 Wave",
           "Button": "重新載入"
+        },
+        "AppVersion": {
+          "Title": "軟體版本",
+          "Desc": "目前版本"
+        },
+        "ToastFilters": {
+          "Title": "提示框篩選",
+          "Desc": "選擇要顯示的提示通知",
+          "Button": "管理",
+          "ModalTitle": "提示框篩選",
+          "ModalHint": "變更會立即生效",
+          "SummaryAll": "全部啟用",
+          "SummaryNone": "全部停用",
+          "SummarySome": "已啟用 {0}/{1}"
         }
       },
       "SmallWave": {
@@ -141,7 +156,10 @@
       },
       "APIs": {
         "Choose": {
-          "Title": "選擇 APIs"
+          "Title": "選擇 APIs",
+          "MissingVersion": "version.json 丟失，請重新執行 Checker.exe",
+          "RunChecker": "執行 Checker.exe",
+          "CheckerNotFound": "未找到 Checker.exe\n請重新下載 Checker.exe"
         },
         "Debug": {
           "Title": "除錯",
@@ -244,7 +262,8 @@
         "ScriptNameEmpty": "請輸入腳本名稱。",
         "ScriptNameInvalid": "腳本名稱包含不允許的字元。",
         "ScriptExtensionInvalid": "只允許 .luau 或 .txt 檔案。",
-        "ScriptExists": "已存在相同名稱的腳本。"
+        "ScriptExists": "已存在相同名稱的腳本。",
+        "Saved": "已儲存。"
       },
       "DefaultScript": "歡迎使用 Wave！",
       "Untitled": "未命名 {0}"

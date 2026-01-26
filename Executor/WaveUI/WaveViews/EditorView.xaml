@@ -883,7 +883,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ComboBox x:Name="NewScriptExtensionCombo" Grid.Column="0" MinWidth="88" Height="26" Margin="0,4,12,0" Style="{StaticResource UnderlineComboBox}" VerticalAlignment="Center" SelectedIndex="0">
+                            <ComboBox x:Name="NewScriptExtensionCombo" Grid.Column="0" MinWidth="88" Height="26" Margin="0,8,12,0" Style="{StaticResource UnderlineComboBox}" VerticalAlignment="Center" SelectedIndex="0">
                                 <ComboBoxItem Content=".luau" Tag=".luau" />
                                 <ComboBoxItem Content=".lua" Tag=".lua" />
                                 <ComboBoxItem Content=".txt" Tag=".txt" />

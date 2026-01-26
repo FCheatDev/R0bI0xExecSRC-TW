@@ -16,6 +16,7 @@
   "WaveUI": {
     "Common": {
       "Info": "Info",
+      "Error": "Error",
       "Open": "Open",
       "Skip": "Skip",
       "Execute": "Execute",
@@ -81,6 +82,20 @@
           "Title": "Reload App",
           "Desc": "Restart Wave",
           "Button": "Reload"
+        },
+        "AppVersion": {
+          "Title": "App Version",
+          "Desc": "Current version"
+        },
+        "ToastFilters": {
+          "Title": "Toast Filters",
+          "Desc": "Choose which notifications to display",
+          "Button": "Manage",
+          "ModalTitle": "Toast Filters",
+          "ModalHint": "Changes apply immediately",
+          "SummaryAll": "All enabled",
+          "SummaryNone": "All disabled",
+          "SummarySome": "Enabled {0}/{1}"
         }
       },
       "SmallWave": {
@@ -141,7 +156,10 @@
       },
       "APIs": {
         "Choose": {
-          "Title": "Choose APIs"
+          "Title": "Choose APIs",
+          "MissingVersion": "version.json missing, please rerun Checker.exe",
+          "RunChecker": "Run Checker.exe",
+          "CheckerNotFound": "Checker.exe not found\nPlease download Checker.exe again"
         },
         "Debug": {
           "Title": "Debug",
@@ -244,7 +262,8 @@
         "ScriptNameEmpty": "Script name is required.",
         "ScriptNameInvalid": "Script name contains invalid characters.",
         "ScriptExtensionInvalid": "Only .luau or .txt are allowed.",
-        "ScriptExists": "A script with this name already exists."
+        "ScriptExists": "A script with this name already exists.",
+        "Saved": "Saved."
       },
       "DefaultScript": "Welcome to Wave!",
       "Untitled": "Untitled {0}"

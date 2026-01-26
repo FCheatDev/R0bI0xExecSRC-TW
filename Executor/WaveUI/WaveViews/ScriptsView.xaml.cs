@@ -27,6 +27,8 @@ namespace Executor.WaveUI.WaveViews
         private bool _isLoading;
         private int _page = 1;
         private int _totalPages = 1;
+        private readonly DispatcherTimer _scriptsSearchTimer;
+        private string _scriptsSearchText = string.Empty;
 
         private string _scriptsRightTitle = "SCRIPTS";
         private string _scriptsRightSubtitle = "";
@@ -208,6 +210,13 @@ namespace Executor.WaveUI.WaveViews
 
             DataContext = this;
 
+            _scriptsSearchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _scriptsSearchTimer.Tick += (_, _) =>
+            {
+                _scriptsSearchTimer.Stop();
+                _ = RefreshAsync(resetPage: true);
+            };
+
             Loaded += ScriptsView_OnLoaded;
             Unloaded += ScriptsView_OnUnloaded;
         }
@@ -215,6 +224,7 @@ namespace Executor.WaveUI.WaveViews
         private void ScriptsView_OnUnloaded(object sender, RoutedEventArgs e)
         {
             LocalizationManager.LanguageChanged -= OnLanguageChanged;
+            _scriptsSearchTimer.Stop();
         }
 
         private void OnLanguageChanged()
@@ -240,6 +250,11 @@ namespace Executor.WaveUI.WaveViews
             _verifiedText = LocalizationManager.T("WaveUI.Scripts.Status.Verified");
             _unverifiedText = LocalizationManager.T("WaveUI.Scripts.Status.Unverified");
             _statusUnknownText = LocalizationManager.T("WaveUI.Scripts.Status.Unknown");
+
+            if (ScriptsSearchPlaceholderText != null)
+            {
+                ScriptsSearchPlaceholderText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SearchHint");
+            }
 
             UpdateSelectedScriptStatus(_selectedScript);
         }
@@ -418,6 +433,7 @@ namespace Executor.WaveUI.WaveViews
             }
 
             _loaded = true;
+            _scriptsSearchText = ScriptsSearchBox?.Text ?? string.Empty;
             _ = RefreshAsync(resetPage: true);
         }
 
@@ -438,7 +454,7 @@ namespace Executor.WaveUI.WaveViews
                     UpdateSelectedScriptStatus(null);
                 }
 
-                var url = BuildFetchUrl(_page, MaxPerPage);
+                var url = BuildFetchUrl(_page, MaxPerPage, _scriptsSearchText);
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, url);
                 req.Headers.UserAgent.ParseAdd("Executor/1.0");
@@ -528,10 +544,20 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
-        private static Uri BuildFetchUrl(int page, int max)
+        private static Uri BuildFetchUrl(int page, int max, string? searchText)
         {
             var sb = new StringBuilder();
-            sb.Append("https://scriptblox.com/api/script/fetch?");
+            var normalizedSearch = string.IsNullOrWhiteSpace(searchText) ? null : searchText.Trim();
+            if (string.IsNullOrWhiteSpace(normalizedSearch))
+            {
+                sb.Append("https://scriptblox.com/api/script/fetch?");
+            }
+            else
+            {
+                sb.Append("https://scriptblox.com/api/script/search?q=");
+                sb.Append(Uri.EscapeDataString(normalizedSearch));
+                sb.Append('&');
+            }
             sb.Append("page=").Append(Math.Max(1, page));
             sb.Append("&max=").Append(Math.Clamp(max, 1, MaxPerPage));
             return new Uri(sb.ToString());
@@ -659,6 +685,13 @@ namespace Executor.WaveUI.WaveViews
                     fe.Visibility = Visibility.Visible;
                 }
             }
+        }
+
+        private void ScriptsSearchBox_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _scriptsSearchText = ScriptsSearchBox?.Text ?? string.Empty;
+            _scriptsSearchTimer.Stop();
+            _scriptsSearchTimer.Start();
         }
 
         private void PrevPage_OnClick(object sender, RoutedEventArgs e)

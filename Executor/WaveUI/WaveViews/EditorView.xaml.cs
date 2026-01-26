@@ -2552,7 +2552,7 @@ namespace Executor.WaveUI.WaveViews
                 }
 
                 File.WriteAllText(path, _activeTab.Content ?? string.Empty);
-                _toast("Saved.");
+                _toast(LocalizationManager.T("WaveUI.Editor.Toast.Saved"));
             }
             catch (Exception ex)
             {

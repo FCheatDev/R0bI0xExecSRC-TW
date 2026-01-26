@@ -80,7 +80,33 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Column="0" Grid.Row="0" Margin="0,0,10,10">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,5,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" CornerRadius="10" Height="36" Padding="12,0" Margin="10,5,10,0" VerticalAlignment="Center">
+                <Grid>
+                    <TextBox x:Name="ScriptsSearchBox" Background="Transparent" Foreground="#EDEDED" BorderThickness="0" FontSize="12" CaretBrush="#FFFFFF"
+                             VerticalContentAlignment="Center" Padding="0,0,22,0" TextChanged="ScriptsSearchBox_OnTextChanged" />
+                    <TextBlock x:Name="ScriptsSearchPlaceholderText" Text="Search..." Foreground="#6F7782" FontSize="12" Margin="2,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=ScriptsSearchBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Text, ElementName=ScriptsSearchBox}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <wave:WaveIcon IconName="search" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Center" Opacity="0.8" />
+                </Grid>
+            </Border>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,5,0,0">
                 <Button Width="36" Height="36" Background="#0E0E0E" BorderBrush="#202020" BorderThickness="1" Cursor="Hand" Click="PrevPage_OnClick">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
