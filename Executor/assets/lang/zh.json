@@ -74,6 +74,10 @@
           "Title": "開機啟動",
           "Desc": "系統啟動時自動執行 Wave"
         },
+        "DiscordRpc": {
+          "Title": "DiscordRPC",
+          "Desc": "在 Discord 顯示目前主題狀態"
+        },
         "Opacity": {
           "Title": "透明度",
           "Desc": "調整 Wave 視窗透明度（0.1 到 1）"
@@ -290,11 +294,11 @@
         "Unknown": "-"
       },
       "Toast": {
-        "ScriptEmpty": "腳本為空。",
-        "Copied": "已複製。",
-        "Executed": "已執行。",
-        "ExecuteFailed": "執行失敗。",
-        "InvalidResponse": "回應無效。"
+        "ScriptEmpty": "腳本為空 / Script is empty",
+        "Copied": "已複製 / Copied",
+        "Executed": "已執行 / Executed",
+        "ExecuteFailed": "執行失敗 / Execute failed",
+        "InvalidResponse": "回應無效 / Invalid response"
       }
     },
     "Home": {

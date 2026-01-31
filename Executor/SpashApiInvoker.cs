@@ -50,6 +50,9 @@ namespace Executor
         private static Exception? _initializationError;
         private static readonly object _initLock = new();
 
+        // 動態載入相關
+        private static bool _dynamicManagerInitialized;
+
         private enum SelectedApi
         {
             Velocity,
@@ -169,6 +172,13 @@ namespace Executor
 
                 try
                 {
+                    // 初始化動態載入管理器
+                    if (!_dynamicManagerInitialized)
+                    {
+                        DynamicApiManager.Initialize();
+                        _dynamicManagerInitialized = true;
+                    }
+
                     if (!_dllLoaded)
                     {
                         string? selectedApi = null;
@@ -189,19 +199,38 @@ namespace Executor
                         var tag = GetApiLogTagFromSelectedString(selectedApi);
                         LogInfo(tag, $"Loading API: {selectedApi}");
 
-                        if (TryLoadSelectedApiAssembly(selectedApi, out var asm, out var dllPath, out var loadError))
+                        // 嘗試使用動態載入
+                        if (DynamicApiManager.IsApiLoaded(selectedApi))
                         {
-                            if (asm != null)
+                            if (DynamicApiManager.SetCurrentApi(selectedApi))
                             {
-                                LogInfo(tag, $"Successfully loaded: {dllPath}");
+                                LogInfo(tag, $"Successfully loaded API using dynamic loader: {selectedApi}");
                                 _dllLoaded = true;
+                            }
+                            else
+                            {
+                                error = $"Failed to set current API: {selectedApi}";
+                                _initializationError = new Exception(error);
+                                return false;
                             }
                         }
                         else
                         {
-                            _initializationError = new Exception(loadError ?? "Load failed.");
-                            error = loadError;
-                            return false;
+                            // 回退到原始載入方式
+                            if (TryLoadSelectedApiAssembly(selectedApi, out var asm, out var dllPath, out var loadError))
+                            {
+                                if (asm != null)
+                                {
+                                    LogInfo(tag, $"Successfully loaded: {dllPath}");
+                                    _dllLoaded = true;
+                                }
+                            }
+                            else
+                            {
+                                _initializationError = new Exception(loadError ?? "Load failed.");
+                                error = loadError;
+                                return false;
+                            }
                         }
                     }
 
@@ -578,6 +607,35 @@ namespace Executor
 
             try
             {
+                // 嘗試使用動態載入的 API 實例
+                var currentApiName = DynamicApiManager.GetCurrentApiName();
+                if (!string.IsNullOrEmpty(currentApiName))
+                {
+                    var apiInstance = DynamicApiManager.GetCurrentApiInstance();
+                    if (apiInstance != null)
+                    {
+                        var instanceType = apiInstance.GetType();
+                        var instanceMethod = instanceType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+                        
+                        if (instanceMethod != null)
+                        {
+                            try
+                            {
+                                result = instanceMethod.Invoke(apiInstance, args);
+                                WriteInvocationLog(apiTag, "DynamicAPI", methodName, instanceMethod.ReturnType?.Name ?? "void", result, 0);
+                                return true;
+                            }
+                            catch (Exception ex)
+                            {
+                                error = FormatExceptionMessage(ex);
+                                WriteInvocationLog(apiTag, "DynamicAPI", methodName, "Exception", null, 0);
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                // 回退到原始反射方式
                 if (!_apiTypeCache.TryGetValue(typeName, out var apiType))
                 {
                     apiType = null;

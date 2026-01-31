@@ -603,18 +603,40 @@ namespace Executor.WaveUI.WaveViews
 
         private async System.Threading.Tasks.Task SaveTabsStateAsync()
         {
+            SaveTabsState();
+
             try
             {
-                if (MonacoView?.CoreWebView2 != null)
+                if (MonacoView?.CoreWebView2 == null)
                 {
-                    _activeTab.Content = await GetEditorTextAsync();
+                    return;
                 }
+
+                var getTextTask = GetEditorTextAsync();
+                var completedTask = await Task.WhenAny(getTextTask, Task.Delay(800));
+                if (!ReferenceEquals(completedTask, getTextTask))
+                {
+                    _ = getTextTask.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                    return;
+                }
+
+                _activeTab.Content = await getTextTask;
+                SaveTabsState();
             }
             catch
             {
             }
+        }
 
-            SaveTabsState();
+        internal void SaveTabsStateForExit()
+        {
+            try
+            {
+                _ = SaveTabsStateAsync();
+            }
+            catch
+            {
+            }
         }
 
         private void SaveTabsState()
@@ -2701,7 +2723,7 @@ namespace Executor.WaveUI.WaveViews
         private sealed class TabsState
         {
             public string? ActiveTabId { get; set; }
-            public List<TabStateEntry> Tabs { get; } = new();
+            public List<TabStateEntry> Tabs { get; set; } = new();
         }
 
         private sealed class TabStateEntry

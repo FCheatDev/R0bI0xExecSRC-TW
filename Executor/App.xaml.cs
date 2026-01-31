@@ -298,6 +298,14 @@ namespace Executor
         {
             try
             {
+                DiscordRpcService.Shutdown();
+            }
+            catch
+            {
+            }
+
+            try
+            {
                 if (_singleInstanceMutex != null)
                 {
                     _singleInstanceMutex.ReleaseMutex();

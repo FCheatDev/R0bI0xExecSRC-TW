@@ -30,6 +30,7 @@ namespace Executor
             InitializeComponent();
             Opacity = 0;
             Loaded += (_, _) => BeginFadeIn();
+            Closing += (_, _) => SaveTabsStateForExit();
             ApplyLanguage();
             LocalizationManager.LanguageChanged += OnLanguageChanged;
             Closed += (_, _) => LocalizationManager.LanguageChanged -= OnLanguageChanged;
@@ -37,6 +38,20 @@ namespace Executor
             SourceInitialized += OnSourceInitialized;
 
             ApplyTheme();
+        }
+
+        private void SaveTabsStateForExit()
+        {
+            try
+            {
+                if (ThemeHost.Content is WaveShell shell)
+                {
+                    shell.SaveTabsStateForExit();
+                }
+            }
+            catch
+            {
+            }
         }
 
         private void BeginFadeIn()
@@ -208,6 +223,40 @@ namespace Executor
         {
             var cfg = ConfigManager.ReadConfig();
             var theme = ConfigManager.Get(cfg, "theme") ?? "";
+
+            var discordRpcEnabled = true;
+            try
+            {
+                var raw = ConfigManager.Get(cfg, DiscordRpcService.EnabledConfigKey);
+                if (!string.IsNullOrWhiteSpace(raw) && bool.TryParse(raw.Trim(), out var parsed))
+                {
+                    discordRpcEnabled = parsed;
+                }
+            }
+            catch
+            {
+            }
+
+            if (discordRpcEnabled)
+            {
+                try
+                {
+                    DiscordRpcService.ApplyTheme(theme);
+                }
+                catch
+                {
+                }
+            }
+            else
+            {
+                try
+                {
+                    DiscordRpcService.Shutdown();
+                }
+                catch
+                {
+                }
+            }
 
             if (string.Equals(theme, "Wave", System.StringComparison.OrdinalIgnoreCase)
                 || string.Equals(theme, "Synapse X", System.StringComparison.OrdinalIgnoreCase)

@@ -986,6 +986,20 @@ private static bool IsRobloxProcessRunning()
             WaveToastService.Show(LocalizationManager.T("WaveUI.Common.Info"), message);
         }
 
+        internal void SaveTabsStateForExit()
+        {
+            try
+            {
+                if (_pages.TryGetValue("Editor", out var control) && control is WaveViews.EditorView editor)
+                {
+                    editor.SaveTabsStateForExit();
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private void ShowOpenRobloxPromptIfNotRunning()
         {
             if (_homeRobloxPromptShown)
@@ -1024,6 +1038,8 @@ private static bool IsRobloxProcessRunning()
             {
                 return;
             }
+
+            SaveTabsStateForExit();
 
             _isWindowAnimating = true;
             var (scale, translate) = EnsureWindowTransforms(w);

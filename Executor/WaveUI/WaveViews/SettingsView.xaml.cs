@@ -24,25 +24,11 @@ namespace Executor.WaveUI.WaveViews
     {
         public sealed class ApiEntry
         {
-            public ApiEntry(string name, string? sunc, string? unc)
-            {
-                Name = name;
-                sUNC = sunc;
-                UNC = unc;
-            }
-
-            public string Name { get; }
-            public string? sUNC { get; }
-            public string? UNC { get; }
-
-            public string SuncLine => $"sUNC: {NormalizeValue(sUNC)}";
-            public string UncLine => $"UNC: {NormalizeValue(UNC)}";
-
-            private static string NormalizeValue(string? v)
-            {
-                var trimmed = (v ?? "").Trim();
-                return trimmed.Length == 0 ? "NULL" : trimmed;
-            }
+            public string Name { get; set; } = string.Empty;
+            public string? Sunc { get; set; }
+            public string? Unc { get; set; }
+            public string SuncLine => string.IsNullOrEmpty(Sunc) ? "" : $"sUNC: {Sunc}";
+            public string UncLine => string.IsNullOrEmpty(Unc) ? "" : $"UNC: {Unc}";
         }
 
         public sealed class FontOption
@@ -444,6 +430,7 @@ namespace Executor.WaveUI.WaveViews
         private const string SelectedApiKey = "selected_api";
         private const string TopmostKey = "topmost";
         private const string StartupKey = "WaveUI_start_on_boot";
+        private const string DiscordRpcKey = DiscordRpcService.EnabledConfigKey;
         private const string OpacityKey = "opacity";
         private const string SmallWaveOpacityKey = "WaveUI_small_wave_opacity";
         private const string SmallWaveEffectKey = "WaveUI_small_wave_effect";
@@ -582,6 +569,8 @@ namespace Executor.WaveUI.WaveViews
             TopmostDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.Topmost.Desc");
             BootTitleText.Text = LocalizationManager.T("WaveUI.Settings.Application.Boot.Title");
             BootDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.Boot.Desc");
+            DiscordRpcTitleText.Text = LocalizationManager.T("WaveUI.Settings.Application.DiscordRpc.Title");
+            DiscordRpcDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.DiscordRpc.Desc");
             OpacityTitleText.Text = LocalizationManager.T("WaveUI.Settings.Application.Opacity.Title");
             OpacityDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.Opacity.Desc");
 
@@ -1017,6 +1006,9 @@ namespace Executor.WaveUI.WaveViews
                 var startup = ParseBool(ConfigManager.Get(cfg, StartupKey), fallback: IsStartupEnabledInRegistry());
                 BootCheckBox.IsChecked = startup;
 
+                var discordRpc = ParseBool(ConfigManager.Get(cfg, DiscordRpcKey), fallback: true);
+                DiscordRpcCheckBox.IsChecked = discordRpc;
+
                 var opacity = ParseDouble(ConfigManager.Get(cfg, OpacityKey), fallback: 1.0);
                 opacity = Clamp(opacity, 0.1, 1.0);
                 OpacitySlider.Value = opacity;
@@ -1384,6 +1376,33 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private void DiscordRpcCheckBox_OnChanged(object sender, RoutedEventArgs e)
+        {
+            if (_suppressSettingEvents)
+            {
+                return;
+            }
+
+            var enabled = DiscordRpcCheckBox.IsChecked == true;
+            SaveConfigValue(DiscordRpcKey, enabled.ToString().ToLowerInvariant());
+
+            try
+            {
+                if (!enabled)
+                {
+                    DiscordRpcService.Shutdown();
+                    return;
+                }
+
+                var cfg = ConfigManager.ReadConfig();
+                var theme = ConfigManager.Get(cfg, "theme") ?? string.Empty;
+                DiscordRpcService.ApplyTheme(theme);
+            }
+            catch
+            {
+            }
+        }
+
         private void OpacitySlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!IsLoaded || OpacitySlider == null || OpacityValueText == null)
@@ -1456,6 +1475,8 @@ namespace Executor.WaveUI.WaveViews
             AddSettingsSearchTarget(SkipLoadAppDescText);
             AddSettingsSearchTarget(BootTitleText);
             AddSettingsSearchTarget(BootDescText);
+            AddSettingsSearchTarget(DiscordRpcTitleText);
+            AddSettingsSearchTarget(DiscordRpcDescText);
             AddSettingsSearchTarget(OpacityTitleText);
             AddSettingsSearchTarget(OpacityDescText);
             AddSettingsSearchTarget(ReloadAppTitleText);
@@ -2337,7 +2358,12 @@ private void AnimateScrollTo(double targetOffset, int requestId)
                         }
                     }
 
-                    ApiItems.Add(new ApiEntry(apiName, sunc, unc));
+                    ApiItems.Add(new ApiEntry 
+                    { 
+                        Name = apiName, 
+                        Sunc = sunc, 
+                        Unc = unc 
+                    });
                 }
             }
             catch

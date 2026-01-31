@@ -74,6 +74,10 @@
           "Title": "Start on Boot",
           "Desc": "Automatically have Wave run when your system boots"
         },
+        "DiscordRpc": {
+          "Title": "Discord Rich Presence",
+          "Desc": "Show your current theme on Discord"
+        },
         "Opacity": {
           "Title": "Transparency",
           "Desc": "Adjust Wave's window transparency (from 0.1 to 1)"
@@ -290,11 +294,11 @@
         "Unknown": "-"
       },
       "Toast": {
-        "ScriptEmpty": "Script is empty.",
-        "Copied": "Copied.",
-        "Executed": "Executed.",
-        "ExecuteFailed": "Execute failed.",
-        "InvalidResponse": "Invalid response."
+        "ScriptEmpty": "Script is empty / 腳本為空",
+        "Copied": "Copied / 已複製",
+        "Executed": "Executed / 已執行",
+        "ExecuteFailed": "Execute failed / 執行失敗",
+        "InvalidResponse": "Invalid response / 回應無效"
       }
     },
     "Home": {

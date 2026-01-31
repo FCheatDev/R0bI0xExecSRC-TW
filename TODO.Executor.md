@@ -1,3 +1,104 @@
+# TODO.Executor.md
+
+## 🤖 AI 助手工作方式說明
+
+### **🎯 核心工作原則**
+
+#### **1. 任務導向執行**
+
+- **專注目標**：每次回應都直接針對用戶需求，不偏離主題
+- **立即行動**：收到指令後馬上分析並執行，不拖延
+- **結果驗證**：每次修改後都執行 `dotnet build` 確保程式碼品質
+
+#### **2. 精確技術實作**
+
+- **最小修改**：只改動用戶指定的檔案和範圍，避免影響其他部分
+- **錯誤修復**：遇到編譯錯誤立即修正，不讓問題累積
+- **程式碼品質**：遵循現有程式碼風格，保持一致性
+
+#### **3. 系統化追蹤**
+
+- **TODO 管理**：自動更新 TODO.Executor.md，記錄所有需求和錯誤
+- **狀態標記**：使用 `[ DONE ]` 標記完成項目，詳細記錄錯誤訊息
+- **進度透明**：讓用戶清楚了解每個需求的完成狀況
+
+### **💬 溝通風格特點**
+
+#### **1. 簡潔直接**
+
+- **無廢話**：不說「好的」、「我明白了」等無意義詞語
+- **重點優先**：重要資訊用符號標示（✅、🎯、⚡等）
+- **結構化**：使用標題、列表讓資訊易於閱讀
+
+#### **2. 技術精確**
+
+- **術語準確**：使用正確的技術術語（如 XAML、WPF、Storyboard）
+- **程式碼引用**：精確指出檔案路徑和行號
+- **錯誤詳述**：完整記錄編譯錯誤訊息和解決方案
+
+#### **3. 正向回饋**
+
+- **成功確認**：建置成功後明確表示「太好了！建置成功！」
+- **進度總結**：每個階段完成後提供完整功能清單
+- **價值強調**：突出改進帶來的效益（如「流暢體驗」、「現代化設計」）
+
+### **🧠 思考模式**
+
+#### **1. 需求分解**
+
+```
+用戶需求 → 技術分析 → 實作計畫 → 順序執行
+```
+
+- 將複雜需求拆解為多個小任務
+- 按優先順序排列（先核心功能，後優化細節）
+- 每個任務都有明確的完成標準
+
+#### **2. 風險管控**
+
+- **預期錯誤**：預先考慮可能出現的編譯問題
+- **即時修復**：錯誤出現後立即處理，不累積
+- **備用方案**：遇到無法解決的問題時提供替代方案
+
+#### **3. 持續改進**
+
+- **模式識別**：從錯誤中學習，避免重複問題
+- **最佳實踐**：遵循 TODO.Executor.md 的所有規則
+- **效率優化**：並行執行獨立任務，節省時間
+
+### **🔧 工作流程**
+
+#### **標準執行循環**
+
+1. **接收需求** → 分析技術可行性
+2. **規劃實作** → 確定修改範圍和順序
+3. **執行修改** → 逐步實作，每步驟驗證
+4. **測試確認** → `dotnet build` 確保無錯誤
+5. **記錄更新** → 更新 TODO.md 狀態
+6. **總結回報** → 提供完成狀況和功能清單
+
+#### **並行處理策略**
+
+- **獨立任務**：同時執行多個不相關的修改
+- **依賴任務**：按順序執行有依賴關係的任務
+- **批次驗證**：多個修改後一次性建置測試
+
+### **📊 效能指標**
+
+#### **成功要素**
+
+- **零錯誤建置**：確保每次修改都能成功編譯
+- **需求覆蓋**：100% 完成用戶提出的所有需求
+- **文件同步**：即時更新 TODO.md，保持資訊同步
+
+#### **品質保證**
+
+- **程式碼一致性**：遵循現有程式碼風格
+- **功能完整性**：所有功能都能正常運作
+- **使用者體驗**：界面流暢，交互自然
+
+---
+
 # [ 重要 ]:
 
 - 1.任何改動都需要跑一次測試
@@ -503,14 +604,17 @@
 - [ DONE ] 105.設定的重新載入下面添加當前軟體版本,目前是1.0.1,樣式一樣也需要線,需要中英語言,然後寫入"../version.json"的AppVersion
   - [ 錯誤 105-1 ]: 同上
 
-- [ DONE ] 106.設定的重新載入上面添加禁用提示框,旁邊是按鈕,字是"篩選",點開後,會像選擇api時點開一樣,樣式一樣,需要中英語言,寫入config.cfg(前面要加上"WaveUI"),要有動畫
+- [ 移除 ] 106.設定的重新載入上面添加禁用提示框,旁邊是按鈕,字是"篩選",點開後,會像選擇api時點開一樣,樣式一樣,需要中英語言,寫入config.cfg(前面要加上"WaveUI"),要有動畫
   - [ 錯誤 106-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
-- [ DONE ] 106-1.篩選資訊:
+  - [ 錯誤 106-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ 移除 ] 106-1.篩選資訊:
   - 格式為(類似表格): {勾選框} {名稱} {空白} {switch}
   - switch為: {啟用/禁用}
   - 勾選框預設是沒有然後最上面有個勾選框是"全部",點的話,所有勾選框變成已勾選
   - 此功能用來調整 Executed / 儲存 / KillRoblox ...等(有用到提示框的東西全部都列出來),的提示框(debug的測試提示框可以忽略,並且在debug的測試提示框旁邊寫"不受禁用與啟用提示框影響")
   - [ 錯誤 106-1-1 ]: 無
+  - [ 錯誤 106-1-2 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 106-1-3 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
 
 - [ DONE ] 107.script page的搜索框消失了,請放回去,我要搜索框與功能
   - [ 錯誤 107-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
@@ -551,10 +655,139 @@
   - [ 錯誤 112-2-1 ]: 使用者要求還原，未完成實踐
 - [ CANCELLED ] 112-3.更新 SettingsView 邏輯支援動態載入（非同步化、改用 DynamicApiInvoker）
   - [ 錯誤 112-3-1 ]: 使用者要求還原，未完成實踐
-- 112-4.建立範例 Velocity/Xeno 插件實作（實作 IPlugin 與 IApiService）
-- 112-5.測試動態載入與切換功能
-- 113.MyPlants(動態載入):
+
+- [ DONE ] 113.MyPlants(動態載入):
   - API 選擇仍從 version.json 讀取
   - API 實作則是讀取存放路徑(比如APIs/{version.json的api名稱}/{api名稱(希望軟體能自己找那個dll,因為APIs/{version.json的api名稱}資料夾裡面結構是:Bin資料夾/.dll,這樣)})
   - 不使用絕對檔名來讀取,而是直接載入dll
   - 先做SpashAPI,RKO的我在想辦法
+  - [ 錯誤 113-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 113-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 114.提示框的executed之類的都要中英語言
+  - [ 錯誤 114-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 114-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 114-1.要加入篩選提示框功能
+  - [ 錯誤 114-1-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 114-1-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 115.接下來,要改home pageUI,以下是homeUI需求
+  - [ 錯誤 115-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-1.滾輪要自訂義
+  - [ 錯誤 115-1-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-1-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-2.要淡出淡入(RECENT的Untitled 1框)
+  - [ 錯誤 115-2-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-2-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-3."Edit"按鈕要快一點移動,瞬間的,但是還是要有動畫
+  - [ 錯誤 115-3-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-3-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-4.字沒有出現中英會出現函數,修復此問題
+  - [ 錯誤 115-4-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-4-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-5.topbar的字也是Arial Black粗體
+  - [ 錯誤 115-5-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-5-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-6.當我從setting變更字體後home page字體沒有出現變化,字體不是固定的,而是當使用者選擇default字體才是Arial Black粗體
+  - [ 錯誤 115-6-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-6-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-7.RECENT的Untitled 1不需要漢化,直接引用editor page的tab
+  - [ 錯誤 115-7-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-7-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-8.完成RECENT功能(要跟editor page的tab連動)
+  - [ 錯誤 115-8-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-8-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-9.滾輪不是馬上出現,只在腳本顯示超出視窗才顯示,他顏色是#0979bf ,寬度要3px
+  - [ 錯誤 115-9-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-9-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-10.完成WaveUI.Home.Status/Discord/Release跟EndOfList中英語言,不要再顯示函數
+  - [ 錯誤 115-10-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-10-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-11.RECENT裡面的腳本是顯示未儲存的腳本,關閉軟體也要保留這些未儲存的,editor的tab也是
+  - [ 錯誤 115-11-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-11-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-12.我已經關閉了軟體,在打開還是會不顯示,修復此問題
+  - [ 錯誤 115-12-1 ]: AppPaths 為 internal class，HomeView 無法直接存取，改用 AppDomain.CurrentDomain.BaseDirectory
+  - [ 錯誤 115-12-2 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-12-3 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-13.有些字還沒天加上語言,你幫我加上去
+  - [ 錯誤 115-13-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-13-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-14.home page的RECENT有儲存到editor page的tab為什麼沒有顯示?
+  - [ 錯誤 115-14-1 ]: TabsState.Tabs 只有 get 屬性，JsonSerializer 無法反序列化，已添加 set
+  - [ 錯誤 115-14-2 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-14-3 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-15.滾輪要自訂義,顏色是#0979bf,寬度要3px - 移到滾輪那邊,會有一條粗的顯示,移除他
+  - [ 錯誤 115-15-1 ]: 滾輪 Thumb Margin 設定為 "0,0,0,0" 造成粗條顯示，改為 Margin="0" BorderThickness="0"
+  - [ 錯誤 115-15-2 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-15-3 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- [ DONE ] 115-16.點edit沒反應,因該要跳到editor page相對應的腳本名稱
+  - [ 錯誤 115-16-1 ]: NavigateToEditorTab 方法過於簡單，無法正確定位到對應腳本，已改進為完整實作
+  - [ 錯誤 115-16-2 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-16-3 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 115-17.home page 的 RECENT 顯示已儲存 tab，並且 Edit 會跳到 editor 並選中對應 tab
+  - [ 錯誤 115-17-1 ]: dotnet build 警告 MSB3270 (MSIL 與 SpashAPIXeno AMD64 不相符)
+  - [ 錯誤 115-17-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 115-18."You've reached the end of the list"因該在腳本最後一個底下(留3px)出現
+  - [ 錯誤 115-18-1 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 115-19.RECENT的Untitled 1框,滑鼠移到上面背景顏色改成rgb(26, 26, 26)要淡入淡出
+  - [ 錯誤 115-19-1 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] Website可以點擊,導向https://axproject.dpdns.org/wave
+- [ DONE ] Store可以點擊,導向https://axproject.dpdns.org/wave/buy
+- [ DONE ] "Welcome to Wave,"逗號後有名字,要換行,像: "Welcome to Wave,{換行} {name}",名字使用使用者電腦當前使用者名稱
+- [ DONE ] 所有可以看得到的字都要中英語言(除了topbar)
+- [ DONE ] RECENT的Untitled 1框,滑鼠移到上面背景顏色改成rgb(26, 26, 26)
+  - 並且最右邊(接近框)會跑出一個按鈕(從右邊滑出來,滑鼠移開又會從左邊滑回去),沒有白色的動畫
+    - 按鈕樣式:背景顏色 #0ea5e9,字是粗體,名稱是Edit,有圓角
+    - 按鈕功能,點擊Edit按鈕後,會跳到eidtor page相對應的腳本名稱
+  - file.png的外框顏色是 #18282f 圖片位置沒有正,有點歪(所有png都是64x64)
+  - 外框沒有邊框
+- [ DONE ] 所有字體預設是Arial Black粗體
+- [ DONE ] RECENT當腳本太多時會多出滾輪
+- [ DONE ] "You've reached the end of the list"因該在腳本最後一個底下(留3px)出現
+- [ DONE ] 滾輪要自訂義
+- [ DONE ] 要淡出淡入(RECENT的Untitled 1框)
+- [ DONE ] "Edit"按鈕要快一點移動,瞬間的,但是還是要有動畫
+- [ DONE ] 字沒有出現中英會出現函數,修復此問題
+- [ DONE ] topbar的字也是Arial Black粗體
+- [ DONE ] 當我從setting變更字體後home page字體沒有出現變化,字體不是固定的,而是當使用者選擇default字體才是Arial Black粗體
+
+- [ DONE ] RECENT的Untitled 1不需要漢化,直接引用editor page的tab
+- [ DONE ] 完成RECENT功能(要跟editor page的tab連動)
+  - [ 錯誤 ]: 修復 TabsState.Tabs 屬性缺少 set 導致 JSON 反序列化失敗
+  - [ 錯誤 ]: 修復語言鍵對應錯誤，改用 WaveUI.Home.Widget.\* 格式
+- [ DONE ] RECENT裡面的腳本是顯示未儲存的腳本,關閉軟體也要保留這些未儲存的,editor的tab也是
+- [ DONE ] 我已經關閉了軟體,在打開還是會不顯示,修復此問題
+  - [ 錯誤 ]: TabsState.Tabs 只有 get 屬性，JsonSerializer 無法反序列化，已添加 set
+- [ DONE ] 有些字還沒天加上語言,你幫我加上去
+  - [ 錯誤 ]: Edit 按鈕已實作滑動動畫和點擊導航到 Editor 頁面功能
+
+- [ DONE ] home page的RECENT有儲存到editor page的tab為什麼沒有顯示?
+- [ DONE ] 滾輪要自訂義,顏色是#0979bf,寬度要3px
+  - [ DONE ] 移到滾輪那邊,會有一條粗的顯示,移除他
+- [ DONE ] 點edit沒反應,因該要跳到editor page相對應的腳本名稱
+
+- [ DONE ] 我會添加DiscordRPC,我希望他是顯示正在玩Wave Executor Remake/KRNL Executor Remake之類的(隨著theme變化更改名稱跟圖案)
+  - [ 錯誤 ]: dotnet build 還原失敗 NU1100（PackageSourceMapping 未允許 DiscordRichPresence/相依套件），已更新 NuGet.config 的 packageSourceMapping
+
+- [ DONE ] 116.WaveHexAPI.about 的 about.md 依 1~5.png 與 ..\Outputs\Executor\APIs 實際檔案結構更新（補齊依賴檔案、修正 WaveHax.Api 命名、重新整理章節）
+  - [ 錯誤 116-1 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 117.修復editor tab沒有顯示上次關閉時的tab, 刪除home page的recent滾輪(懸浮時的動畫)
+  - [ 錯誤 117-1 ]: EditorView 的 TabsState.Tabs 只有 get 屬性，JsonSerializer 無法反序列化，已添加 set
+  - [ 錯誤 117-2 ]: home page RECENT 的滾輪 hover 會出現變粗/動畫效果，已改成固定 Thumb Template 並移除預設 Style
+  - [ 錯誤 117-3 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 118.從視窗按鈕關閉不會儲存tab,從setting的reload會儲存,修復此問題,不管怎樣都要儲存到tab
+  - [ 錯誤 118-1 ]: WaveShell 的 Close 動畫結束後直接 Shutdown，可能來不及觸發 EditorView.Unloaded/存檔，已在關閉流程開始先強制 SaveTabsState
+  - [ 錯誤 118-2 ]: EditorView.SaveTabsStateAsync 在關閉時 WebView2 可能卡住導致完全不寫檔，已改成先同步寫檔，再用 timeout 嘗試抓最新文字後補存
+  - [ 錯誤 118-3 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 119.在 setting 的「應用程式」分類：於「開機自起」下方新增 DiscordRPC 開關（Switch），可開啟/關閉 DiscordRPC（中英語言 + 寫入配置）
+  - [ 錯誤 119-1 ]: 確認 SettingsView 已有 DiscordRpcCheckBox（WaveSwitch）並寫入配置鍵 DiscordRpcService.EnabledConfigKey，且可即時呼叫 DiscordRpcService.ApplyTheme/Shutdown
+  - [ 錯誤 119-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
