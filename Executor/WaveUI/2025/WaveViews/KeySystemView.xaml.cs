@@ -19,7 +19,7 @@ namespace Executor.WaveUI.WaveViews
         private DispatcherTimer? _autoVerifyDelayTimer;
         private bool _isVerifying;
         private const string SkipLoadAppKey = "WaveUI_skip_load_app";
-        private const string WaveKey = "WaveUI_key";
+        private const string WaveKey = "key";
 
         private void ApplyLanguage()
         {
@@ -28,6 +28,31 @@ namespace Executor.WaveUI.WaveViews
                 if (SkipButtonText != null)
                 {
                     SkipButtonText.Text = LocalizationManager.T("WaveUI.Common.Skip");
+                }
+
+                if (TitleText != null)
+                {
+                    TitleText.Text = LocalizationManager.T("WaveUI.KeySystem.Title");
+                }
+
+                if (SubtitleText != null)
+                {
+                    SubtitleText.Text = LocalizationManager.T("WaveUI.KeySystem.Subtitle");
+                }
+
+                if (LoginButtonText != null)
+                {
+                    LoginButtonText.Text = LocalizationManager.T("WaveUI.KeySystem.Login");
+                }
+
+                if (GetKeyButtonText != null)
+                {
+                    GetKeyButtonText.Text = LocalizationManager.T("WaveUI.KeySystem.GetKey");
+                }
+
+                if (VerifyingText != null)
+                {
+                    VerifyingText.Text = LocalizationManager.T("WaveUI.KeySystem.Verifying");
                 }
             }
             catch
@@ -59,7 +84,7 @@ namespace Executor.WaveUI.WaveViews
             var entered = KeyBox?.Text?.Trim() ?? "";
             if (entered.Length == 0)
             {
-                error = "Please enter a key.";
+                error = LocalizationManager.T("WaveUI.KeySystem.Error.EnterKey");
                 return false;
             }
 
@@ -71,7 +96,7 @@ namespace Executor.WaveUI.WaveViews
                 {
                     if (!string.Equals(expected.Trim(), entered, StringComparison.Ordinal))
                     {
-                        error = "Invalid key.";
+                        error = LocalizationManager.T("WaveUI.KeySystem.Error.InvalidKey");
                         return false;
                     }
 
@@ -123,7 +148,7 @@ namespace Executor.WaveUI.WaveViews
             }
             catch (Exception ex)
             {
-                WaveToastService.Show("Error", ex.Message);
+                WaveToastService.Show(LocalizationManager.T("WaveUI.Common.Error"), ex.Message);
             }
         }
 
@@ -313,7 +338,7 @@ namespace Executor.WaveUI.WaveViews
         {
             if (!ValidateKey(out var error))
             {
-                WaveToastService.Show("Error", error ?? "Invalid key.");
+                WaveToastService.Show(LocalizationManager.T("WaveUI.Common.Error"), error ?? LocalizationManager.T("WaveUI.KeySystem.Error.InvalidKey"));
                 return;
             }
 

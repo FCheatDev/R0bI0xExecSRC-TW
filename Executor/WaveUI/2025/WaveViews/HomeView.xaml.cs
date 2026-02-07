@@ -31,7 +31,6 @@ namespace Executor.WaveUI.WaveViews
         {
             InitializeWorkspace();
             ApplyLanguage();
-            ApplyFontSettings();
             LoadRecentScripts();
             
             // 監聽語言變更事件
@@ -106,40 +105,6 @@ namespace Executor.WaveUI.WaveViews
             catch
             {
                 return defaultValue;
-            }
-        }
-
-        private void ApplyFontSettings()
-        {
-            try
-            {
-                var cfg = ConfigManager.ReadConfig();
-                var selectedFont = cfg.TryGetValue("font", out var fontValue) ? fontValue : string.Empty;
-                
-                FontFamily defaultFont = new FontFamily("Arial Black");
-                FontFamily currentFont = string.IsNullOrEmpty(selectedFont) ? defaultFont : new FontFamily(selectedFont);
-                
-                // 套用到所有文字元素
-                WelcomeText.FontFamily = currentFont;
-                WebsiteText.FontFamily = currentFont;
-                StoreText.FontFamily = currentFont;
-                SubscriptionText.FontFamily = currentFont;
-                KeyExpiryText.FontFamily = currentFont;
-                PlanText.FontFamily = currentFont;
-                WidgetsText.FontFamily = currentFont;
-                ReleaseText.FontFamily = currentFont;
-                ReleaseDescText.FontFamily = currentFont;
-                StatusText.FontFamily = currentFont;
-                StatusDescText.FontFamily = currentFont;
-                DiscordText.FontFamily = currentFont;
-                DiscordDescText.FontFamily = currentFont;
-                RecentText.FontFamily = currentFont;
-                EditedText.FontFamily = currentFont;
-                EndOfListText.FontFamily = currentFont;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to apply font settings: {ex.Message}");
             }
         }
 
@@ -345,9 +310,19 @@ namespace Executor.WaveUI.WaveViews
                 Text = "Edit",
                 Foreground = Brushes.White,
                 FontWeight = FontWeights.Bold,
-                FontSize = 12,
-                FontFamily = new FontFamily("Arial Black")
+                FontSize = 12
             };
+
+            try
+            {
+                if (Application.Current != null && Application.Current.Resources["WaveTitleFontFamily"] is FontFamily family)
+                {
+                    editText.FontFamily = family;
+                }
+            }
+            catch
+            {
+            }
             editButton.Child = editText;
             
             editButton.MouseLeftButtonDown += (s, e) =>

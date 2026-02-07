@@ -85,19 +85,19 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock x:Name="WelcomeText" Text="Welcome to Wave," Foreground="#EDEDED" FontSize="18" FontWeight="SemiBold" FontFamily="Arial Black" />
+                <TextBlock x:Name="WelcomeText" Text="Welcome to Wave," Foreground="#EDEDED" FontSize="18" FontWeight="SemiBold" FontFamily="{DynamicResource WaveHeadingFontFamily}" />
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,0">
                     <Border Background="#1DA1F2" CornerRadius="8" Padding="12,6" Margin="0,0,10,0" Cursor="Hand" MouseLeftButtonDown="Website_OnClick">
                         <StackPanel Orientation="Horizontal">
                             <wave:WaveIcon IconName="globe" Width="14" Height="14" Stretch="Uniform" />
-                            <TextBlock x:Name="WebsiteText" Text="Website" Foreground="White" FontSize="12" Margin="8,0,0,0" FontWeight="Bold" FontFamily="Arial Black" />
+                            <TextBlock x:Name="WebsiteText" Text="Website" Foreground="White" FontSize="12" Margin="8,0,0,0" FontWeight="Bold" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                         </StackPanel>
                     </Border>
                     <Border Background="#1A1A1A" CornerRadius="8" Padding="12,6" Cursor="Hand" MouseLeftButtonDown="Store_OnClick">
                         <StackPanel Orientation="Horizontal">
                             <wave:WaveIcon IconName="store" Width="14" Height="14" Stretch="Uniform" />
-                            <TextBlock x:Name="StoreText" Text="Store" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" Margin="8,0,0,0" FontFamily="Arial Black" />
+                            <TextBlock x:Name="StoreText" Text="Store" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" Margin="8,0,0,0" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -111,38 +111,38 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock x:Name="SubscriptionText" Text="SUBSCRIPTION" Foreground="#9AA0A6" FontWeight="SemiBold" FontSize="12" FontFamily="Arial Black" />
+                    <TextBlock x:Name="SubscriptionText" Text="SUBSCRIPTION" Foreground="#9AA0A6" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <TextBlock x:Name="KeyExpiryText" Text="Key Expiry:" Foreground="#9AA0A6" FontSize="12" Width="86" FontFamily="Arial Black" />
-                        <TextBlock Text="364 Days" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="12" FontFamily="Arial Black" />
+                        <TextBlock x:Name="KeyExpiryText" Text="Key Expiry:" Foreground="#9AA0A6" FontSize="12" Width="86" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
+                        <TextBlock Text="364 Days" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock x:Name="PlanText" Text="Plan:" Foreground="#9AA0A6" FontSize="12" Width="86" FontFamily="Arial Black" />
-                        <TextBlock Text="Paid" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" FontFamily="Arial Black" />
+                        <TextBlock x:Name="PlanText" Text="Plan:" Foreground="#9AA0A6" FontSize="12" Width="86" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
+                        <TextBlock Text="Paid" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                     </StackPanel>
-                    <TextBlock Text="2:56 AM  -  12/25/2026" Foreground="#5D6066" FontSize="11" Margin="0,10,0,0" FontFamily="Arial Black" />
+                    <TextBlock Text="2:56 AM  -  12/25/2026" Foreground="#5D6066" FontSize="11" Margin="0,10,0,0" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock x:Name="WidgetsText" Text="WIDGETS" Foreground="#9AA0A6" FontWeight="SemiBold" FontSize="12" Margin="6,0,0,8" FontFamily="Arial Black" />
+            <TextBlock x:Name="WidgetsText" Text="WIDGETS" Foreground="#9AA0A6" FontWeight="SemiBold" FontSize="12" Margin="6,0,0,8" FontFamily="{DynamicResource WaveTitleFontFamily}" />
             <Border CornerRadius="12" Background="#1DA1F2" Padding="16" Margin="0,0,0,10">
                 <StackPanel>
-                    <TextBlock x:Name="ReleaseText" Text="Release" Foreground="White" FontSize="16" FontWeight="SemiBold" FontFamily="Arial Black" />
-                    <TextBlock x:Name="ReleaseDescText" Text="Wave is finally available to the public, after&#10;many months!" Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" FontFamily="Arial Black" />
+                    <TextBlock x:Name="ReleaseText" Text="Release" Foreground="White" FontSize="16" FontWeight="SemiBold" FontFamily="{DynamicResource WaveTitleFontFamily}" />
+                    <TextBlock x:Name="ReleaseDescText" Text="Wave is finally available to the public, after&#10;many months!" Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="12" Background="#1DA1F2" Padding="16" Margin="0,0,0,10">
                 <StackPanel>
-                    <TextBlock x:Name="StatusText" Text="Status" Foreground="White" FontSize="16" FontWeight="SemiBold" FontFamily="Arial Black" />
-                    <TextBlock x:Name="StatusDescText" Text="Wave is currently undetected, and up-to&#10;date." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" FontFamily="Arial Black" />
+                    <TextBlock x:Name="StatusText" Text="Status" Foreground="White" FontSize="16" FontWeight="SemiBold" FontFamily="{DynamicResource WaveTitleFontFamily}" />
+                    <TextBlock x:Name="StatusDescText" Text="Wave is currently undetected, and up-to&#10;date." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="12" Background="#1DA1F2" Padding="16">
                 <StackPanel>
-                    <TextBlock x:Name="DiscordText" Text="Discord" Foreground="White" FontSize="16" FontWeight="SemiBold" FontFamily="Arial Black" />
-                    <TextBlock x:Name="DiscordDescText" Text="Join our discord server for further updates,&#10;and a community." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" FontFamily="Arial Black" />
+                    <TextBlock x:Name="DiscordText" Text="Discord" Foreground="White" FontSize="16" FontWeight="SemiBold" FontFamily="{DynamicResource WaveTitleFontFamily}" />
+                    <TextBlock x:Name="DiscordDescText" Text="Join our discord server for further updates,&#10;and a community." Foreground="White" Opacity="0.95" FontSize="12" Margin="0,8,0,0" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
                 </StackPanel>
             </Border>
         </StackPanel>
@@ -155,8 +155,8 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="RecentText" Text="RECENT" Foreground="#EDEDED" FontSize="14" FontWeight="SemiBold" FontFamily="Arial Black" />
-                    <TextBlock x:Name="EditedText" Text="Edited" Foreground="#5D6066" FontSize="12" Margin="10,2,0,0" FontFamily="Arial Black" />
+                    <TextBlock x:Name="RecentText" Text="RECENT" Foreground="#EDEDED" FontSize="14" FontWeight="SemiBold" FontFamily="{DynamicResource WaveTitleFontFamily}" />
+                    <TextBlock x:Name="EditedText" Text="Edited" Foreground="#5D6066" FontSize="12" Margin="10,2,0,0" FontFamily="{DynamicResource WaveBodyAltFontFamily}" />
                 </StackPanel>
 
                 <ScrollViewer Grid.Row="2" Style="{StaticResource HomeScrollViewerStyle}" Margin="0,14,0,0" ScrollChanged="RecentScrollViewer_OnScrollChanged">

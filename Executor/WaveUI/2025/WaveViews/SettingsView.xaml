@@ -12,6 +12,56 @@
         <SolidColorBrush x:Key="WaveBlueLight" Color="#7CC4FF" />
         <SolidColorBrush x:Key="WaveBlueDeep" Color="#0D3B66" />
 
+        <Style x:Key="BounceButtonStyle" TargetType="Button">
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" CornerRadius="5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleX)}"
+                                                ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleY)}" />
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.94" Duration="0:0:0.06" />
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.94" Duration="0:0:0.06" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="SettingsThinScrollBar" TargetType="ScrollBar">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#6FFFFFFF" />
@@ -798,6 +848,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+
                         <StackPanel>
                             <TextBlock x:Name="SkipLoadAppTitleText" Text="Skip Load App" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
                             <TextBlock x:Name="SkipLoadAppDescText" Text="Show skip button in Load/KeySystem" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
@@ -866,6 +917,25 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock x:Name="ChangeKeyTitleText" Text="Change Key" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="ChangeKeyDescText" Text="Update your key" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+
+                        <Button x:Name="ChangeKeyRowButton" Grid.Column="1" Style="{StaticResource UnderlineTextButtonStyle}" Click="ChangeKeyRowButton_OnClick" VerticalAlignment="Center">
+                            <TextBlock x:Name="ChangeKeyActionText" Text="Change" FontSize="12" FontWeight="SemiBold" />
+                        </Button>
+                    </Grid>
+                    <Border Background="#202020" Height="1" Margin="0,14,0,0" HorizontalAlignment="Stretch" />
+                </StackPanel>
+
+                <StackPanel Margin="15,12,10,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <StackPanel>
                             <TextBlock x:Name="ReloadAppTitleText" Text="重新載入應用程式 / Reload Application" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
                             <TextBlock x:Name="ReloadAppDescText" Text="重新啟動 Wave 以應用設定更改 / Restart Wave to apply setting changes" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
@@ -879,6 +949,24 @@
                 <Border Background="#202020" Height="2" Margin="15,14,10,14" HorizontalAlignment="Stretch" />
 
                 <TextBlock x:Name="SmallWaveSection" Text="Wave懸浮球" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="20" Margin="10,18,0,10" FontFamily="{DynamicResource WaveHeadingFontFamily}" Padding="10,0,0,0" />
+
+                <StackPanel Margin="15,0,10,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="SmallWaveFpsTitleText" Text="Small Wave FPS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock x:Name="SmallWaveFpsDescText" Text="Adjust small Wave frame rate" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="SmallWaveFpsSlider" Minimum="30" Maximum="120" Value="60" Width="140" IsSnapToTickEnabled="True" TickFrequency="5" ValueChanged="SmallWaveFpsSlider_OnValueChanged" Style="{StaticResource WaveOpacitySlider}" />
+                            <TextBlock x:Name="SmallWaveFpsValueText" Text="60" Foreground="#EDEDED" FontSize="12" Margin="10,0,0,0" Width="40" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </Grid>
+                    <Border Background="#202020" Height="1" Margin="0,14,0,0" HorizontalAlignment="Stretch" />
+                </StackPanel>
 
                 <StackPanel Margin="15,0,10,12">
                     <Grid>
@@ -1228,24 +1316,6 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock x:Name="SmallWaveFpsTitleText" Text="Small Wave FPS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
-                            <TextBlock x:Name="SmallWaveFpsDescText" Text="Adjust small Wave frame rate" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Slider x:Name="SmallWaveFpsSlider" Minimum="30" Maximum="120" Value="60" Width="140" IsSnapToTickEnabled="True" TickFrequency="5" ValueChanged="SmallWaveFpsSlider_OnValueChanged" Style="{StaticResource WaveOpacitySlider}" />
-                            <TextBlock x:Name="SmallWaveFpsValueText" Text="60" Foreground="#EDEDED" FontSize="12" Margin="10,0,0,0" Width="40" HorizontalAlignment="Left" />
-                        </StackPanel>
-                    </Grid>
-                    <Border Background="#202020" Height="1" Margin="0,14,0,0" HorizontalAlignment="Stretch" />
-                </StackPanel>
-
-                <StackPanel Margin="15,0,10,12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
                             <TextBlock x:Name="TestPromptTitleText" Text="Test Prompt" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" />
                             <TextBlock x:Name="TestPromptDescText" Text="Test toast/prompt" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
                         </StackPanel>
@@ -1320,12 +1390,12 @@
                 <StackPanel Grid.Row="2" Margin="0,14,0,0">
                     <Grid Cursor="Hand" Tag="Application" Margin="0,0,0,10" MouseLeftButtonDown="RightNavItem_OnMouseLeftButtonDown">
                         <Border CornerRadius="10" Background="#121212" />
-                        <Border x:Name="NavApplicationActiveBg" CornerRadius="10" Background="#121212" Opacity="1" />
+                        <Border x:Name="NavApplicationActiveBg" CornerRadius="10" Background="#121212" Opacity="0" />
                         <StackPanel Orientation="Horizontal" Margin="12,10">
                             <wave:WaveIcon IconName="application" Width="14" Height="14" Stretch="Uniform" />
                             <Grid Margin="10,0,0,0">
-                                <TextBlock x:Name="NavApplicationTextInactive" Text="Application" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
-                                <TextBlock x:Name="NavApplicationTextActive" Text="Application" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />
+                                <TextBlock x:Name="NavApplicationTextInactive" Text="Application" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />
+                                <TextBlock x:Name="NavApplicationTextActive" Text="Application" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -1337,7 +1407,7 @@
                             <wave:WaveIcon IconName="minimize_wave" Width="14" Height="14" Stretch="Uniform" />
                             <Grid Margin="10,0,0,0">
                                 <TextBlock x:Name="NavSmallWaveTextInactive" Text="Floating Ball" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />
-                                <TextBlock x:Name="NavSmallWaveTextActive" Text="Floating Ball" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
+                                <TextBlock x:Name="NavSmallWaveTextActive" Text="Floating Ball" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -1349,7 +1419,7 @@
                             <wave:WaveIcon IconName="appearance" Width="14" Height="14" Stretch="Uniform" />
                             <Grid Margin="10,0,0,0">
                                 <TextBlock x:Name="NavAppearanceTextInactive" Text="Appearance" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />
-                                <TextBlock x:Name="NavAppearanceTextActive" Text="Appearance" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
+                                <TextBlock x:Name="NavAppearanceTextActive" Text="Appearance" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -1361,7 +1431,7 @@
                             <wave:WaveIcon IconName="data" Width="14" Height="14" Stretch="Uniform" />
                             <Grid Margin="10,0,0,0">
                                 <TextBlock x:Name="NavDataTextInactive" Text="Data" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />
-                                <TextBlock x:Name="NavDataTextActive" Text="Data" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
+                                <TextBlock x:Name="NavDataTextActive" Text="Data" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -1373,7 +1443,7 @@
                             <wave:WaveIcon IconName="apis" Width="14" Height="14" Stretch="Uniform" />
                             <Grid Margin="10,0,0,0">
                                 <TextBlock x:Name="NavApisTextInactive" Text="APIs" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />
-                                <TextBlock x:Name="NavApisTextActive" Text="APIs" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
+                                <TextBlock x:Name="NavApisTextActive" Text="APIs" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -1385,7 +1455,7 @@
                             <wave:WaveIcon IconName="debug" Width="14" Height="14" Stretch="Uniform" />
                             <Grid Margin="10,0,0,0">
                                 <TextBlock x:Name="NavDebugTextInactive" Text="Debug" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />
-                                <TextBlock x:Name="NavDebugTextActive" Text="Debug" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
+                                <TextBlock x:Name="NavDebugTextActive" Text="Debug" Foreground="#1DA1F2" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -1446,5 +1516,34 @@
                 </Grid>
             </Border>
         </Grid>
+
+        <Border x:Name="ChangeKeyModalOverlay" Grid.ColumnSpan="2" Background="#99000000" Visibility="Collapsed" Opacity="0" Panel.ZIndex="220" MouseLeftButtonDown="ChangeKeyModalBackdrop_OnMouseLeftButtonDown">
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border x:Name="ChangeKeyModalPanel" Width="360" Background="#1A1A1A" BorderBrush="#2A2A2A" BorderThickness="1" Padding="14" CornerRadius="6" RenderTransformOrigin="0.5,0.5"
+                        MouseLeftButtonDown="ChangeKeyModalContent_OnMouseLeftButtonDown">
+                    <Border.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="ChangeKeyModalScale" ScaleX="0.96" ScaleY="0.96" />
+                            <TranslateTransform x:Name="ChangeKeyModalTranslate" Y="8" />
+                        </TransformGroup>
+                    </Border.RenderTransform>
+                    <StackPanel>
+                        <TextBlock x:Name="ChangeKeyModalTitleText" Text="Change Key" Foreground="#EDEDED" FontSize="13" FontWeight="Bold" Margin="0,0,0,10" />
+                        <TextBlock x:Name="ChangeKeyModalKeyLabelText" Text="Key" Foreground="#9AA0A6" FontSize="12" Margin="0,0,0,6" />
+                        <Border Background="#2A2A2A" BorderBrush="#3A3A3A" BorderThickness="1" CornerRadius="4" Padding="6,4">
+                            <TextBox x:Name="ChangeKeyModalKeyBox" Background="Transparent" Foreground="#EDEDED" BorderThickness="0" FontSize="12" CaretBrush="#FFFFFF" />
+                        </Border>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                            <Button Width="78" Height="26" Background="#1C1C1C" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Click="ChangeKeyCancelButton_OnClick" Style="{StaticResource BounceButtonStyle}">
+                                <TextBlock x:Name="ChangeKeyCancelText" Text="Cancel" FontWeight="SemiBold" FontSize="12" />
+                            </Button>
+                            <Button Width="78" Height="26" Background="#2D8CF0" Foreground="White" BorderThickness="0" Cursor="Hand" Margin="8,0,0,0" Click="ChangeKeyConfirmButton_OnClick" Style="{StaticResource BounceButtonStyle}">
+                                <TextBlock x:Name="ChangeKeyConfirmText" Text="Change" FontWeight="SemiBold" FontSize="12" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

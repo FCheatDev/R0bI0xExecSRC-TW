@@ -93,8 +93,8 @@
 
             <wave:WaveIcon x:Name="LockIcon" IconName="lock" Width="28" Height="28" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,14" />
 
-            <TextBlock Grid.Row="1" Text="Wave Key System" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="18" HorizontalAlignment="Center" FontFamily="{DynamicResource WaveHeadingFontFamily}" />
-            <TextBlock Grid.Row="2" Text="Purchase a key from our official&#x0a;store, or from one of our resellers." Foreground="#9AA0A6" TextAlignment="Center" FontSize="12" Margin="0,12,0,0" FontFamily="{DynamicResource WaveSubtitleFontFamily}" />
+            <TextBlock x:Name="TitleText" Grid.Row="1" Text="Wave Key System" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="18" HorizontalAlignment="Center" FontFamily="{DynamicResource WaveHeadingFontFamily}" />
+            <TextBlock x:Name="SubtitleText" Grid.Row="2" Text="Purchase a key from our official&#x0a;store, or from one of our resellers." Foreground="#9AA0A6" TextAlignment="Center" FontSize="12" Margin="0,12,0,0" FontFamily="{DynamicResource WaveSubtitleFontFamily}" />
 
             <Grid Grid.Row="3" Margin="0,18,0,0">
                 <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Height="34">
@@ -106,7 +106,7 @@
             </Grid>
 
             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
-                <Button x:Name="LoginButton" Width="86" Height="30" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Login_OnClick" FontFamily="Arial Black" FontSize="14">
+                <Button x:Name="LoginButton" Width="86" Height="30" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Login_OnClick" FontFamily="{DynamicResource WaveTitleFontFamily}" FontSize="14">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" CornerRadius="5">
@@ -114,10 +114,10 @@
                             </Border>
                         </ControlTemplate>
                     </Button.Template>
-                    <TextBlock Text="Log in" FontWeight="SemiBold" FontSize="12" />
+                    <TextBlock x:Name="LoginButtonText" Text="Log in" FontWeight="SemiBold" FontSize="12" />
                 </Button>
 
-                <Button Width="86" Height="30" Background="#1A1A1A" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" FontSize="14" FontFamily="Arial Black">
+                <Button Width="86" Height="30" Background="#1A1A1A" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" FontSize="14" FontFamily="{DynamicResource WaveTitleFontFamily}">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" CornerRadius="5">
@@ -125,7 +125,7 @@
                             </Border>
                         </ControlTemplate>
                     </Button.Template>
-                    <TextBlock Text="Get Key" FontWeight="SemiBold" FontSize="12" FontFamily="Arial Black" />
+                    <TextBlock x:Name="GetKeyButtonText" Text="Get Key" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                 </Button>
             </StackPanel>
         </Grid>
@@ -148,7 +148,7 @@
                     <Ellipse Stroke="#404040" StrokeThickness="5" />
                     <Path x:Name="SpinnerArc" Stroke="#EDEDED" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 26,3 A 23,23 0 0 1 49,26" />
                 </Grid>
-                <TextBlock Text="Verifying..." Foreground="#EDEDED" FontSize="16" HorizontalAlignment="Center" Margin="0,12,0,0" />
+                <TextBlock x:Name="VerifyingText" Text="Verifying..." Foreground="#EDEDED" FontSize="16" HorizontalAlignment="Center" Margin="0,12,0,0" />
             </StackPanel>
         </Grid>
     </Grid>

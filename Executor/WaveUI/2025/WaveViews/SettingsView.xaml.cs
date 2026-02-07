@@ -122,6 +122,192 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
+        private void ChangeKeyRowButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            ShowChangeKeyModal();
+        }
+
+        private void ChangeKeyModalBackdrop_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            HideChangeKeyModal();
+        }
+
+        private void ChangeKeyModalContent_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void ChangeKeyCancelButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            HideChangeKeyModal();
+        }
+
+        private void ChangeKeyConfirmButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var value = (ChangeKeyModalKeyBox?.Text ?? string.Empty).Trim();
+                var cfg = ConfigManager.ReadConfig();
+                ConfigManager.Set(cfg, GlobalKeyKey, value);
+                ConfigManager.WriteConfig(cfg);
+            }
+            catch (Exception ex)
+            {
+                WaveToastService.Show(LocalizationManager.T("WaveUI.Common.Error"), ex.Message);
+                return;
+            }
+
+            HideChangeKeyModal();
+        }
+
+        private void ShowChangeKeyModal()
+        {
+            if (_isChangeKeyModalAnimating || _isChangeKeyModalOpen)
+            {
+                return;
+            }
+
+            if (ChangeKeyModalOverlay == null || ChangeKeyModalScale == null || ChangeKeyModalTranslate == null)
+            {
+                return;
+            }
+
+            _isChangeKeyModalOpen = true;
+            _isChangeKeyModalAnimating = true;
+
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var existing = ConfigManager.Get(cfg, GlobalKeyKey) ?? string.Empty;
+                if (ChangeKeyModalKeyBox != null)
+                {
+                    ChangeKeyModalKeyBox.Text = existing;
+                }
+            }
+            catch
+            {
+            }
+
+            ChangeKeyModalOverlay.Visibility = Visibility.Visible;
+            ChangeKeyModalOverlay.BeginAnimation(OpacityProperty, null);
+            ChangeKeyModalOverlay.Opacity = 0;
+
+            ChangeKeyModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            ChangeKeyModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            ChangeKeyModalTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+
+            ChangeKeyModalScale.ScaleX = 0.96;
+            ChangeKeyModalScale.ScaleY = 0.96;
+            ChangeKeyModalTranslate.Y = 8;
+
+            var fadeIn = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            fadeIn.Completed += (_, _) =>
+            {
+                ChangeKeyModalOverlay.BeginAnimation(OpacityProperty, null);
+                ChangeKeyModalOverlay.Opacity = 1;
+                _isChangeKeyModalAnimating = false;
+
+                try
+                {
+                    if (ChangeKeyModalKeyBox != null)
+                    {
+                        ChangeKeyModalKeyBox.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            ChangeKeyModalKeyBox.Focus();
+                            ChangeKeyModalKeyBox.SelectAll();
+                        }), DispatcherPriority.Background);
+                    }
+                }
+                catch
+                {
+                }
+            };
+
+            var scaleAnim = new DoubleAnimation
+            {
+                From = 0.96,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            var translateAnim = new DoubleAnimation
+            {
+                From = 8,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            ChangeKeyModalOverlay.BeginAnimation(OpacityProperty, fadeIn);
+            ChangeKeyModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            ChangeKeyModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            ChangeKeyModalTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+        }
+
+        private void HideChangeKeyModal()
+        {
+            if (_isChangeKeyModalAnimating || !_isChangeKeyModalOpen)
+            {
+                return;
+            }
+
+            if (ChangeKeyModalOverlay == null || ChangeKeyModalScale == null || ChangeKeyModalTranslate == null)
+            {
+                _isChangeKeyModalAnimating = false;
+                _isChangeKeyModalOpen = false;
+                return;
+            }
+
+            _isChangeKeyModalAnimating = true;
+
+            ChangeKeyModalOverlay.BeginAnimation(OpacityProperty, null);
+            var fadeOut = new DoubleAnimation
+            {
+                From = ChangeKeyModalOverlay.Opacity,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            fadeOut.Completed += (_, _) =>
+            {
+                ChangeKeyModalOverlay.BeginAnimation(OpacityProperty, null);
+                ChangeKeyModalOverlay.Opacity = 0;
+                ChangeKeyModalOverlay.Visibility = Visibility.Collapsed;
+                _isChangeKeyModalAnimating = false;
+                _isChangeKeyModalOpen = false;
+            };
+
+            var scaleAnim = new DoubleAnimation
+            {
+                From = ChangeKeyModalScale.ScaleX,
+                To = 0.96,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            var translateAnim = new DoubleAnimation
+            {
+                From = ChangeKeyModalTranslate.Y,
+                To = 8,
+                Duration = TimeSpan.FromMilliseconds(140),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            ChangeKeyModalOverlay.BeginAnimation(OpacityProperty, fadeOut);
+            ChangeKeyModalScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            ChangeKeyModalScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+            ChangeKeyModalTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+        }
+
         private static void ApplySmallWaveFrameRate(int fps)
         {
             try
@@ -442,16 +628,15 @@ namespace Executor.WaveUI.WaveViews
 
         private const string StartupRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
         private const string StartupRegistryValueName = "Wave";
+        private const string GlobalKeyKey = "key";
 
         private bool _isApiModalAnimating;
+        private bool _isChangeKeyModalAnimating;
+        private bool _isChangeKeyModalOpen;
         private bool _suppressSettingEvents;
         private int _scrollAnimationId;
         private int _navScrollRequestId;
         private DispatcherOperation? _pendingNavScrollOperation;
-        private string? _activeNavTag;
-        private string? _targetNavTag;
-        private string? _lockedNavTag;
-        private bool _isScrollAnimating; // 新增：標記是否正在動畫滾動
         private bool _initialized;
         private bool _isOpacityEditing;
         private bool _isSmallWaveOpacityEditing;
@@ -528,9 +713,6 @@ namespace Executor.WaveUI.WaveViews
                 LoadAndApplySettings();
             }
 
-            _isScrollAnimating = false;
-            UpdateNavHighlightFromScroll();
-
             ApplyLanguage();
 
             EnsureApiDebugTimer();
@@ -571,6 +753,16 @@ namespace Executor.WaveUI.WaveViews
             BootDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.Boot.Desc");
             DiscordRpcTitleText.Text = LocalizationManager.T("WaveUI.Settings.Application.DiscordRpc.Title");
             DiscordRpcDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.DiscordRpc.Desc");
+
+            ChangeKeyTitleText.Text = LocalizationManager.T("WaveUI.Settings.Application.ChangeKey.Title");
+            ChangeKeyDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.ChangeKey.Desc");
+            ChangeKeyActionText.Text = LocalizationManager.T("WaveUI.Settings.Application.ChangeKey.Button");
+
+            ChangeKeyModalTitleText.Text = LocalizationManager.T("WaveUI.Settings.ChangeKeyModal.Title");
+            ChangeKeyModalKeyLabelText.Text = LocalizationManager.T("WaveUI.Settings.ChangeKeyModal.KeyLabel");
+            ChangeKeyCancelText.Text = LocalizationManager.T("WaveUI.Settings.ChangeKeyModal.Cancel");
+            ChangeKeyConfirmText.Text = LocalizationManager.T("WaveUI.Settings.ChangeKeyModal.Confirm");
+
             OpacityTitleText.Text = LocalizationManager.T("WaveUI.Settings.Application.Opacity.Title");
             OpacityDescText.Text = LocalizationManager.T("WaveUI.Settings.Application.Opacity.Desc");
 
@@ -822,173 +1014,7 @@ namespace Executor.WaveUI.WaveViews
 
         private void SettingsScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            // 在動畫滾動期間,完全忽略 ScrollChanged 事件
-            if (_isScrollAnimating)
-            {
-                return;
-            }
-
-            UpdateNavHighlightFromScroll();
-        }
-
-        private void UpdateNavHighlightFromScroll()
-        {
-            if (!IsLoaded || SettingsScrollViewer == null)
-            {
-                return;
-            }
-
-            if (SettingsScrollViewer.Content is not FrameworkElement content)
-            {
-                return;
-            }
-
-            // 如果正在進行導航點擊,使用目標區塊而不是計算(避免高亮框在動畫開始前被 ScrollChanged 覆蓋)
-            if (!string.IsNullOrWhiteSpace(_targetNavTag))
-            {
-                SetActiveNav(_targetNavTag);
-                return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(_lockedNavTag))
-            {
-                SetActiveNav(_lockedNavTag);
-                return;
-            }
-
-            var viewport = SettingsScrollViewer.ViewportHeight;
-            var bias = viewport > 1 ? (viewport * 0.35) : 60;
-            var current = SettingsScrollViewer.VerticalOffset + bias;
-
-            double appY = 0;
-            double smallWaveY = 0;
-            double appearanceY = 0;
-            double dataY = 0;
-            double apisY = 0;
-            double debugY = 0;
-
-            try
-            {
-                appY = ApplicationSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-                smallWaveY = SmallWaveSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-                appearanceY = AppearanceSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-                dataY = DataSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-                apisY = ApisSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-                debugY = ApiDebugSection.TransformToAncestor(content).Transform(new Point(0, 0)).Y;
-            }
-            catch
-            {
-                return;
-            }
-
-            var appMid = (appY + smallWaveY) / 2.0;
-            var smallWaveMid = (smallWaveY + appearanceY) / 2.0;
-            var appearanceMid = (appearanceY + dataY) / 2.0;
-            var dataMid = (dataY + apisY) / 2.0;
-            var apisMid = (apisY + debugY) / 2.0;
-
-            var tag = "Application";
-            if (current >= apisMid)
-            {
-                tag = "Debug";
-            }
-            else if (current >= dataMid)
-            {
-                tag = "APIs";
-            }
-            else if (current >= appearanceMid)
-            {
-                tag = "Data";
-            }
-            else if (current >= smallWaveMid)
-            {
-                tag = "Appearance";
-            }
-            else if (current >= appMid)
-            {
-                tag = "SmallWave";
-            }
-            else
-            {
-                tag = "Application";
-            }
-
-            SetActiveNav(tag);
-        }
-
-        private void SetActiveNav(string tag)
-        {
-            if (string.Equals(_activeNavTag, tag, StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            _activeNavTag = tag;
-
-            SetNavVisualState(
-                isActive: string.Equals(tag, "Application", StringComparison.OrdinalIgnoreCase),
-                activeBg: NavApplicationActiveBg,
-                activeText: NavApplicationTextActive,
-                inactiveText: NavApplicationTextInactive);
-
-            SetNavVisualState(
-                isActive: string.Equals(tag, "SmallWave", StringComparison.OrdinalIgnoreCase),
-                activeBg: NavSmallWaveActiveBg,
-                activeText: NavSmallWaveTextActive,
-                inactiveText: NavSmallWaveTextInactive);
-
-            SetNavVisualState(
-                isActive: string.Equals(tag, "Appearance", StringComparison.OrdinalIgnoreCase),
-                activeBg: NavAppearanceActiveBg,
-                activeText: NavAppearanceTextActive,
-                inactiveText: NavAppearanceTextInactive);
-
-            SetNavVisualState(
-                isActive: string.Equals(tag, "Data", StringComparison.OrdinalIgnoreCase),
-                activeBg: NavDataActiveBg,
-                activeText: NavDataTextActive,
-                inactiveText: NavDataTextInactive);
-
-            SetNavVisualState(
-                isActive: string.Equals(tag, "APIs", StringComparison.OrdinalIgnoreCase),
-                activeBg: NavApisActiveBg,
-                activeText: NavApisTextActive,
-                inactiveText: NavApisTextInactive);
-
-            SetNavVisualState(
-                isActive: string.Equals(tag, "Debug", StringComparison.OrdinalIgnoreCase),
-                activeBg: NavDebugActiveBg,
-                activeText: NavDebugTextActive,
-                inactiveText: NavDebugTextInactive);
-        }
-
-        private static void SetNavVisualState(bool isActive, FrameworkElement activeBg, FrameworkElement activeText, FrameworkElement inactiveText)
-        {
-            var toActive = isActive ? 1.0 : 0.0;
-            var toInactive = isActive ? 0.0 : 1.0;
-
-            AnimateOpacity(activeBg, toActive);
-            AnimateOpacity(activeText, toActive);
-            AnimateOpacity(inactiveText, toInactive);
-        }
-
-        private static void AnimateOpacity(UIElement el, double to)
-        {
-            if (el == null)
-            {
-                return;
-            }
-
-            el.BeginAnimation(OpacityProperty, null);
-
-            var anim = new DoubleAnimation
-            {
-                To = to,
-                Duration = TimeSpan.FromMilliseconds(160),
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
-            };
-
-            el.BeginAnimation(OpacityProperty, anim);
+            return;
         }
 
         private void LoadAndApplySettings()
@@ -1623,8 +1649,6 @@ namespace Executor.WaveUI.WaveViews
                     continue;
                 }
 
-                _targetNavTag = null;
-                _lockedNavTag = null;
                 AnimateSearchScrollTo(targetOffset);
                 break;
             }
@@ -1669,12 +1693,8 @@ namespace Executor.WaveUI.WaveViews
             if (Math.Abs(delta) < 0.5)
             {
                 SettingsScrollViewer.ScrollToVerticalOffset(targetOffset);
-                _isScrollAnimating = false;
-                UpdateNavHighlightFromScroll();
                 return;
             }
-
-            _isScrollAnimating = true;
 
             var durationMs = 320.0;
             var sw = Stopwatch.StartNew();
@@ -1704,9 +1724,6 @@ namespace Executor.WaveUI.WaveViews
                         {
                             return;
                         }
-
-                        _isScrollAnimating = false;
-                        UpdateNavHighlightFromScroll();
                     }), DispatcherPriority.ContextIdle);
                     return;
                 }
@@ -2148,13 +2165,6 @@ private void RightNavItem_OnMouseLeftButtonDown(object sender, MouseButtonEventA
         return;
     }
 
-    // 記錄目標區塊,在動畫期間保持此高亮
-    _targetNavTag = tag;
-    _lockedNavTag = tag;
-    
-    // 立即設置導航高亮
-    SetActiveNav(tag);
-
     _navScrollRequestId++;
     var requestId = _navScrollRequestId;
 
@@ -2183,7 +2193,6 @@ private void RightNavItem_OnMouseLeftButtonDown(object sender, MouseButtonEventA
             {
                 if (requestId == _navScrollRequestId)
                 {
-                    _targetNavTag = null;
                 }
                 return;
             }
@@ -2234,16 +2243,8 @@ private void AnimateScrollTo(double targetOffset, int requestId)
     if (Math.Abs(delta) < 0.5)
     {
         SettingsScrollViewer.ScrollToVerticalOffset(targetOffset);
-
-        if (requestId == _navScrollRequestId && animationId == _scrollAnimationId)
-        {
-            _targetNavTag = null; // 清除目標標記
-        }
         return;
     }
-
-    // 設置動畫標記,阻止 ScrollChanged 更新導航
-    _isScrollAnimating = true;
 
     var durationMs = 320.0;
     var sw = Stopwatch.StartNew();
@@ -2274,12 +2275,6 @@ private void AnimateScrollTo(double targetOffset, int requestId)
                 {
                     return;
                 }
-
-                _isScrollAnimating = false;
-                // 清除目標標記,恢復正常的滾動檢測
-                _targetNavTag = null;
-                // 滾動完成後,手動更新一次導航高亮(這次會正常計算)
-                UpdateNavHighlightFromScroll();
             }), DispatcherPriority.ContextIdle);
             return;
         }

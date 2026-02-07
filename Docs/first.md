@@ -23,3 +23,27 @@
 23. 完成需求在 [✓] 而不是馬上
 24. 名稱定義:
     24-1. todo.md裡面的1./2./3....稱為需求/項目25.如果你要備份檔案,不要放到Executor/Executor,而是放到Executor/Backup,然後要寫上備份日期/原因(允許在程式裡面最上面寫,如果要還原,請刪掉備份日期內容)
+25. config.cfg配置定義:
+    25-1. 如果前面有"WaveUI"/"SynxUI"的話,那個就是針對Wave的(以後可能還會改)
+    25-2. 如果前面有沒有加上"WaveUI"/"SynxUI"的話,那就是全局配置
+    25-3. 例子:
+    - language=zh -> 全局
+    - theme=WaveUI-2025 -> 全局
+    - discord_rpc=true -> 全局
+    - font= -> 全局
+    - opacity=0.8 -> 全局
+    - topmost=true -> 全局
+    - WaveUI_skip_load_app=true -> Wave
+    - WaveUI_small_wave_effect=fade -> Wave
+    - WaveUI_small_wave_opacity=0.5 -> Wave
+26. 樣式部分:
+    26-1. 滑鼠懸浮到按鈕不要出現白色
+    26-1-1. 原因: WPF 預設 Button Template 會在 IsMouseOver 時套用 Highlight/Brush, 造成白色或亮色的底
+    26-1-2. 規則: 任何按鈕(包含像設定列表那種整行可點的 Button)在 Hover 時, 背景與邊框顏色必須保持設計稿, 不可變白
+    26-1-3. 做法(擇一或混用):
+    a. 設定 FocusVisualStyle={x:Null}, 避免焦點框造成額外白邊
+    b. 自己寫 Button Style/ControlTemplate, 並在 Triggers 裡把 IsMouseOver 的 Background/BorderBrush 明確指定成同一色
+    c. 若按鈕只是用來讓整行可點, 可將 Background=Transparent, BorderThickness=0, 並且仍需避免 Hover 套到預設 Template
+    26-1-4. 檢查點:
+    a. 滑鼠移到按鈕上時, 不應出現任何白色遮罩/白底/白邊
+    b. 按下按鈕時(Pressed)若有縮放動畫可以保留, 但不可出現白色高亮

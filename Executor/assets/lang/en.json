@@ -58,6 +58,12 @@
         "Title": "SETTINGS",
         "Subtitle": "Customize Wave to your liking"
       },
+      "ChangeKeyModal": {
+        "Title": "Change Key",
+        "KeyLabel": "Key",
+        "Cancel": "Cancel",
+        "Confirm": "Change"
+      },
       "Section": {
         "Application": "Application",
         "SmallWave": "Wave Floating Ball",
@@ -77,6 +83,11 @@
         "DiscordRpc": {
           "Title": "Discord Rich Presence",
           "Desc": "Show your current theme on Discord"
+        },
+        "ChangeKey": {
+          "Title": "Change Key",
+          "Desc": "Update your key",
+          "Button": "Change"
         },
         "Opacity": {
           "Title": "Transparency",

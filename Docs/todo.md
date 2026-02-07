@@ -18,14 +18,29 @@
 4-3-1.你只需把2025版monaco路徑改成Assets/WaveUI/Monaco/2025,我已經把檔案移動到2025資料夾裡面
 4-3-2.2025版的setting開啟monaco路徑也要改
 4-4.注意:Monaco與png都是絕對路徑,不可能會出現monaco1之類的
+
 [✓] 5.setup的preview圖片使用Assets/Setup裡面的Wave2025.png等
 
-6. 我好奇,我把WaveUI資料夾裡面的檔案移動到WaveUI/2025,為什麼還是可以讀到,比如:
-   - WaveMinimizeWindow.xaml.cs
-   - WaveShell.xaml
-   - WaveAssets.cs
-   - 之類的檔案,可以在Executor\WaveUI\2025 看到
-   - 幫我檢查這樣改會不會有其他問題
+[✓] 6. 我好奇,我把WaveUI資料夾裡面的檔案移動到WaveUI/2025,為什麼還是可以讀到,比如:
+6-1. WaveMinimizeWindow.xaml.cs
+6-2. WaveShell.xaml
+6-3. WaveAssets.cs
+6-4. 之類的檔案,可以在Executor\WaveUI\2025 看到
+6-5. 幫我檢查這樣改會不會有其他問題
 
-7. 把key system page也{f:lang},目前是寫死的,我不要這樣
-8. 你告訴我,config.cfg的"WaveUI"我現在有2025版跟2026版,我要區分他們嗎?
+[✓] 7. 把key system page也{f:lang},目前是寫死的,我不要這樣
+[✓] 8. 你告訴我,config.cfg的"WaveUI"我現在有2025版跟2026版,我要區分他們嗎?
+[✓] 8. 將config.cfg的WaveUI_key改成全局"key"
+
+[✓]9. 在setting page的app列表裡面的透明度上方添加變更Key功能,樣式同setting(不含按鈕),他是個按鈕,點擊後,會彈出窗口,窗口內容:
+9-1. 樣式同editor page的explorer添加腳本的窗口差不多
+9-2. 有取消與變更按鈕,還有輸入key的框,然後會顯示上次的key
+9-3. {f:lang}
+9-4. 取消與變更按鈕樣式動畫是editor page的executor
+9-5. 我希望字跟上面的一樣靠左邊,然後按鈕靠右邊,按鈕樣式跟setting一樣,然後不要key圖案,只要字
+9-6. 需要有字體切換功能(變更key彈窗)
+
+[✓]10. 所有page的字體都要有字體切換功能
+[✓]11. 將setting page的debug 懸浮球偵數移動到懸浮球透明度上方
+[✓]12. 將變更key移動到重新載入上方
+[✓]13. 告訴我setting的所有專有名詞

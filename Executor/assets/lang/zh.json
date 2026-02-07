@@ -58,6 +58,12 @@
         "Title": "SETTINGS",
         "Subtitle": "自訂 Wave 的設定"
       },
+      "ChangeKeyModal": {
+        "Title": "變更 Key",
+        "KeyLabel": "Key",
+        "Cancel": "取消",
+        "Confirm": "變更"
+      },
       "Section": {
         "Application": "應用程式",
         "SmallWave": "Wave懸浮球",
@@ -77,6 +83,11 @@
         "DiscordRpc": {
           "Title": "DiscordRPC",
           "Desc": "在 Discord 顯示目前主題狀態"
+        },
+        "ChangeKey": {
+          "Title": "變更 Key",
+          "Desc": "更新你的 Key",
+          "Button": "變更"
         },
         "Opacity": {
           "Title": "透明度",

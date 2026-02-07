@@ -145,7 +145,7 @@
                         <Run Text="{Binding ElementName=Root, Path=ScriptStatusKeyLabel, Mode=OneWay}" />
                         <Run Text="{Binding ElementName=Root, Path=SelectedScriptKeyStatus, Mode=OneWay}" FontWeight="SemiBold" />
                     </TextBlock>
-                    <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="Consolas" Margin="0,0,0,6">
+                    <TextBlock Foreground="#EDEDED" FontSize="12" FontFamily="{DynamicResource WaveMonoFontFamily}" Margin="0,0,0,6">
                         <Run Text="{Binding ElementName=Root, Path=ScriptStatusModeLabel, Mode=OneWay}" />
                         <Run Text="{Binding ElementName=Root, Path=SelectedScriptModeStatus, Mode=OneWay}" FontWeight="SemiBold" />
                     </TextBlock>
