@@ -79,9 +79,3 @@ WaveHexAPI 有三種實作（對應 `..\Outputs\Executor\APIs` 內的三個資�
 ## WaveHex（WaveHexAPI - WaveHex）
 
 ### 檔案
-
-- `WaveModule.dll`
-- `Injector.exe`
-- `readME.txt`
-
-整合方式請以 `readME.txt`（以及本資料夾內的其他說明文件）為主。

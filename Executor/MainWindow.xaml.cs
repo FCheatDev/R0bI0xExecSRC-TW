@@ -24,11 +24,21 @@ namespace Executor
     {
         private const int ResizeBorderThicknessDip = 6;
         public double TargetOpacity { get; set; } = 1.0;
+        private string _currentTheme = string.Empty;
 
         public MainWindow()
         {
             InitializeComponent();
             Opacity = 0;
+
+            try
+            {
+                Icon = WaveAssets.TryLoadIcon("app");
+            }
+            catch
+            {
+            }
+
             Loaded += (_, _) => BeginFadeIn();
             Closing += (_, _) => SaveTabsStateForExit();
             ApplyLanguage();
@@ -223,11 +233,14 @@ namespace Executor
         {
             var cfg = ConfigManager.ReadConfig();
             var theme = ConfigManager.Get(cfg, "theme") ?? "";
+            _currentTheme = theme;
+            UpdateWindowTitle();
 
             var discordRpcEnabled = true;
             try
             {
                 var raw = ConfigManager.Get(cfg, DiscordRpcService.EnabledConfigKey);
+
                 if (!string.IsNullOrWhiteSpace(raw) && bool.TryParse(raw.Trim(), out var parsed))
                 {
                     discordRpcEnabled = parsed;
@@ -259,6 +272,8 @@ namespace Executor
             }
 
             if (string.Equals(theme, "Wave", System.StringComparison.OrdinalIgnoreCase)
+                || string.Equals(theme, "WaveUI-2025", System.StringComparison.OrdinalIgnoreCase)
+                || string.Equals(theme, "WaveUI-2026/2", System.StringComparison.OrdinalIgnoreCase)
                 || string.Equals(theme, "Synapse X", System.StringComparison.OrdinalIgnoreCase)
                 || string.Equals(theme, "KRNL", System.StringComparison.OrdinalIgnoreCase))
             {
@@ -283,8 +298,52 @@ namespace Executor
 
         private void ApplyLanguage()
         {
-            TitleText.Text = LocalizationManager.T("main.title");
-            Title = TitleText.Text;
+            UpdateWindowTitle();
+        }
+
+        private void UpdateWindowTitle()
+        {
+            var version = GetThemeVersion(_currentTheme);
+            var name = GetThemeExecutorName(_currentTheme);
+            var title = string.IsNullOrWhiteSpace(version)
+                ? name
+                : $"{name} {version}";
+            TitleText.Text = title;
+            Title = title;
+        }
+
+        private static string GetThemeExecutorName(string? theme)
+        {
+            var t = (theme ?? string.Empty).Trim();
+            if (string.Equals(t, "KRNL", StringComparison.OrdinalIgnoreCase))
+            {
+                return "KRNL Executor";
+            }
+
+            if (string.Equals(t, "Synapse X", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t, "SynapseX", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Synapse X Executor";
+            }
+
+            return "Wave Executor";
+        }
+
+        private static string GetThemeVersion(string? theme)
+        {
+            var t = (theme ?? string.Empty).Trim();
+            if (string.Equals(t, "WaveUI-2026/2", StringComparison.OrdinalIgnoreCase))
+            {
+                return "v2026/2";
+            }
+
+            if (string.Equals(t, "WaveUI-2025", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t, "Wave", StringComparison.OrdinalIgnoreCase))
+            {
+                return "v2025";
+            }
+
+            return string.Empty;
         }
 
         private void TitleBar_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -114,11 +114,16 @@
                 <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1" />
             </Grid.RenderTransform>
 
-            <Border Background="Transparent" BorderThickness="0" CornerRadius="32" Padding="12"
+            <Border Width="70"
+                    Height="70"
+                    CornerRadius="35"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    BorderThickness="0"
                     SnapsToDevicePixels="True" UseLayoutRounding="True"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
-                <wave:WaveIcon IconName="wave_logo" Width="40" Height="40" Stretch="Uniform" />
+                <wave:WaveIcon x:Name="ThemeLogoIcon" IconName="wave" Width="40" Height="40" Stretch="Uniform" />
             </Border>
         </Grid>
     </Grid>

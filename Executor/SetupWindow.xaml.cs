@@ -33,6 +33,7 @@ namespace Executor
             var palette = new[]
             {
                 (Color)ColorConverter.ConvertFromString("#2D7DFF"), // Wave - 藍色
+                (Color)ColorConverter.ConvertFromString("#2D7DFF"),
                 (Color)ColorConverter.ConvertFromString("#2AA6FF"), // Synapse X - 淺藍
                 (Color)ColorConverter.ConvertFromString("#6A5CFF"), // KRNL - 紫色
                 (Color)ColorConverter.ConvertFromString("#19C3B3"), // Fluxus - 青色
@@ -47,7 +48,8 @@ namespace Executor
             // 主題名稱列表 - 擴展到10個
             var names = new List<string>
             {
-                "Wave",
+                "WaveUI-2025",
+                "WaveUI-2026/2",
                 "Synapse X",
                 "KRNL",
                 "Fluxus",
@@ -72,7 +74,13 @@ namespace Executor
             var existingTheme = ConfigManager.Get(_config, "theme");
             if (!string.IsNullOrWhiteSpace(existingTheme))
             {
-                var idx = _filteredThemes.FindIndex(t => string.Equals(t.Name, existingTheme, StringComparison.OrdinalIgnoreCase));
+                var matchTheme = existingTheme.Trim();
+                if (string.Equals(matchTheme, "Wave", StringComparison.OrdinalIgnoreCase))
+                {
+                    matchTheme = "WaveUI-2025";
+                }
+
+                var idx = _filteredThemes.FindIndex(t => string.Equals(t.Name, matchTheme, StringComparison.OrdinalIgnoreCase));
                 if (idx >= 0)
                 {
                     ThemeList.SelectedIndex = idx;
@@ -179,8 +187,38 @@ namespace Executor
                 }
 
                 ConfigManager.Set(_config, "language", lang);
-                _stepIndex = 1;
-                UpdateStepUI(animated: true);
+
+                // 淡出語言頁面動畫
+                var fadeOut = new Storyboard();
+                var fadeOutAnimation = new DoubleAnimation
+                {
+                    From = 1,
+                    To = 0,
+                    Duration = TimeSpan.FromMilliseconds(220),
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                };
+                Storyboard.SetTarget(fadeOutAnimation, StepLanguage);
+                Storyboard.SetTargetProperty(fadeOutAnimation, new PropertyPath("Opacity"));
+                fadeOut.Children.Add(fadeOutAnimation);
+
+                var slideOut = new DoubleAnimation
+                {
+                    From = 0,
+                    To = -10,
+                    Duration = TimeSpan.FromMilliseconds(220),
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                };
+                Storyboard.SetTarget(slideOut, StepLanguageTransform);
+                Storyboard.SetTargetProperty(slideOut, new PropertyPath("Y"));
+                fadeOut.Children.Add(slideOut);
+
+                fadeOut.Completed += (s, e) =>
+                {
+                    _stepIndex = 1;
+                    UpdateStepUI(animated: true);
+                };
+
+                fadeOut.Begin();
                 return;
             }
         }
@@ -253,6 +291,42 @@ namespace Executor
             {
                 // Keep finish enabled only when a theme is selected
                 FinishButton.IsEnabled = SelectedTheme != null;
+                
+                // 預覽淡出淡入動畫
+                var previewControl = ThemePreviewControl;
+                if (previewControl != null)
+                {
+                    var fadeOut = new Storyboard();
+                    var fadeOutAnimation = new DoubleAnimation
+                    {
+                        From = 1,
+                        To = 0,
+                        Duration = TimeSpan.FromMilliseconds(150),
+                        EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                    };
+                    Storyboard.SetTarget(fadeOutAnimation, previewControl);
+                    Storyboard.SetTargetProperty(fadeOutAnimation, new PropertyPath("Opacity"));
+                    fadeOut.Children.Add(fadeOutAnimation);
+                    
+                    fadeOut.Completed += (s, e) =>
+                    {
+                        // 淡入動畫
+                        var fadeIn = new Storyboard();
+                        var fadeInAnimation = new DoubleAnimation
+                        {
+                            From = 0,
+                            To = 1,
+                            Duration = TimeSpan.FromMilliseconds(150),
+                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                        };
+                        Storyboard.SetTarget(fadeInAnimation, previewControl);
+                        Storyboard.SetTargetProperty(fadeInAnimation, new PropertyPath("Opacity"));
+                        fadeIn.Children.Add(fadeInAnimation);
+                        fadeIn.Begin();
+                    };
+                    
+                    fadeOut.Begin();
+                }
             }
         }
 
@@ -414,6 +488,7 @@ namespace Executor
         public ThemeItem(string name, Color accentColor)
         {
             Name = name;
+            DisplayName = CreateDisplayName(name);
             LogoText = CreateLogoText(name);
             AccentBrush = new SolidColorBrush(accentColor);
             AccentBrush.Freeze();
@@ -422,6 +497,8 @@ namespace Executor
         }
 
         public string Name { get; }
+        
+        public string DisplayName { get; }
 
         public string LogoText { get; }
 
@@ -433,10 +510,14 @@ namespace Executor
         {
             var safeName = ToSafeFileName(name);
             var baseDir = AppPaths.AppDirectory;
+            
+            // 優先從 Assets/Setup 目錄載入
+            var setupDir = Path.Combine(baseDir, "Assets", "Setup");
             var themeDir = Path.Combine(baseDir, "Assets", "WaveUI");
 
             try
             {
+                Directory.CreateDirectory(setupDir);
                 Directory.CreateDirectory(themeDir);
             }
             catch
@@ -449,10 +530,33 @@ namespace Executor
                 safeName + ".jpg",
                 safeName + ".jpeg",
             };
+            
+            // 特殊處理 WaveUI 主題名稱對應
+            var setupCandidates = new List<string>();
+            if (string.Equals(name, "WaveUI-2025", StringComparison.OrdinalIgnoreCase))
+            {
+                setupCandidates.Add("Wave2025.png");
+                setupCandidates.Add("Wave2025.jpg");
+                setupCandidates.Add("Wave2025.jpeg");
+            }
+            else if (string.Equals(name, "WaveUI-2026/2", StringComparison.OrdinalIgnoreCase))
+            {
+                setupCandidates.Add("Wave2026.png");
+                setupCandidates.Add("Wave2026.jpg");
+                setupCandidates.Add("Wave2026.jpeg");
+            }
+            
+            // 合併候選檔案，Setup 目錄優先
+            var allCandidates = setupCandidates.Concat(candidates).ToList();
 
             if (string.Equals(name, "Wave", StringComparison.OrdinalIgnoreCase))
             {
                 candidates.Insert(0, "Wave.png");
+            }
+            else if (string.Equals(name, "WaveUI-2025", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(name, "WaveUI-2026/2", StringComparison.OrdinalIgnoreCase))
+            {
+                candidates.Add("Wave.png");
             }
             else if (string.Equals(name, "KRNL", StringComparison.OrdinalIgnoreCase))
             {
@@ -475,13 +579,29 @@ namespace Executor
             }
 
             string? fullPath = null;
-            foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+            
+            // 優先從 Assets/Setup 目錄載入
+            foreach (var candidate in allCandidates.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                var p = Path.Combine(themeDir, candidate);
+                var p = Path.Combine(setupDir, candidate);
                 if (File.Exists(p))
                 {
                     fullPath = p;
                     break;
+                }
+            }
+            
+            // 如果 Setup 目錄沒有，則從 Assets/WaveUI 目錄載入
+            if (fullPath == null)
+            {
+                foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    var p = Path.Combine(themeDir, candidate);
+                    if (File.Exists(p))
+                    {
+                        fullPath = p;
+                        break;
+                    }
                 }
             }
 
@@ -543,6 +663,18 @@ namespace Executor
             return s.Trim('_');
         }
 
+        private static string CreateDisplayName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return "?";
+            }
+
+            // 移除 "UI" 字樣
+            var cleanName = name.Replace("UI", "", StringComparison.OrdinalIgnoreCase);
+            return cleanName.Trim();
+        }
+
         private static string CreateLogoText(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -550,7 +682,10 @@ namespace Executor
                 return "?";
             }
 
-            var parts = name
+            // 移除 "UI" 字樣
+            var cleanName = name.Replace("UI", "", StringComparison.OrdinalIgnoreCase);
+
+            var parts = cleanName
                 .Split(new[] { ' ', '-', '_', '.' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(p => p.Trim())
                 .Where(p => p.Length > 0)

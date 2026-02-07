@@ -109,6 +109,7 @@ namespace Executor.WaveUI
                 var candidates = new[]
                 {
                     Path.Combine(baseDir, "Assets", "WaveUI", fileName),
+                    Path.Combine(baseDir, "assets", fileName),
                     Path.Combine(baseDir, "Assets", "icons", "wave", fileName),
                     Path.Combine(baseDir, "assets", "icons", "wave", fileName),
                     Path.Combine(baseDir, "assets", "wave", fileName),
@@ -141,6 +142,7 @@ namespace Executor.WaveUI
             var candidates = new[]
             {
                 $"Assets/WaveUI/{fileName}",
+                $"assets/{fileName}",
                 $"assets/icons/wave/{fileName}",
                 $"Assets/icons/wave/{fileName}",
                 $"assets/wave/{fileName}",

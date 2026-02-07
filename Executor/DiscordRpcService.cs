@@ -128,17 +128,34 @@ namespace Executor
         {
             var details = GetDetails(theme);
             var largeKey = GetLargeImageKey(theme);
+            var state = GetState(theme);
 
             return new RichPresence
             {
                 Details = details,
-                State = "Idle",
+                State = state,
                 Assets = new Assets
                 {
                     LargeImageKey = largeKey,
                     LargeImageText = details,
                 },
             };
+        }
+
+        private static string GetState(string theme)
+        {
+            if (string.Equals(theme, "WaveUI-2026/2", StringComparison.OrdinalIgnoreCase))
+            {
+                return "v2026/2";
+            }
+
+            if (string.Equals(theme, "WaveUI-2025", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(theme, "Wave", StringComparison.OrdinalIgnoreCase))
+            {
+                return "v2025";
+            }
+
+            return "Idle";
         }
 
         private static string GetDetails(string theme)
@@ -176,7 +193,17 @@ namespace Executor
         private static string NormalizeTheme(string? theme)
         {
             var t = (theme ?? string.Empty).Trim();
-            return string.IsNullOrWhiteSpace(t) ? "Wave" : t;
+            if (string.IsNullOrWhiteSpace(t))
+            {
+                return "WaveUI-2025";
+            }
+
+            if (string.Equals(t, "Wave", StringComparison.OrdinalIgnoreCase))
+            {
+                return "WaveUI-2025";
+            }
+
+            return t;
         }
     }
 }

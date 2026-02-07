@@ -791,3 +791,19 @@
 - [ DONE ] 119.在 setting 的「應用程式」分類：於「開機自起」下方新增 DiscordRPC 開關（Switch），可開啟/關閉 DiscordRPC（中英語言 + 寫入配置）
   - [ 錯誤 119-1 ]: 確認 SettingsView 已有 DiscordRpcCheckBox（WaveSwitch）並寫入配置鍵 DiscordRpcService.EnabledConfigKey，且可即時呼叫 DiscordRpcService.ApplyTheme/Shutdown
   - [ 錯誤 119-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 120.由於Wave將大更新UI,請添加選擇"WaveUI-2026/2"discordrpc也要,這個ui,但是顯在還不知道ui長怎樣,舊的就改成WaveUI-2025
+  - [ 錯誤 120-1 ]: 主題選單新增/改名後，需對舊 config 的 theme=Wave 做相容處理（自動視為 WaveUI-2025）
+  - [ 錯誤 120-2 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+
+- [ DONE ] 121.軟體工作列 icon 使用 Docs/app.png(app logo 固定), 視窗標題依 theme 顯示「{Theme} Executor {版本}」且 WaveUI 內部 logo 跟著 theme
+  - [ 錯誤 121-1 ]: 視窗標題原本顯示 DropUI 且會被語言套用覆寫, 已改成依 theme 組合「{Theme} Executor {版本}」並在語言切換/套用主題時保持不被覆寫
+  - [ 錯誤 121-2 ]: WaveShell/WaveMinimizeWindow 內部 logo 原本是固定 app 圖, 已改成依 theme 動態切換 (wave/krnl/synx)
+  - [ 錯誤 121-3 ]: app logo 原本複製到 Assets/WaveUI/app.png, 已調整輸出到 assets/app.png, 並額外把 wave/krnl/synx logo 複製到 assets/
+  - [ 錯誤 121-4 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+- 122.你覺得theme因該分開嗎?就是一個wave做成一個.exe,不過不能執行(含v2025與v2026/2,儲存背景然後主軟體套用,需要依靠主軟體給的參數,比如"Wave-v2025"類似的參數,執行.exe) 因為如果以後全部theme做完的話,軟體感覺會很大,我想上傳到github
+- 122-1.注意,"需求122."是我的構思,不需要完成他,但你必須告訴我這構思是否能執行,並列出潛在的問題
+
+- [ DONE ] 123.懸浮球(小圓球)外觀還原：移除外框/邊框，還原原本無框樣式
+  - [ 錯誤 123-1 ]: dotnet build 警告 CS8604 (DynamicApiManager.cs 參數可能為 Null 參考引數)
+  - [ 錯誤 123-2 ]: 懸浮球原本有黑色邊框/黑底, 原因是外層 Border 的 Background/Border 設定, 已改為 Transparent 並移除 BorderThickness

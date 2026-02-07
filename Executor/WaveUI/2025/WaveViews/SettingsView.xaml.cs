@@ -362,7 +362,7 @@ namespace Executor.WaveUI.WaveViews
 
         public string ApisDirectoryPath => Path.Combine(AppPaths.AppDirectory, "APIs");
 
-        public string MonacoDirectoryPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI", "Monaco");
+        public string MonacoDirectoryPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI", "Monaco", "2025");
 
         public string WaveUiResourcesPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI");
 
@@ -1258,9 +1258,15 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
+            var matchTheme = theme.Trim();
+            if (string.Equals(matchTheme, "Wave", StringComparison.OrdinalIgnoreCase))
+            {
+                matchTheme = "WaveUI-2025";
+            }
+
             foreach (var item in ThemeCombo.Items)
             {
-                if (item is ComboBoxItem cbi && string.Equals(cbi.Content as string, theme, StringComparison.OrdinalIgnoreCase))
+                if (item is ComboBoxItem cbi && string.Equals(cbi.Content as string, matchTheme, StringComparison.OrdinalIgnoreCase))
                 {
                     ThemeCombo.SelectedItem = cbi;
                     return;

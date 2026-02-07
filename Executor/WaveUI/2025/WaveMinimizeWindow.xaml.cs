@@ -65,12 +65,43 @@ namespace Executor.WaveUI
         public WaveMinimizeWindow()
         {
             InitializeComponent();
+            ApplyThemeLogoFromConfig();
             Opacity = 0;
             _holdTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(LongPressMs) };
             _holdTimer.Tick += HoldTimer_Tick;
             _pulseStart = DateTime.UtcNow;
             LoadFrameRateFromConfig();
             LoadEffectFromConfig();
+        }
+
+        private void ApplyThemeLogoFromConfig()
+        {
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var theme = ConfigManager.Get(cfg, "theme") ?? string.Empty;
+                ThemeLogoIcon.IconName = GetThemeLogoIconName(theme);
+            }
+            catch
+            {
+            }
+        }
+
+        private static string GetThemeLogoIconName(string? theme)
+        {
+            var t = (theme ?? string.Empty).Trim();
+            if (string.Equals(t, "KRNL", StringComparison.OrdinalIgnoreCase))
+            {
+                return "krnl";
+            }
+
+            if (string.Equals(t, "Synapse X", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t, "SynapseX", StringComparison.OrdinalIgnoreCase))
+            {
+                return "synx";
+            }
+
+            return "wave";
         }
 
         public void ApplyOpacity(double opacity)

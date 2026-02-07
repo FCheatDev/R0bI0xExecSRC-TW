@@ -64,8 +64,8 @@
         </Style>
 
         <Style x:Key="FlatButton" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="Padding" Value="14,8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
@@ -73,15 +73,16 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="3">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Opacity" Value="0.92" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Opacity" Value="0.85" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Opacity" Value="0.7" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45" />
@@ -93,7 +94,7 @@
         </Style>
 
         <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource FlatButton}">
-            <Setter Property="Background" Value="#2A3550" />
+            <Setter Property="Background" Value="Transparent" />
         </Style>
 
         <Style x:Key="CloseButton" TargetType="Button">
@@ -250,7 +251,7 @@
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                         <Ellipse Width="8" Height="8" Fill="{StaticResource AccentBrush}" Margin="0,0,10,0" />
-                        <TextBlock x:Name="TitleText" Text="First-time Setup" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" />
+                        <TextBlock x:Name="TitleText" Text="DropUI" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" />
                     </StackPanel>
 
                     <Button Grid.Column="1" Margin="0,0,10,0" Style="{StaticResource CloseButton}" Click="CloseButton_OnClick" />
@@ -297,145 +298,102 @@
                             <TextBlock x:Name="ThemeHeaderText" Text="Choose Theme" Foreground="{StaticResource TextBrush}" FontSize="22" FontWeight="SemiBold" />
 
                             <Grid Grid.Row="1" Margin="0,16,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
 
-                                <!-- 搜尋框 -->
-                                <Grid>
-                                    <TextBox x:Name="ThemeSearch" 
-                                             Height="38" 
-                                             Padding="36,8,12,8"
-                                             Style="{StaticResource RoundedTextBox}" 
-                                             TextChanged="ThemeSearch_OnTextChanged" />
+                                <!-- 左側主題清單 -->
+                                <Border Grid.Column="0" Background="#0F1626" BorderBrush="#1F315C" BorderThickness="1" CornerRadius="12">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
 
-                                    <!-- 搜尋圖標 -->
-                                    <Path Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                                          Fill="{StaticResource SubTextBrush}" 
-                                          Width="16" Height="16"
-                                          Stretch="Uniform"
-                                          Margin="12,0,0,0"
-                                          VerticalAlignment="Center" 
-                                          HorizontalAlignment="Left"
-                                          IsHitTestVisible="False" />
+                                        <!-- 搜尋框 -->
+                                        <Grid Grid.Row="0" Margin="12,12,12,8">
+                                            <TextBox x:Name="ThemeSearch" 
+                                                     Height="32" 
+                                                     Padding="32,6,10,6"
+                                                     Style="{StaticResource RoundedTextBox}" 
+                                                     TextChanged="ThemeSearch_OnTextChanged" />
 
-                                    <TextBlock x:Name="ThemeSearchHint" 
-                                               Margin="38,0,0,0" 
-                                               VerticalAlignment="Center" 
-                                               Foreground="{StaticResource SubTextBrush}" 
-                                               IsHitTestVisible="False" 
-                                               Text="Search themes...">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Text, ElementName=ThemeSearch}" Value="">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Grid>
+                                            <!-- 搜尋圖標 -->
+                                            <Path Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                                  Fill="{StaticResource SubTextBrush}" 
+                                                  Width="14" Height="14"
+                                                  Stretch="Uniform"
+                                                  Margin="10,0,0,0"
+                                                  VerticalAlignment="Center" 
+                                                  HorizontalAlignment="Left"
+                                                  IsHitTestVisible="False" />
 
-                                <!-- 主題列表 (網格佈局) -->
-                                <ListBox x:Name="ThemeList" 
-                                         Grid.Row="1" 
-                                         Margin="0,12,0,0" 
-                                         SelectionChanged="ThemeList_OnSelectionChanged" 
-                                         PreviewMouseWheel="ThemeList_OnPreviewMouseWheel" 
-                                         ItemContainerStyle="{StaticResource ThemeListItem}" 
-                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
-                                         ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                                         ScrollViewer.PanningMode="VerticalOnly" 
-                                         ScrollViewer.CanContentScroll="False" 
-                                         HorizontalContentAlignment="Stretch">
-                                    <ListBox.Resources>
-                                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBar}" />
-                                    </ListBox.Resources>
+                                            <TextBlock x:Name="ThemeSearchHint" 
+                                                       Margin="32,0,0,0" 
+                                                       VerticalAlignment="Center" 
+                                                       Foreground="{StaticResource SubTextBrush}" 
+                                                       IsHitTestVisible="False" 
+                                                       Text="Search themes..."
+                                                       FontSize="12">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Text, ElementName=ThemeSearch}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
 
-                                    <!-- 網格佈局 - 2列 -->
-                                    <ListBox.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <UniformGrid Columns="2" />
-                                        </ItemsPanelTemplate>
-                                    </ListBox.ItemsPanel>
+                                        <!-- 主題列表 -->
+                                        <ListBox x:Name="ThemeList" 
+                                                 Grid.Row="1" 
+                                                 Margin="8,0,8,8" 
+                                                 SelectionChanged="ThemeList_OnSelectionChanged" 
+                                                 PreviewMouseWheel="ThemeList_OnPreviewMouseWheel" 
+                                                 ItemContainerStyle="{StaticResource ThemeListItem}" 
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                                                 ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                                                 ScrollViewer.PanningMode="VerticalOnly" 
+                                                 ScrollViewer.CanContentScroll="False" 
+                                                 HorizontalContentAlignment="Stretch"
+                                                 Background="Transparent"
+                                                 BorderThickness="0">
+                                            <ListBox.Resources>
+                                                <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBar}" />
+                                            </ListBox.Resources>
 
-                                    <!-- 主題項目模板 -->
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Height="180" Margin="6">
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="140" />
-                                                    <RowDefinition Height="40" />
-                                                </Grid.RowDefinitions>
-
-                                                <!-- 預覽圖區域 -->
-                                                <Border Grid.Row="0" Background="#0D1428" CornerRadius="12,12,0,0" ClipToBounds="True">
-                                                    <Grid>
-                                                        <!-- 如果有圖片就顯示圖片 -->
-                                                        <Image Source="{Binding ImageUri}" 
-                                                               Stretch="UniformToFill" 
-                                                               RenderOptions.BitmapScalingMode="HighQuality" />
-
-                                                        <!-- 沒有圖片就顯示 Logo 文字 -->
-                                                        <Grid>
-                                                            <Grid.Style>
-                                                                <Style TargetType="Grid">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding ImageUri}" Value="{x:Null}">
-                                                                            <Setter Property="Visibility" Value="Visible" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Grid.Style>
-
-                                                            <!-- Logo 背景圓形 -->
-                                                            <Ellipse Width="60" Height="60" Fill="{Binding AccentBrush}" Opacity="0.2" />
-                                                            <TextBlock Text="{Binding LogoText}" 
-                                                                       Foreground="{Binding AccentBrush}" 
-                                                                       FontSize="24" 
-                                                                       FontWeight="Bold" 
-                                                                       HorizontalAlignment="Center" 
-                                                                       VerticalAlignment="Center" />
-                                                        </Grid>
-
-                                                        <!-- 右下角顏色預覽點 -->
-                                                        <StackPanel Orientation="Horizontal" 
-                                                                    HorizontalAlignment="Right" 
-                                                                    VerticalAlignment="Bottom" 
-                                                                    Margin="0,0,10,10">
-                                                            <Ellipse Width="10" Height="10" Fill="{Binding AccentBrush}" Margin="0,0,4,0" />
-                                                            <Ellipse Width="10" Height="10" Fill="{Binding AccentBrush}" Opacity="0.7" Margin="0,0,4,0" />
-                                                            <Ellipse Width="10" Height="10" Fill="{Binding AccentBrush}" Opacity="0.4" />
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
-
-                                                <!-- 主題名稱區域 -->
-                                                <Border Grid.Row="1" Background="#0D1428" CornerRadius="0,0,12,12" Padding="12,0">
-                                                    <Grid VerticalAlignment="Center">
+                                            <!-- 主題項目模板 -->
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Height="50" Margin="4,2">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
 
-                                                        <TextBlock Text="{Binding Name}" 
+                                                        <!-- 主題名稱 -->
+                                                        <TextBlock Grid.Column="0" 
+                                                                   Text="{Binding DisplayName}" 
                                                                    Foreground="{StaticResource TextBrush}" 
-                                                                   FontWeight="SemiBold" 
-                                                                   FontSize="13"
+                                                                   FontSize="13" 
+                                                                   FontWeight="Bold"
                                                                    VerticalAlignment="Center" 
-                                                                   TextTrimming="CharacterEllipsis" />
+                                                                   Margin="12,0,0,0" />
 
                                                         <!-- 選中時的勾選圖標 -->
-                                                        <Path Grid.Column="1" 
+                                                        <Path Grid.Column="0" 
                                                               Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                                               Fill="{StaticResource AccentBrush}"
                                                               Width="16" Height="16"
                                                               Stretch="Uniform"
-                                                              VerticalAlignment="Center">
+                                                              VerticalAlignment="Center"
+                                                              HorizontalAlignment="Right"
+                                                              Margin="0,0,8,0">
                                                             <Path.Style>
                                                                 <Style TargetType="Path">
                                                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -448,11 +406,120 @@
                                                             </Path.Style>
                                                         </Path>
                                                     </Grid>
-                                                </Border>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 右側預覽區 -->
+                                <Grid Grid.Column="2">
+                                    <Grid Margin="12">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+
+                                        <!-- 預覽標題 -->
+                                        <TextBlock Grid.Row="0" 
+                                                   Text="Preview" 
+                                                   Foreground="{StaticResource TextBrush}" 
+                                                   FontSize="16" 
+                                                   FontWeight="SemiBold" 
+                                                   Margin="0,0,0,12" />
+
+                                        <!-- 預覽內容 -->
+                                        <ContentControl x:Name="ThemePreviewControl" 
+                                                        Grid.Row="1"
+                                                        Content="{Binding SelectedItem, ElementName=ThemeList}"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        VerticalContentAlignment="Stretch">
+                                            <ContentControl.ContentTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="*" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
+
+                                                        <!-- 主題名稱 -->
+                                                        <TextBlock Grid.Row="0" 
+                                                                   Text="{Binding DisplayName}" 
+                                                                   Foreground="{StaticResource TextBrush}" 
+                                                                   FontWeight="SemiBold" 
+                                                                   FontSize="14" 
+                                                                   HorizontalAlignment="Center" 
+                                                                   Margin="0,0,0,16" />
+
+                                                        <!-- 預覽圖 -->
+                                                        <Grid Grid.Row="1" 
+                                                              HorizontalAlignment="Stretch" 
+                                                              VerticalAlignment="Stretch"
+                                                              MinHeight="120">
+                                                            <Grid>
+                                                                <!-- 如果有圖片就顯示圖片 -->
+                                                                <Image Source="{Binding ImageUri}" 
+                                                                       Stretch="Uniform" 
+                                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                                       HorizontalAlignment="Center" 
+                                                                       VerticalAlignment="Center">
+                                                                    <Image.Style>
+                                                                        <Style TargetType="Image">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding ImageUri}" Value="{x:Null}">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Image.Style>
+                                                                </Image>
+
+                                                                <!-- 沒有圖片就顯示 Logo -->
+                                                                <Grid>
+                                                                    <Grid.Style>
+                                                                        <Style TargetType="Grid">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding ImageUri}" Value="{x:Null}">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Grid.Style>
+
+                                                                    <Ellipse Width="60" Height="60" Fill="{Binding AccentBrush}" Opacity="0.2" />
+                                                                    <TextBlock Text="{Binding LogoText}" 
+                                                                               Foreground="{Binding AccentBrush}" 
+                                                                               FontSize="24" 
+                                                                               FontWeight="Bold" 
+                                                                               HorizontalAlignment="Center" 
+                                                                               VerticalAlignment="Center" />
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Grid>
+
+                                                        <!-- 主題描述 -->
+                                                        <StackPanel Grid.Row="2" Margin="0,16,0,0">
+                                                            <TextBlock Text="Accent Color" 
+                                                                       Foreground="{StaticResource SubTextBrush}" 
+                                                                       FontSize="11" 
+                                                                       Margin="0,0,0,4" />
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Ellipse Width="12" Height="12" Fill="{Binding AccentBrush}" Margin="0,0,6,0" />
+                                                                <TextBlock Text="{Binding DisplayName}" 
+                                                                           Foreground="{StaticResource TextBrush}" 
+                                                                           FontSize="12" 
+                                                                           VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ContentControl.ContentTemplate>
+                                        </ContentControl>
+                                    </Grid>
+                                </Grid>
                             </Grid>
                         </Grid>
 

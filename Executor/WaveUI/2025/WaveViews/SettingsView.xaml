@@ -814,7 +814,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock x:Name="BootTitleText" Text="Start on Boot" Foreground="#EDEDED" FontSize="14" FontWeight="Bold" />
+                            <TextBlock x:Name="BootTitleText" Text="Start on Boot" Foreground="#EDEDED" FontSize="14" FontWeight="SemiBold" />
                             <TextBlock x:Name="BootDescText" Text="Automatically have Wave run when your system boots" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
                         </StackPanel>
                         <CheckBox x:Name="BootCheckBox" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource WaveCheckBox}" Checked="BootCheckBox_OnChanged" Unchecked="BootCheckBox_OnChanged" />
@@ -953,7 +953,8 @@
                             <TextBlock x:Name="ThemeDescText" Text="Change UI theme" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" />
                         </StackPanel>
                         <ComboBox x:Name="ThemeCombo" Grid.Column="1" SelectionChanged="ThemeCombo_OnSelectionChanged" MinWidth="160" Style="{StaticResource UnderlineComboBox}" VerticalAlignment="Center">
-                            <ComboBoxItem Content="Wave" />
+                            <ComboBoxItem Content="WaveUI-2025" />
+                            <ComboBoxItem Content="WaveUI-2026/2" />
                             <ComboBoxItem Content="Synapse X" />
                             <ComboBoxItem Content="KRNL" />
                             <ComboBoxItem Content="Fluxus" />
@@ -1321,7 +1322,7 @@
                         <Border CornerRadius="10" Background="#121212" />
                         <Border x:Name="NavApplicationActiveBg" CornerRadius="10" Background="#121212" Opacity="1" />
                         <StackPanel Orientation="Horizontal" Margin="12,10">
-                            <wave:WaveIcon IconName="app" Width="14" Height="14" Stretch="Uniform" />
+                            <wave:WaveIcon IconName="application" Width="14" Height="14" Stretch="Uniform" />
                             <Grid Margin="10,0,0,0">
                                 <TextBlock x:Name="NavApplicationTextInactive" Text="Application" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="0" />
                                 <TextBlock x:Name="NavApplicationTextActive" Text="Application" Foreground="White" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveHeadingFontFamily}" Opacity="1" />

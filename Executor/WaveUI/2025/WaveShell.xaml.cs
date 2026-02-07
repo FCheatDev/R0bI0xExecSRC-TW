@@ -52,8 +52,41 @@ namespace Executor.WaveUI
         public WaveShell()
         {
             InitializeComponent();
+            ApplyThemeLogoFromConfig();
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
+        }
+
+        private void ApplyThemeLogoFromConfig()
+        {
+            try
+            {
+                var cfg = ConfigManager.ReadConfig();
+                var theme = ConfigManager.Get(cfg, "theme") ?? string.Empty;
+                var iconName = GetThemeLogoIconName(theme);
+                ThemeLogoIcon.IconName = iconName;
+            }
+            catch
+            {
+            }
+        }
+
+        private static string GetThemeLogoIconName(string? theme)
+        {
+            var t = (theme ?? string.Empty).Trim();
+
+            if (string.Equals(t, "KRNL", StringComparison.OrdinalIgnoreCase))
+            {
+                return "krnl";
+            }
+
+            if (string.Equals(t, "Synapse X", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t, "SynapseX", StringComparison.OrdinalIgnoreCase))
+            {
+                return "synx";
+            }
+
+            return "wave";
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)

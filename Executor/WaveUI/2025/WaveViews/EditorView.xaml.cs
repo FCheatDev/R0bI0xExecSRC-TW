@@ -926,8 +926,10 @@ namespace Executor.WaveUI.WaveViews
         {
             var candidates = new[]
             {
+                Path.Combine(baseDir, "Assets", "WaveUI", "Monaco", "2025"),
                 Path.Combine(baseDir, "Assets", "WaveUI", "Monaco"),
                 Path.Combine(baseDir, "Assets", "Monaco"),
+                Path.Combine(baseDir, "Assets", "waveUI", "Monaco", "2025"),
                 Path.Combine(baseDir, "Assets", "waveUI", "Monaco"),
                 Path.Combine(baseDir, "waveUI", "Monaco1"),
             };
