@@ -8,6 +8,43 @@
              d:DesignHeight="450" d:DesignWidth="800">
 
     <UserControl.Resources>
+        <Style x:Key="BounceButtonStyle" TargetType="Button">
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsPressed" Value="True">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="0.94" Duration="0:0:0.06" />
+                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="0.94" Duration="0:0:0.06" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Trigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.18">
+                                    <DoubleAnimation.EasingFunction>
+                                        <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.18">
+                                    <DoubleAnimation.EasingFunction>
+                                        <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.ExitActions>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="IconLinkButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
@@ -97,16 +134,28 @@
             <TextBlock x:Name="SubtitleText" Grid.Row="2" Text="Purchase a key from our official&#x0a;store, or from one of our resellers." Foreground="#9AA0A6" TextAlignment="Center" FontSize="12" Margin="0,12,0,0" FontFamily="{DynamicResource WaveSubtitleFontFamily}" />
 
             <Grid Grid.Row="3" Margin="0,18,0,0">
-                <Border Background="#121212" BorderBrush="#202020" BorderThickness="1" CornerRadius="8" Height="34">
+                <Border x:Name="KeyBoxBorder" Background="#141414" BorderBrush="#2A2A2A" BorderThickness="1" CornerRadius="6" Height="28" Width="220" HorizontalAlignment="Center" MouseLeftButtonDown="KeyBoxBorder_OnMouseLeftButtonDown">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#141414" />
+                            <Setter Property="BorderBrush" Value="#2A2A2A" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=KeyBox}" Value="True">
+                                    <Setter Property="Background" Value="#2b2b2b" />
+                                    <Setter Property="BorderBrush" Value="#4e4e4e" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <Grid>
-                        <TextBox x:Name="KeyBox" Background="Transparent" Foreground="#EDEDED" CaretBrush="#FFFFFF" BorderThickness="0" Margin="10,0,29,0" FontSize="12" VerticalContentAlignment="Center" FontFamily="{DynamicResource WaveHeadingFontFamily}" FontWeight="Bold" />
-                        <wave:WaveIcon IconName="key" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBox x:Name="KeyBox" Background="Transparent" Foreground="#EDEDED" CaretBrush="#FFFFFF" BorderThickness="0" Margin="12,0,32,0" FontSize="12" VerticalContentAlignment="Center" FontFamily="{DynamicResource WaveHeadingFontFamily}" FontWeight="Bold" />
+                        <wave:WaveTintIcon IconName="key" TintBrush="White" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" Opacity="0.9" />
                     </Grid>
                 </Border>
             </Grid>
 
             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
-                <Button x:Name="LoginButton" Width="86" Height="30" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Login_OnClick" FontFamily="{DynamicResource WaveTitleFontFamily}" FontSize="14">
+                <Button x:Name="LoginButton" Style="{StaticResource BounceButtonStyle}" Width="86" Height="30" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Click="Login_OnClick" FontFamily="{DynamicResource WaveTitleFontFamily}" FontSize="14">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" CornerRadius="5">
@@ -117,7 +166,7 @@
                     <TextBlock x:Name="LoginButtonText" Text="Log in" FontWeight="SemiBold" FontSize="12" />
                 </Button>
 
-                <Button Width="86" Height="30" Background="#1A1A1A" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" FontSize="14" FontFamily="{DynamicResource WaveTitleFontFamily}">
+                <Button Style="{StaticResource BounceButtonStyle}" Width="86" Height="30" Background="#1A1A1A" Foreground="#EDEDED" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" FontSize="14" FontFamily="{DynamicResource WaveTitleFontFamily}">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" CornerRadius="5">

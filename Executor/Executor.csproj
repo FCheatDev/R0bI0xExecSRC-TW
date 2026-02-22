@@ -78,38 +78,6 @@
       <Link>Assets\WaveUI\%(Filename)%(Extension)</Link>
       <TargetPath>Assets\WaveUI\%(Filename)%(Extension)</TargetPath>
     </Content>
-
-    <Content Include="..\Docs\app.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <Link>assets\app.png</Link>
-      <TargetPath>assets\app.png</TargetPath>
-    </Content>
-
-    <Content Include="..\UI\wave.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <Link>assets\wave.png</Link>
-      <TargetPath>assets\wave.png</TargetPath>
-    </Content>
-
-    <Content Include="..\UI\krnl.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <Link>assets\krnl.png</Link>
-      <TargetPath>assets\krnl.png</TargetPath>
-    </Content>
-
-    <Content Include="..\UI\synx.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <Link>assets\synx.png</Link>
-      <TargetPath>assets\synx.png</TargetPath>
-    </Content>
   </ItemGroup>
 
   <!-- 語言檔案 -->

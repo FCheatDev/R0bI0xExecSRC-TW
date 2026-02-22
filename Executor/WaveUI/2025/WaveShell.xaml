@@ -63,126 +63,59 @@
         </Style>
 
         <Style x:Key="Win11CaptionButton" TargetType="Button">
-            <Setter Property="Width" Value="46" />
+            <Setter Property="Width" Value="38" />
             <Setter Property="Height" Value="44" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#6c6c6c" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="UseLayoutRounding" Value="True" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root" CornerRadius="0" SnapsToDevicePixels="True" UseLayoutRounding="True" CacheMode="BitmapCache">
-                            <Border.Background>
-                                <SolidColorBrush x:Name="BgBrush" Color="Transparent" />
-                            </Border.Background>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition GeneratedDuration="0:0:0.083">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <PowerEase Power="1" EasingMode="EaseInOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal">
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BgBrush"
-                                                            Storyboard.TargetProperty="Color"
-                                                            To="Transparent"
-                                                            Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="MouseOver">
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BgBrush"
-                                                            Storyboard.TargetProperty="Color"
-                                                            To="#0FFFFFFF"
-                                                            Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BgBrush"
-                                                            Storyboard.TargetProperty="Color"
-                                                            To="#0AFFFFFF"
-                                                            Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled">
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             To="0.4"
-                                                             Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1" />
+                            </Border.RenderTransform>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#ababab" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="RootScale" Storyboard.TargetProperty="ScaleX" To="0.92" Duration="0:0:0.08" />
+                                            <DoubleAnimation Storyboard.TargetName="RootScale" Storyboard.TargetProperty="ScaleY" To="0.92" Duration="0:0:0.08" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="RootScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12" />
+                                            <DoubleAnimation Storyboard.TargetName="RootScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <Style x:Key="Win11CloseCaptionButton" TargetType="Button" BasedOn="{StaticResource Win11CaptionButton}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root" CornerRadius="0" SnapsToDevicePixels="True" UseLayoutRounding="True" CacheMode="BitmapCache">
-                            <Border.Background>
-                                <SolidColorBrush x:Name="BgBrush" Color="Transparent" />
-                            </Border.Background>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition GeneratedDuration="0:0:0.083">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <PowerEase Power="1" EasingMode="EaseInOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal">
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BgBrush"
-                                                            Storyboard.TargetProperty="Color"
-                                                            To="Transparent"
-                                                            Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="MouseOver">
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BgBrush"
-                                                            Storyboard.TargetProperty="Color"
-                                                            To="#C42B1C"
-                                                            Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BgBrush"
-                                                            Storyboard.TargetProperty="Color"
-                                                            To="#E6C42B1C"
-                                                            Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled">
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                             To="0.4"
-                                                             Duration="0:0:0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <Style x:Key="Win11CloseCaptionButton" TargetType="Button" BasedOn="{StaticResource Win11CaptionButton}" />
 
         <Style x:Key="TopIconButton" TargetType="Button">
             <Setter Property="Width" Value="38" />
@@ -274,65 +207,79 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border x:Name="TopBar" Grid.Row="0" Background="#0a0a0a" Padding="0,0,5,0" MouseLeftButtonDown="TopBar_OnMouseLeftButtonDown">
+        <Border x:Name="TopBar" Grid.Row="0" Background="#0a0a0a" Padding="0" MouseLeftButtonDown="TopBar_OnMouseLeftButtonDown">
             <DockPanel LastChildFill="False">
-                <StackPanel x:Name="TopNav" DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                    <wave:WaveIcon x:Name="ThemeLogoIcon" IconName="wave" Width="22" Height="22" Stretch="Uniform" Margin="6,0,20,0" />
+                <StackPanel x:Name="TopNav" DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0">
+                    <wave:WaveTintIcon x:Name="ThemeLogoIcon" IconName="wave" TintBrush="White" Width="22" Height="22" Margin="14,0,20,0" />
+                    <wave:WaveIcon x:Name="KeyLogoIcon" IconName="wave" Width="28" Height="28" Stretch="Uniform" Margin="6,0,20,0" Visibility="Collapsed" />
 
-                    <ToggleButton x:Name="TabHome" Style="{StaticResource WaveTabButton}" IsChecked="True" Click="Tab_OnClick" Tag="Home">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <wave:WaveTintIcon x:Name="TabHomeIcon" IconName="home" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabHomeText" Text="HOME" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
-                                <TextBlock.LayoutTransform>
-                                    <ScaleTransform x:Name="TabHomeTextScale" ScaleX="1" ScaleY="1" />
-                                </TextBlock.LayoutTransform>
-                            </TextBlock>
-                        </StackPanel>
-                    </ToggleButton>
+                    <StackPanel x:Name="TopTabs" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton x:Name="TabHome" Style="{StaticResource WaveTabButton}" IsChecked="True" Click="Tab_OnClick" Tag="Home">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <wave:WaveTintIcon x:Name="TabHomeIcon" IconName="home" Width="16" Height="16" Margin="0,0,8,0" />
+                                <TextBlock x:Name="TabHomeText" Text="HOME" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
+                                    <TextBlock.LayoutTransform>
+                                        <ScaleTransform x:Name="TabHomeTextScale" ScaleX="1" ScaleY="1" />
+                                    </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </StackPanel>
+                        </ToggleButton>
 
-                    <ToggleButton x:Name="TabEditor" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Editor">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <wave:WaveTintIcon x:Name="TabEditorIcon" IconName="editor" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabEditorText" Text="EDITOR" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
-                                <TextBlock.LayoutTransform>
-                                    <ScaleTransform x:Name="TabEditorTextScale" ScaleX="0" ScaleY="1" />
-                                </TextBlock.LayoutTransform>
-                            </TextBlock>
-                        </StackPanel>
-                    </ToggleButton>
+                        <ToggleButton x:Name="TabEditor" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Editor">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <wave:WaveTintIcon x:Name="TabEditorIcon" IconName="editor" Width="16" Height="16" Margin="0,0,8,0" />
+                                <TextBlock x:Name="TabEditorText" Text="EDITOR" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
+                                    <TextBlock.LayoutTransform>
+                                        <ScaleTransform x:Name="TabEditorTextScale" ScaleX="0" ScaleY="1" />
+                                    </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </StackPanel>
+                        </ToggleButton>
 
-                    <ToggleButton x:Name="TabScripts" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Scripts">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <wave:WaveTintIcon x:Name="TabScriptsIcon" IconName="scripts" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabScriptsText" Text="SCRIPTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
-                                <TextBlock.LayoutTransform>
-                                    <ScaleTransform x:Name="TabScriptsTextScale" ScaleX="0" ScaleY="1" />
-                                </TextBlock.LayoutTransform>
-                            </TextBlock>
-                        </StackPanel>
-                    </ToggleButton>
+                        <ToggleButton x:Name="TabConsole" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Console">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <wave:WaveTintIcon x:Name="TabConsoleIcon" IconName="console" Width="16" Height="16" Margin="0,0,8,0" />
+                                <TextBlock x:Name="TabConsoleText" Text="CONSOLE" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
+                                    <TextBlock.LayoutTransform>
+                                        <ScaleTransform x:Name="TabConsoleTextScale" ScaleX="0" ScaleY="1" />
+                                    </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </StackPanel>
+                        </ToggleButton>
 
-                    <ToggleButton x:Name="TabClients" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Clients">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <wave:WaveTintIcon x:Name="TabClientsIcon" IconName="clients" Width="16" Height="16" Margin="0,0,8,0" />
-                            <TextBlock x:Name="TabClientsText" Text="CLIENTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5"> 
-                                <TextBlock.LayoutTransform>
-                                    <ScaleTransform x:Name="TabClientsTextScale" ScaleX="0" ScaleY="1" />
-                                </TextBlock.LayoutTransform>
-                            </TextBlock>
-                        </StackPanel>
-                    </ToggleButton>
+                        <ToggleButton x:Name="TabScripts" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Scripts">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <wave:WaveTintIcon x:Name="TabScriptsIcon" IconName="scripts" Width="16" Height="16" Margin="0,0,8,0" />
+                                <TextBlock x:Name="TabScriptsText" Text="SCRIPTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
+                                    <TextBlock.LayoutTransform>
+                                        <ScaleTransform x:Name="TabScriptsTextScale" ScaleX="0" ScaleY="1" />
+                                    </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </StackPanel>
+                        </ToggleButton>
 
-                    <ToggleButton x:Name="TabSettings" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Settings">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <wave:WaveTintIcon x:Name="TabSettingsIcon" IconName="settings" Width="16" Height="16" Margin="0,0,8,0" Loaded="TabSettingsIcon_Loaded" />
-                            <TextBlock x:Name="TabSettingsText" Text="SETTINGS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
-                                <TextBlock.LayoutTransform>
-                                    <ScaleTransform x:Name="TabSettingsTextScale" ScaleX="0" ScaleY="1" />
-                                </TextBlock.LayoutTransform>
-                            </TextBlock>
-                        </StackPanel>
-                    </ToggleButton>
+                        <ToggleButton x:Name="TabClients" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Clients">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <wave:WaveTintIcon x:Name="TabClientsIcon" IconName="clients" Width="16" Height="16" Margin="0,0,8,0" />
+                                <TextBlock x:Name="TabClientsText" Text="CLIENTS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5"> 
+                                    <TextBlock.LayoutTransform>
+                                        <ScaleTransform x:Name="TabClientsTextScale" ScaleX="0" ScaleY="1" />
+                                    </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </StackPanel>
+                        </ToggleButton>
+
+                        <ToggleButton x:Name="TabSettings" Style="{StaticResource WaveTabButton}" Margin="14,0,0,0" Click="Tab_OnClick" Tag="Settings">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <wave:WaveTintIcon x:Name="TabSettingsIcon" IconName="settings" Width="16" Height="16" Margin="0,0,8,0" Loaded="TabSettingsIcon_Loaded" />
+                                <TextBlock x:Name="TabSettingsText" Text="SETTINGS" Foreground="{StaticResource WaveText}" FontWeight="SemiBold" FontSize="12" FontFamily="{DynamicResource WaveTitleFontFamily}" RenderTransformOrigin="0,0.5">
+                                    <TextBlock.LayoutTransform>
+                                        <ScaleTransform x:Name="TabSettingsTextScale" ScaleX="0" ScaleY="1" />
+                                    </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </StackPanel>
+                        </ToggleButton>
+                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0">
@@ -341,7 +288,7 @@
                     </Button>
                     <Button Style="{StaticResource Win11CaptionButton}" Click="Minimize_OnClick">
                         <Viewbox Width="10" Height="10" Stretch="Uniform" SnapsToDevicePixels="True" UseLayoutRounding="True">
-                            <Path Stroke="White" StrokeThickness="1" Data="M 1,5.5 H 9" SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased" />
+                            <Path Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1" Data="M 1,5.5 H 9" SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased" />
                         </Viewbox>
                     </Button>
                     <Button Style="{StaticResource Win11CaptionButton}" Click="Maximize_OnClick">
@@ -349,12 +296,12 @@
                             <Grid.RenderTransform>
                                 <RotateTransform x:Name="MaximizeIconRotate" Angle="0" />
                             </Grid.RenderTransform>
-                            <Path Stroke="White" StrokeThickness="1" Data="M 1.5,1.5 H 8.5 V 8.5 H 1.5 Z" SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased" />
+                            <Path Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1" Data="M 1.5,1.5 H 8.5 V 8.5 H 1.5 Z" SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased" />
                         </Grid>
                     </Button>
                     <Button Style="{StaticResource Win11CloseCaptionButton}" Click="Close_OnClick">
                         <Viewbox Width="10" Height="10" Stretch="Uniform" SnapsToDevicePixels="True" UseLayoutRounding="True">
-                            <Path Stroke="White" StrokeThickness="1" Data="M 2,2 L 8,8 M 8,2 L 2,8" SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased" />
+                            <Path Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1" Data="M 2,2 L 8,8 M 8,2 L 2,8" SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased" />
                         </Viewbox>
                     </Button>
                 </StackPanel>

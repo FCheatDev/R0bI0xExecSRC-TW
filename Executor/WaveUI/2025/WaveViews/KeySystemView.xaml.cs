@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -353,6 +354,30 @@ namespace Executor.WaveUI.WaveViews
                 return;
             }
 
+            try
+            {
+                var src = e.OriginalSource as DependencyObject;
+                while (src != null)
+                {
+                    if (src == KeyBoxBorder)
+                    {
+                        KeyBox?.Focus();
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (src is ButtonBase || src is TextBoxBase || src is PasswordBox)
+                    {
+                        return;
+                    }
+
+                    src = VisualTreeHelper.GetParent(src);
+                }
+            }
+            catch
+            {
+            }
+
             var w = Window.GetWindow(this);
             if (w == null)
             {
@@ -362,6 +387,18 @@ namespace Executor.WaveUI.WaveViews
             try
             {
                 w.DragMove();
+            }
+            catch
+            {
+            }
+        }
+
+        private void KeyBoxBorder_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                KeyBox?.Focus();
+                e.Handled = true;
             }
             catch
             {

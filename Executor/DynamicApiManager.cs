@@ -45,7 +45,7 @@ namespace Executor
             try
             {
                 // 如果已有實例，先清理
-                if (_apiInstances.ContainsKey(_currentApiName))
+                if (!string.IsNullOrWhiteSpace(_currentApiName) && _apiInstances.ContainsKey(_currentApiName))
                 {
                     CleanupApiInstance(_currentApiName);
                 }
@@ -62,6 +62,12 @@ namespace Executor
                     System.Diagnostics.Debug.WriteLine($"Successfully set current API: {apiName}");
                     return true;
                 }
+
+                // 有些第三方 API 只提供 static 類（無法 Activator.CreateInstance）。
+                // 這種情況仍允許切換成功：由呼叫端走反射 fallback（SpashApiInvoker 的原始反射路徑）。
+                _currentApiName = apiName;
+                System.Diagnostics.Debug.WriteLine($"Set current API without instance (static-only API?): {apiName}");
+                return true;
             }
             catch (Exception ex)
             {

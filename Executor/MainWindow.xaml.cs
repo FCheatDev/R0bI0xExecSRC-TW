@@ -23,6 +23,7 @@ namespace Executor
     public partial class MainWindow : Window
     {
         private const int ResizeBorderThicknessDip = 6;
+        private const double NormalCornerRadius = 3;
         public double TargetOpacity { get; set; } = 1.0;
         private string _currentTheme = string.Empty;
 
@@ -40,6 +41,9 @@ namespace Executor
             }
 
             Loaded += (_, _) => BeginFadeIn();
+            Loaded += (_, _) => UpdateRoundedChrome();
+            SizeChanged += (_, _) => UpdateRoundedChrome();
+            StateChanged += (_, _) => UpdateRoundedChrome();
             Closing += (_, _) => SaveTabsStateForExit();
             ApplyLanguage();
             LocalizationManager.LanguageChanged += OnLanguageChanged;
@@ -48,6 +52,36 @@ namespace Executor
             SourceInitialized += OnSourceInitialized;
 
             ApplyTheme();
+        }
+
+        private void UpdateRoundedChrome()
+        {
+            try
+            {
+                if (RootBorder == null)
+                {
+                    return;
+                }
+
+                var radius = WindowState == WindowState.Maximized ? 0 : NormalCornerRadius;
+                RootBorder.CornerRadius = new CornerRadius(radius);
+
+                var w = RootBorder.ActualWidth;
+                var h = RootBorder.ActualHeight;
+                if (w <= 0 || h <= 0)
+                {
+                    RootBorder.Clip = null;
+                    return;
+                }
+
+                var bt = RootBorder.BorderThickness;
+                var t = Math.Max(Math.Max(bt.Left, bt.Top), Math.Max(bt.Right, bt.Bottom));
+                var half = t / 2.0;
+                RootBorder.Clip = new RectangleGeometry(new Rect(-half, -half, w + t, h + t), radius, radius);
+            }
+            catch
+            {
+            }
         }
 
         private void SaveTabsStateForExit()
@@ -281,7 +315,7 @@ namespace Executor
                 TitleBarRow.Height = new GridLength(0);
                 ThemeHost.Content = new WaveShell();
 
-                Background = Brushes.Black;
+                Background = Brushes.Transparent;
                 RootBorder.Background = Brushes.Black;
                 Width = 1000;
                 Height = 600;

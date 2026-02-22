@@ -66,6 +66,59 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="HomeBounceButtonStyle" TargetType="Button">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" CornerRadius="8" Padding="12,6">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleX)}"
+                                                ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleY)}" />
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.94" Duration="0:0:0.06" />
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.94" Duration="0:0:0.06" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="Black" Margin="12,10,12,12">
@@ -88,18 +141,18 @@
                 <TextBlock x:Name="WelcomeText" Text="Welcome to Wave," Foreground="#EDEDED" FontSize="18" FontWeight="SemiBold" FontFamily="{DynamicResource WaveHeadingFontFamily}" />
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,0">
-                    <Border Background="#1DA1F2" CornerRadius="8" Padding="12,6" Margin="0,0,10,0" Cursor="Hand" MouseLeftButtonDown="Website_OnClick">
+                    <Button Background="#1DA1F2" Margin="0,0,10,0" Cursor="Hand" Click="Website_OnClick" Style="{StaticResource HomeBounceButtonStyle}">
                         <StackPanel Orientation="Horizontal">
                             <wave:WaveIcon IconName="globe" Width="14" Height="14" Stretch="Uniform" />
                             <TextBlock x:Name="WebsiteText" Text="Website" Foreground="White" FontSize="12" Margin="8,0,0,0" FontWeight="Bold" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                         </StackPanel>
-                    </Border>
-                    <Border Background="#1A1A1A" CornerRadius="8" Padding="12,6" Cursor="Hand" MouseLeftButtonDown="Store_OnClick">
+                    </Button>
+                    <Button Background="#1A1A1A" Cursor="Hand" Click="Store_OnClick" Style="{StaticResource HomeBounceButtonStyle}">
                         <StackPanel Orientation="Horizontal">
                             <wave:WaveIcon IconName="store" Width="14" Height="14" Stretch="Uniform" />
                             <TextBlock x:Name="StoreText" Text="Store" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" Margin="8,0,0,0" FontFamily="{DynamicResource WaveTitleFontFamily}" />
                         </StackPanel>
-                    </Border>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

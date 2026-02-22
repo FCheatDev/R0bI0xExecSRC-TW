@@ -608,7 +608,7 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
-        private void Website_OnClick(object sender, MouseButtonEventArgs e)
+        private void Website_OnClick(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -624,7 +624,7 @@ namespace Executor.WaveUI.WaveViews
             }
         }
 
-        private void Store_OnClick(object sender, MouseButtonEventArgs e)
+        private void Store_OnClick(object sender, RoutedEventArgs e)
         {
             try
             {

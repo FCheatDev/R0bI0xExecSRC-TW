@@ -4,11 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Executor"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800"
         WindowStyle="None"
         ResizeMode="CanResize"
-        AllowsTransparency="True"
+        AllowsTransparency="False"
         Background="Transparent"
         SnapsToDevicePixels="True" UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="Grayscale" TextOptions.TextHintingMode="Fixed">
@@ -47,8 +48,12 @@
         </Style>
     </Window.Resources>
 
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" CornerRadius="3" GlassFrameThickness="0" ResizeBorderThickness="6" UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
     <Grid>
-        <Border x:Name="RootBorder" CornerRadius="0,0,18,18" Background="{StaticResource PanelBrush}" BorderBrush="#323232" BorderThickness="1" SnapsToDevicePixels="True" Margin="-3,0,-3,-3">
+        <Border x:Name="RootBorder" CornerRadius="3" Background="{StaticResource PanelBrush}" BorderBrush="#323232" BorderThickness="1" SnapsToDevicePixels="True" Margin="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition x:Name="TitleBarRow" Height="44" />

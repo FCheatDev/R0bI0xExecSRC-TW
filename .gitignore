@@ -3,6 +3,9 @@
 Executor/**/bin/
 Executor/**/obj/
 
+Backup/
+backup/
+
 *.user
 *.suo
 *.userosscache

@@ -596,6 +596,7 @@ private static bool IsRobloxProcessRunning()
         {
             TabHome.IsChecked = string.Equals(tab, "Home", StringComparison.OrdinalIgnoreCase);
             TabEditor.IsChecked = string.Equals(tab, "Editor", StringComparison.OrdinalIgnoreCase);
+            TabConsole.IsChecked = string.Equals(tab, "Console", StringComparison.OrdinalIgnoreCase);
             TabScripts.IsChecked = string.Equals(tab, "Scripts", StringComparison.OrdinalIgnoreCase);
             TabClients.IsChecked = string.Equals(tab, "Clients", StringComparison.OrdinalIgnoreCase);
             TabSettings.IsChecked = string.Equals(tab, "Settings", StringComparison.OrdinalIgnoreCase);
@@ -605,18 +606,21 @@ private static bool IsRobloxProcessRunning()
 
             TabHomeText.Foreground = TabHome.IsChecked == true ? active : inactive;
             TabEditorText.Foreground = TabEditor.IsChecked == true ? active : inactive;
+            TabConsoleText.Foreground = TabConsole.IsChecked == true ? active : inactive;
             TabScriptsText.Foreground = TabScripts.IsChecked == true ? active : inactive;
             TabClientsText.Foreground = TabClients.IsChecked == true ? active : inactive;
             TabSettingsText.Foreground = TabSettings.IsChecked == true ? active : inactive;
 
             TabHomeIcon.TintBrush = TabHome.IsChecked == true ? active : inactive;
             TabEditorIcon.TintBrush = TabEditor.IsChecked == true ? active : inactive;
+            TabConsoleIcon.TintBrush = TabConsole.IsChecked == true ? active : inactive;
             TabScriptsIcon.TintBrush = TabScripts.IsChecked == true ? active : inactive;
             TabClientsIcon.TintBrush = TabClients.IsChecked == true ? active : inactive;
             TabSettingsIcon.TintBrush = TabSettings.IsChecked == true ? active : inactive;
 
             AnimateTabText(TabHomeTextScale, TabHome.IsChecked == true);
             AnimateTabText(TabEditorTextScale, TabEditor.IsChecked == true);
+            AnimateTabText(TabConsoleTextScale, TabConsole.IsChecked == true);
             AnimateTabText(TabScriptsTextScale, TabScripts.IsChecked == true);
             AnimateTabText(TabClientsTextScale, TabClients.IsChecked == true);
             AnimateTabText(TabSettingsTextScale, TabSettings.IsChecked == true);
@@ -735,6 +739,7 @@ private static bool IsRobloxProcessRunning()
                 "key" => new WaveViews.KeySystemView(OnKeyVerified),
                 "home" => new WaveViews.HomeView(),
                 "editor" => new WaveViews.EditorView(ShowToast),
+                "console" => new WaveViews.ConsoleView(),
                 "scripts" => new WaveViews.ScriptsView(ShowToast, OpenScriptInEditor, ExecuteScriptInEditor),
                 "clients" => new WaveViews.ClientsView(),
                 "settings" => new WaveViews.SettingsView(),
@@ -1001,7 +1006,22 @@ private static bool IsRobloxProcessRunning()
             var hideNav = key is ("load" or "key");
             TopBar.Visibility = Visibility.Visible;
             TopBarRow.Height = new GridLength(44);
-            TopNav.Visibility = hideNav ? Visibility.Collapsed : Visibility.Visible;
+            TopNav.Visibility = Visibility.Visible;
+
+            if (TopTabs != null)
+            {
+                TopTabs.Visibility = hideNav ? Visibility.Collapsed : Visibility.Visible;
+            }
+
+            if (ThemeLogoIcon != null)
+            {
+                ThemeLogoIcon.Visibility = hideNav ? Visibility.Collapsed : Visibility.Visible;
+            }
+
+            if (KeyLogoIcon != null)
+            {
+                KeyLogoIcon.Visibility = hideNav ? Visibility.Visible : Visibility.Collapsed;
+            }
 
             TopBar.Background = Brushes.Black;
             ShellRoot.Background = Brushes.Black;

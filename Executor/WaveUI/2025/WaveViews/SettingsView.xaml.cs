@@ -548,6 +548,10 @@ namespace Executor.WaveUI.WaveViews
 
         public string ApisDirectoryPath => Path.Combine(AppPaths.AppDirectory, "APIs");
 
+        public string AppDirectoryPathDisplay => TruncateAfterBin(AppDirectoryPath);
+
+        public string ApisDirectoryPathDisplay => TruncateAfterBin(ApisDirectoryPath);
+
         public string MonacoDirectoryPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI", "Monaco", "2025");
 
         public string WaveUiResourcesPath => Path.Combine(AppPaths.AppDirectory, "Assets", "WaveUI");
@@ -555,6 +559,29 @@ namespace Executor.WaveUI.WaveViews
         public string MonacoDirectoryPathDisplay => TruncateAfterAssets(MonacoDirectoryPath);
 
         public string WaveUiResourcesPathDisplay => TruncateAfterAssets(WaveUiResourcesPath);
+
+        private static string TruncateAfterBin(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            const string token = "\\bin\\";
+            var idx = path.IndexOf(token, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0)
+            {
+                return path;
+            }
+
+            var cut = idx + token.Length;
+            if (cut < 0 || cut > path.Length)
+            {
+                return path;
+            }
+
+            return path[..cut] + "...";
+        }
 
         private static string TruncateAfterAssets(string path)
         {
@@ -654,6 +681,8 @@ namespace Executor.WaveUI.WaveViews
         private bool? _lastApiDebugIsRobloxOpen;
         private int _apiDebugPollId;
         private bool _apiDebugPollRunning;
+        private bool _hasVersionJsonError;
+        private bool _isVersionJsonMissing;
 
         public SettingsView()
         {
@@ -851,6 +880,9 @@ namespace Executor.WaveUI.WaveViews
             SmallWaveFpsDescText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Debug.SmallWaveFps.Desc");
 
             SettingsSearchPlaceholderText.Text = LocalizationManager.T("WaveUI.Editor.Explorer.SearchHint");
+
+            RunCheckerButtonText.Text = LocalizationManager.T("WaveUI.Settings.APIs.Choose.RunChecker");
+            UpdateApiErrorMessageText();
 
             RefreshSettingsSearchBaseText();
             ApplySettingsSearchHighlight();
@@ -2321,12 +2353,17 @@ private void AnimateScrollTo(double targetOffset, int requestId)
         private void LoadApisFromVersionJson()
         {
             ApiItems.Clear();
+            _hasVersionJsonError = false;
+            _isVersionJsonMissing = false;
 
             try
             {
                 var path = GetVersionJsonPath();
                 if (!File.Exists(path))
                 {
+                    _hasVersionJsonError = true;
+                    _isVersionJsonMissing = true;
+                    UpdateApiModalErrorVisibility();
                     return;
                 }
 
@@ -2335,9 +2372,13 @@ private void AnimateScrollTo(double targetOffset, int requestId)
 
                 if (!doc.RootElement.TryGetProperty("APIs", out var apisElement) || apisElement.ValueKind != JsonValueKind.Object)
                 {
+                    _hasVersionJsonError = true;
+                    _isVersionJsonMissing = false;
+                    UpdateApiModalErrorVisibility();
                     return;
                 }
 
+                var hasAnyApi = false;
                 foreach (var apiProp in apisElement.EnumerateObject())
                 {
                     var apiName = apiProp.Name;
@@ -2365,11 +2406,55 @@ private void AnimateScrollTo(double targetOffset, int requestId)
                         Sunc = sunc, 
                         Unc = unc 
                     });
+                    hasAnyApi = true;
                 }
+
+                if (!hasAnyApi)
+                {
+                    _hasVersionJsonError = true;
+                    _isVersionJsonMissing = false;
+                }
+
+                UpdateApiModalErrorVisibility();
             }
             catch
             {
+                _hasVersionJsonError = true;
+                _isVersionJsonMissing = false;
+                UpdateApiModalErrorVisibility();
             }
+        }
+
+        private void UpdateApiModalErrorVisibility()
+        {
+            if (ApiItemsControl == null || ApiErrorPanel == null)
+            {
+                return;
+            }
+
+            if (_hasVersionJsonError)
+            {
+                ApiItemsControl.Visibility = Visibility.Collapsed;
+                ApiErrorPanel.Visibility = Visibility.Visible;
+                UpdateApiErrorMessageText();
+            }
+            else
+            {
+                ApiItemsControl.Visibility = Visibility.Visible;
+                ApiErrorPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateApiErrorMessageText()
+        {
+            if (ApiErrorMessageText == null)
+            {
+                return;
+            }
+
+            ApiErrorMessageText.Text = _isVersionJsonMissing
+                ? LocalizationManager.T("WaveUI.Settings.APIs.Choose.MissingVersion")
+                : LocalizationManager.T("WaveUI.Settings.APIs.Choose.InvalidVersion");
         }
 
         private void ApplyInitialSelectedApi()
@@ -2426,6 +2511,44 @@ private void AnimateScrollTo(double targetOffset, int requestId)
         private void CloseApiModalButton_OnClick(object sender, RoutedEventArgs e)
         {
             HideApiModal();
+        }
+
+        private void RunChecker_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var checkerPath = Path.GetFullPath(Path.Combine(AppPaths.AppDirectory, "..", "checker.exe"));
+                
+                if (!File.Exists(checkerPath))
+                {
+                    WaveToastService.Show(
+                        LocalizationManager.T("WaveUI.Common.Error"),
+                        LocalizationManager.T("WaveUI.Settings.APIs.Choose.CheckerNotFound"));
+                    return;
+                }
+
+                HideApiModal();
+                Process.Start(new ProcessStartInfo(checkerPath)
+                {
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(checkerPath)
+                });
+
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        Application.Current?.Shutdown();
+                    }
+                    catch
+                    {
+                    }
+                }));
+            }
+            catch (Exception ex)
+            {
+                WaveToastService.Show("Error", ex.Message);
+            }
         }
 
         private void ApiModalBackdrop_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

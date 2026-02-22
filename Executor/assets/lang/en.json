@@ -2,15 +2,19 @@
   "main.title": "Wave",
   "setup.title": "Setup",
   "setup.choose_language": "Choose your language",
+  "setup.choose_mode": "Choose injection mode",
   "setup.choose_theme": "Choose your theme",
   "setup.search_hint": "Search...",
   "setup.lang_zh": "Chinese",
   "setup.lang_en": "English",
+  "setup.mode_internal": "Internal",
+  "setup.mode_external": "External",
   "setup.back": "Back",
   "setup.next": "Next",
   "setup.finish": "Finish",
   "setup.window_title": "Wave Setup",
   "setup.msg_choose_language": "Please choose a language.",
+  "setup.msg_choose_mode": "Please choose an injection mode.",
   "setup.msg_select_theme": "Please select a theme.",
 
   "WaveUI": {
@@ -81,7 +85,7 @@
           "Desc": "Automatically have Wave run when your system boots"
         },
         "DiscordRpc": {
-          "Title": "Discord Rich Presence",
+          "Title": "DiscordRPC",
           "Desc": "Show your current theme on Discord"
         },
         "ChangeKey": {
@@ -173,6 +177,7 @@
         "Choose": {
           "Title": "Choose APIs",
           "MissingVersion": "version.json missing, please rerun Checker.exe",
+          "InvalidVersion": "version.json invalid, please rerun Checker.exe",
           "RunChecker": "Run Checker.exe",
           "CheckerNotFound": "Checker.exe not found\nPlease download Checker.exe again"
         },
@@ -333,10 +338,15 @@
       "End": "You've reached the end of the list"
     },
     "Clients": {
-      "Right": {
-        "Title": "CLIENTS",
-        "Subtitle": "Client manager used for Wave to\nmanage your current sessions"
-      }
+      "Title": "CLIENTS",
+      "Desc": "Client manager used for Wave to\nmanage your current sessions",
+      "Inject": "Inject",
+      "SelectAll": "Select All",
+      "SelectedOne": "1 selected",
+      "SelectedMany": "{0} selected",
+      "Injected": "Injected successfully",
+      "PidLabel": "PID: ",
+      "UserNameLabel": " / UserName: "
     },
     "KeySystem": {
       "Title": "Wave Key System",
@@ -347,6 +357,20 @@
       "Error": {
         "EnterKey": "Please enter a key.",
         "InvalidKey": "Invalid key."
+      }
+    },
+    "Console": {
+      "Title": "Console",
+      "SearchPlaceholder": "Search...",
+      "Status": {
+        "NoLog": "No log file for this session."
+      },
+      "ScrollToBottom": "Scroll to bottom",
+      "Filter": {
+        "All": "ALL",
+        "Info": "INFO",
+        "Waring": "WARNING",
+        "Error": "ERROR"
       }
     }
   }

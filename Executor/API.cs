@@ -131,6 +131,26 @@ namespace Executor
                 return "Velocity";
             }
 
+            try
+            {
+                var execType = (SpashApiInvoker.TryGetExecutorTypeFromVersionJson(v) ?? string.Empty).Trim();
+                if (execType.Length != 0)
+                {
+                    if (execType.Equals("Xeno", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Xeno";
+                    }
+
+                    if (execType.Equals("Velocity", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Velocity";
+                    }
+                }
+            }
+            catch
+            {
+            }
+
             var lower = v.ToLowerInvariant();
             if (lower.Contains(XenoKey, StringComparison.OrdinalIgnoreCase) || string.Equals(v, "SpashAPIXeno", StringComparison.OrdinalIgnoreCase))
             {
@@ -530,7 +550,21 @@ namespace Executor
                 Thread.Sleep(poll);
             }
 
-            return Fail("AttachTimeout", "Attach timeout.");
+            var lastProviderError = string.Empty;
+            try
+            {
+                lastProviderError = (SpashApiInvoker.GetLastAttachError() ?? string.Empty).Trim();
+            }
+            catch
+            {
+                lastProviderError = string.Empty;
+            }
+
+            var msg = string.IsNullOrWhiteSpace(lastProviderError)
+                ? "Attach timeout."
+                : "Attach timeout: " + lastProviderError;
+
+            return Fail("AttachTimeout", msg);
         }
 
         public static async Task<ApiResult> ExecuteScriptAsync(string script, CancellationToken ct)

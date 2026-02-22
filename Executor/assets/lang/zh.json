@@ -2,15 +2,19 @@
   "main.title": "Wave",
   "setup.title": "設定",
   "setup.choose_language": "選擇語言",
+  "setup.choose_mode": "選擇注入模式",
   "setup.choose_theme": "選擇主題",
   "setup.search_hint": "搜尋...",
   "setup.lang_zh": "中文",
   "setup.lang_en": "English",
+  "setup.mode_internal": "內部",
+  "setup.mode_external": "外部",
   "setup.back": "返回",
   "setup.next": "下一步",
   "setup.finish": "完成",
   "setup.window_title": "Wave 設定",
   "setup.msg_choose_language": "請先選擇語言。",
+  "setup.msg_choose_mode": "請先選擇注入模式。",
   "setup.msg_select_theme": "請先選擇主題。",
 
   "WaveUI": {
@@ -173,6 +177,7 @@
         "Choose": {
           "Title": "選擇 APIs",
           "MissingVersion": "version.json 丟失，請重新執行 Checker.exe",
+          "InvalidVersion": "version.json 內容無效，請重新執行 Checker.exe",
           "RunChecker": "執行 Checker.exe",
           "CheckerNotFound": "未找到 Checker.exe\n請重新下載 Checker.exe"
         },
@@ -333,10 +338,15 @@
       "End": "已經到底了"
     },
     "Clients": {
-      "Right": {
-        "Title": "CLIENTS",
-        "Subtitle": "用於管理 Wave\n目前的連線工作階段"
-      }
+      "Title": "CLIENTS",
+      "Desc": "用於管理 Wave\n目前的連線工作階段",
+      "Inject": "注入",
+      "SelectAll": "全選",
+      "SelectedOne": "已選擇 1 個",
+      "SelectedMany": "已選擇 {0} 個",
+      "Injected": "已成功注入",
+      "PidLabel": "PID: ",
+      "UserNameLabel": " / UserName: "
     },
     "KeySystem": {
       "Title": "Wave Key System",
@@ -347,6 +357,20 @@
       "Error": {
         "EnterKey": "請輸入 Key。",
         "InvalidKey": "Key 無效。"
+      }
+    },
+    "Console": {
+      "Title": "主控台",
+      "SearchPlaceholder": "搜尋...",
+      "Status": {
+        "NoLog": "找不到本次啟動的日誌檔。"
+      },
+      "ScrollToBottom": "滑到最底部",
+      "Filter": {
+        "All": "全部",
+        "Info": "資訊",
+        "Waring": "警告",
+        "Error": "錯誤"
       }
     }
   }

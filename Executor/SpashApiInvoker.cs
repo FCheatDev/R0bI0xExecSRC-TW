@@ -17,6 +17,117 @@ namespace Executor
         private const string VelocityKey = "velocity";
         private const string XenoKey = "xeno";
 
+        private const string ExecutorTypeVelocity = "Velocity";
+        private const string ExecutorTypeXeno = "Xeno";
+
+        private static readonly object _versionJsonLock = new();
+        private static DateTime _versionJsonLastWriteUtc;
+        private static Dictionary<string, string>? _executorTypeByApiName;
+
+        private static string GetVersionJsonPath()
+        {
+            var preferred = Path.GetFullPath(Path.Combine(AppPaths.AppDirectory, "..", "version.json"));
+            if (File.Exists(preferred))
+            {
+                return preferred;
+            }
+
+            var appLocal = Path.Combine(AppPaths.AppDirectory, "version.json");
+            if (File.Exists(appLocal))
+            {
+                return appLocal;
+            }
+
+            return Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "version.json"));
+        }
+
+        private static Dictionary<string, string> GetExecutorTypeMapFromVersionJson()
+        {
+            lock (_versionJsonLock)
+            {
+                try
+                {
+                    var path = GetVersionJsonPath();
+                    if (!File.Exists(path))
+                    {
+                        _executorTypeByApiName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        _versionJsonLastWriteUtc = DateTime.MinValue;
+                        return _executorTypeByApiName;
+                    }
+
+                    var lastWrite = File.GetLastWriteTimeUtc(path);
+                    if (_executorTypeByApiName != null && lastWrite == _versionJsonLastWriteUtc)
+                    {
+                        return _executorTypeByApiName;
+                    }
+
+                    using var stream = File.OpenRead(path);
+                    using var doc = System.Text.Json.JsonDocument.Parse(stream);
+                    if (!doc.RootElement.TryGetProperty("APIs", out var apisElement)
+                        || apisElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+                    {
+                        _executorTypeByApiName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        _versionJsonLastWriteUtc = lastWrite;
+                        return _executorTypeByApiName;
+                    }
+
+                    var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var apiProp in apisElement.EnumerateObject())
+                    {
+                        var apiName = apiProp.Name;
+                        var apiObj = apiProp.Value;
+                        if (apiObj.ValueKind != System.Text.Json.JsonValueKind.Object)
+                        {
+                            continue;
+                        }
+
+                        if (apiObj.TryGetProperty("Executor_Type", out var typeEl)
+                            && typeEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            var v = (typeEl.GetString() ?? string.Empty).Trim();
+                            if (v.Length != 0)
+                            {
+                                map[apiName] = v;
+                            }
+                        }
+                    }
+
+                    _executorTypeByApiName = map;
+                    _versionJsonLastWriteUtc = lastWrite;
+                    return map;
+                }
+                catch
+                {
+                    _executorTypeByApiName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    _versionJsonLastWriteUtc = DateTime.MinValue;
+                    return _executorTypeByApiName;
+                }
+            }
+        }
+
+        internal static string? TryGetExecutorTypeFromVersionJson(string? apiName)
+        {
+            var name = (apiName ?? string.Empty).Trim();
+            if (name.Length == 0)
+            {
+                return null;
+            }
+
+            try
+            {
+                var map = GetExecutorTypeMapFromVersionJson();
+                if (map.TryGetValue(name, out var t))
+                {
+                    return t;
+                }
+            }
+            catch
+            {
+            }
+
+            return null;
+        }
+
         private static readonly string[] VelocityApiTypeCandidates =
         {
             "SpashAPIVelocity+API",
@@ -50,6 +161,25 @@ namespace Executor
         private static Exception? _initializationError;
         private static readonly object _initLock = new();
 
+        private static readonly object _attachErrorLock = new();
+        private static string? _lastAttachError;
+
+        internal static string? GetLastAttachError()
+        {
+            lock (_attachErrorLock)
+            {
+                return _lastAttachError;
+            }
+        }
+
+        private static void SetLastAttachError(string? error)
+        {
+            lock (_attachErrorLock)
+            {
+                _lastAttachError = string.IsNullOrWhiteSpace(error) ? null : error;
+            }
+        }
+
         // 動態載入相關
         private static bool _dynamicManagerInitialized;
 
@@ -76,6 +206,8 @@ namespace Executor
                 _initializationError = null;
             }
 
+            SetLastAttachError(null);
+
             try
             {
                 _apiTypeCache.Clear();
@@ -99,6 +231,20 @@ namespace Executor
             if (s.Length == 0)
             {
                 return "VELOCITY";
+            }
+
+            var execType = (TryGetExecutorTypeFromVersionJson(s) ?? string.Empty).Trim();
+            if (execType.Length != 0)
+            {
+                if (string.Equals(execType, ExecutorTypeXeno, StringComparison.OrdinalIgnoreCase))
+                {
+                    return "XENO";
+                }
+
+                if (string.Equals(execType, ExecutorTypeVelocity, StringComparison.OrdinalIgnoreCase))
+                {
+                    return "VELOCITY";
+                }
             }
 
             if (s.Contains(XenoKey, StringComparison.OrdinalIgnoreCase))
@@ -145,6 +291,20 @@ namespace Executor
             if (v.Length == 0)
             {
                 return SelectedApi.Velocity;
+            }
+
+            var execType = (TryGetExecutorTypeFromVersionJson(v) ?? string.Empty).Trim();
+            if (execType.Length != 0)
+            {
+                if (string.Equals(execType, ExecutorTypeXeno, StringComparison.OrdinalIgnoreCase))
+                {
+                    return SelectedApi.Xeno;
+                }
+
+                if (string.Equals(execType, ExecutorTypeVelocity, StringComparison.OrdinalIgnoreCase))
+                {
+                    return SelectedApi.Velocity;
+                }
             }
 
             if (v.Contains(XenoKey, StringComparison.OrdinalIgnoreCase) || string.Equals(v, "SpashAPIXeno", StringComparison.OrdinalIgnoreCase))
@@ -401,6 +561,7 @@ namespace Executor
         {
             if (!EnsureInitialized(out error))
             {
+                SetLastAttachError(error);
                 return false;
             }
 
@@ -417,6 +578,7 @@ namespace Executor
                     {
                         LogError(apiTag, $"AttachAPI invoke failed: {error ?? "Unknown error"}");
                         TryLogVelocityInternalState("AttachAPI");
+                        SetLastAttachError(error);
                         return false;
                     }
                 }
@@ -425,6 +587,7 @@ namespace Executor
                     var typeName = "SpashAPIXeno";
                     if (!TryInvokeApiMethod(typeName, "AttachAPI", Array.Empty<object>(), out result, out error))
                     {
+                        SetLastAttachError(error);
                         return false;
                     }
                 }
@@ -436,6 +599,8 @@ namespace Executor
                         LogError(apiTag, $"AttachAPI result faulted: {error ?? "Unknown error"}");
                         TryLogVelocityInternalState("AttachAPI");
                     }
+
+                    SetLastAttachError(error);
                     return false;
                 }
 
@@ -447,14 +612,17 @@ namespace Executor
                         TryLogVelocityInternalState("AttachAPI");
                     }
                     error = "AttachAPI returned false";
+                    SetLastAttachError(error);
                     return false;
                 }
 
+                SetLastAttachError(null);
                 return true;
             }
             catch (Exception ex)
             {
                 error = FormatExceptionMessage(ex);
+                SetLastAttachError(error);
                 return false;
             }
         }
@@ -1333,7 +1501,7 @@ namespace Executor
             }
         }
 
-        private static void EnsureDependencyResolverInstalled(string apiFolder)
+        internal static void EnsureDependencyResolverInstalled(string apiFolder)
         {
             lock (ResolverLock)
             {
@@ -1398,7 +1566,7 @@ namespace Executor
             }
         }
 
-        private static void EnsureNativeDependencySearchPathInstalled(string apiFolder)
+        internal static void EnsureNativeDependencySearchPathInstalled(string apiFolder)
         {
             lock (ResolverLock)
             {

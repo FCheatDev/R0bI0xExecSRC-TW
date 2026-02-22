@@ -115,12 +115,22 @@
             </Style>
 
             <Style x:Key="NewScriptModalButtonStyle" TargetType="Button">
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="Padding" Value="0" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                                <Border.RenderTransform>
+                                    <ScaleTransform ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleX)}"
+                                                    ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleY)}" />
+                                </Border.RenderTransform>
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <ControlTemplate.Triggers>
@@ -129,6 +139,30 @@
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="Bd" Property="Opacity" Value="0.85" />
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.94" Duration="0:0:0.06" />
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.94" Duration="0:0:0.06" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.18">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.18">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -804,18 +838,49 @@
                             <TextBlock x:Name="ExplorerSavedScriptsText" Grid.Column="1" Text="Saved Scripts" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" Margin="10,0,0,0" FontFamily="{DynamicResource WaveTitleFontFamily}" Cursor="Hand"
                                        MouseLeftButtonDown="SavedScriptsToggle_OnMouseLeftButtonDown" />
                             <Button x:Name="SavedScriptsAddButton" Grid.Column="2" Background="#1DA1F2" Width="22" Height="22" HorizontalAlignment="Right" BorderThickness="0"
-                                    Cursor="Hand" Click="SavedScriptsAdd_OnClick" Padding="0" FocusVisualStyle="{x:Null}">
+                                    Cursor="Hand" Click="SavedScriptsAdd_OnClick" Padding="0" FocusVisualStyle="{x:Null}" RenderTransformOrigin="0.5,0.5">
+                                <Button.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </Button.RenderTransform>
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border x:Name="SavedScriptsAddButtonBorder" Background="{TemplateBinding Background}" CornerRadius="5">
+                                            <Border.RenderTransform>
+                                                <ScaleTransform ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleX)}"
+                                                                ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RenderTransform.(ScaleTransform.ScaleY)}" />
+                                            </Border.RenderTransform>
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="SavedScriptsAddButtonBorder" Property="Background" Value="#1DA1F2" />
+                                                <Setter TargetName="SavedScriptsAddButtonBorder" Property="Opacity" Value="0.85" />
                                             </Trigger>
                                             <Trigger Property="IsPressed" Value="True">
-                                                <Setter TargetName="SavedScriptsAddButtonBorder" Property="Background" Value="#1487D4" />
+                                                <Setter TargetName="SavedScriptsAddButtonBorder" Property="Opacity" Value="0.70" />
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.94" Duration="0:0:0.06" />
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.94" Duration="0:0:0.06" />
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.18">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.18">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.ExitActions>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>

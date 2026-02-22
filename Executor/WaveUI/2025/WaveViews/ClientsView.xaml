@@ -6,15 +6,197 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
 
+    <UserControl.Resources>
+        <Style x:Key="WaveCheckBox" TargetType="CheckBox">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Border x:Name="Box" Width="18" Height="18" CornerRadius="4" Background="#121212" BorderBrush="#2A2A2A" BorderThickness="1" />
+                            <Path x:Name="Check" Data="M 4.2 9.4 L 7.4 12.6 L 13.8 6.2" StrokeThickness="2" Stroke="White" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#3A3A3A" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#1DA1F2" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#1DA1F2" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="InjectButton" TargetType="Button">
+            <Setter Property="Background" Value="#1DA1F2" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#249FF0" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1A8CD8" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.94" Duration="0:0:0.06" />
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.94" Duration="0:0:0.06" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SelectAllButtonStyle" TargetType="Button" BasedOn="{StaticResource InjectButton}">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#249FF0" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1A8CD8" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.94" Duration="0:0:0.06" />
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.94" Duration="0:0:0.06" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <BackEase EasingMode="EaseOut" Amplitude="0.6" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Background="#0C0C0C" Margin="0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="280" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" CornerRadius="10" Background="#0B0B0B" BorderBrush="#202020" BorderThickness="1" />
+        <Border Grid.Column="0" CornerRadius="10" Background="#0B0B0B" BorderBrush="#202020" BorderThickness="1">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="ClientsItemsControl" Margin="16">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#141414" CornerRadius="8" Margin="0,0,0,8" Padding="16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="1" CornerRadius="10" Background="Black" BorderBrush="#202020"  Margin="10,0,0,0">
+                                    <CheckBox Grid.Column="0" Style="{StaticResource WaveCheckBox}" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,16,0" />
+
+                                    <Border Grid.Column="1" Width="40" Height="40" CornerRadius="20" Background="#2A2A2A" VerticalAlignment="Center" Margin="0,0,12,0">
+                                        <Image Source="{Binding AvatarUrl}" Width="36" Height="36" Stretch="UniformToFill" />
+                                    </Border>
+
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <TextBlock Foreground="#EDEDED" FontSize="14" FontWeight="SemiBold">
+                                            <Run Text="{Binding DataContext.PidLabelText, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}" />
+                                            <Run Text="{Binding ProcessId, Mode=OneWay}" />
+                                            <Run Text="{Binding DataContext.UserNameLabelText, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}" />
+                                            <Run Text="{Binding UserName, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="3" x:Name="InjectBtn" Content="{Binding DataContext.InjectText, RelativeSource={RelativeSource AncestorType=UserControl}}" Style="{StaticResource InjectButton}" Click="InjectButton_Click" Tag="{Binding}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <Border Grid.Column="1" CornerRadius="10" Background="Black" BorderBrush="#202020" Margin="10,0,0,0">
             <Grid Margin="14">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -22,18 +204,13 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock Text="CLIENTS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveTitleFontFamily}" />
-                <TextBlock Grid.Row="1" Text="Client manager used for Wave to&#10;manage your current sessions" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" />
+                <TextBlock x:Name="ClientsTitleText" Text="CLIENTS" Foreground="#EDEDED" FontWeight="SemiBold" FontSize="14" FontFamily="{DynamicResource WaveTitleFontFamily}" />
+                <TextBlock x:Name="ClientsDescText" Grid.Row="1" Text="Client manager used for Wave to&#10;manage your current sessions" Foreground="#9AA0A6" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" />
 
-                <Button Grid.Row="3" Content="Select All" Width="90" Height="32" HorizontalAlignment="Right" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" Margin="0,0,0,0">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="9">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                <StackPanel Grid.Row="3">
+                    <TextBlock x:Name="SelectedCountText" Text="0 selected" Foreground="#9AA0A6" FontSize="12" Margin="0,0,0,10" />
+                    <Button x:Name="SelectAllButton" Style="{StaticResource SelectAllButtonStyle}" Content="Select All" Width="90" Height="32" HorizontalAlignment="Right" Background="#1DA1F2" Foreground="White" BorderThickness="0" Cursor="Hand" />
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

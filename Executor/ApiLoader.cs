@@ -12,6 +12,23 @@ namespace Executor
     /// </summary>
     public static class ApiLoader
     {
+        private static string GetVersionJsonPath()
+        {
+            var preferred = Path.GetFullPath(Path.Combine(AppPaths.AppDirectory, "..", "version.json"));
+            if (File.Exists(preferred))
+            {
+                return preferred;
+            }
+
+            var appLocal = Path.Combine(AppPaths.AppDirectory, "version.json");
+            if (File.Exists(appLocal))
+            {
+                return appLocal;
+            }
+
+            return Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "version.json"));
+        }
+
         /// <summary>
         /// 從 version.json 取得 API 清單並載入對應的 DLL
         /// </summary>
@@ -22,7 +39,7 @@ namespace Executor
             
             try
             {
-                var versionPath = Path.Combine(AppPaths.AppDirectory, "version.json");
+                var versionPath = GetVersionJsonPath();
                 if (!File.Exists(versionPath))
                 {
                     return loadedApis;
@@ -72,15 +89,32 @@ namespace Executor
                 }
 
                 // 搜尋資料夾中的 DLL 檔案
-                var dllFiles = Directory.GetFiles(apiFolder, "*.dll");
+                var dllFiles = Directory.GetFiles(apiFolder, "*.dll", SearchOption.TopDirectoryOnly);
                 if (dllFiles.Length == 0)
                 {
                     System.Diagnostics.Debug.WriteLine($"No DLL files found in: {apiFolder}");
                     return null;
                 }
 
-                // 嘗試載入第一個找到的 DLL
-                var dllPath = dllFiles[0];
+                // 優先挑選可能是主 API 的 DLL（避免誤載依賴 DLL）
+                var dllPath = ChooseApiDllPath(apiName, apiFolder, dllFiles);
+                if (string.IsNullOrWhiteSpace(dllPath) || !File.Exists(dllPath))
+                {
+                    System.Diagnostics.Debug.WriteLine($"No suitable API DLL found in: {apiFolder}");
+                    return null;
+                }
+
+                // 安裝依賴/Native DLL 解析（與 SpashApiInvoker 同策略）
+                try
+                {
+                    SpashApiInvoker.EnsureDependencyResolverInstalled(apiFolder);
+                    SpashApiInvoker.EnsureNativeDependencySearchPathInstalled(apiFolder);
+                }
+                catch
+                {
+                    // 忽略，讓後續 Assembly.LoadFrom 自己拋錯並由外層處理
+                }
+
                 var assembly = Assembly.LoadFrom(dllPath);
                 
                 System.Diagnostics.Debug.WriteLine($"Successfully loaded API: {apiName} from {dllPath}");
@@ -90,6 +124,55 @@ namespace Executor
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to load API {apiName}: {ex.Message}");
                 return null;
+            }
+        }
+
+        private static string? ChooseApiDllPath(string apiName, string apiFolder, string[] dllFiles)
+        {
+            // 常見情況：資料夾內包含多個依賴 DLL，主 DLL 通常以 SpashAPI* 命名
+            try
+            {
+                var ordered = dllFiles
+                    .Select(p => new
+                    {
+                        Path = p,
+                        Name = System.IO.Path.GetFileNameWithoutExtension(p) ?? string.Empty,
+                    })
+                    .OrderBy(x => x.Name.Length)
+                    .ToList();
+
+                string? Pick(Func<string, bool> predicate)
+                {
+                    foreach (var item in ordered)
+                    {
+                        if (predicate(item.Name))
+                        {
+                            return item.Path;
+                        }
+                    }
+                    return null;
+                }
+
+                var api = (apiName ?? string.Empty).Trim();
+
+                // 1) 精準匹配資料夾名
+                var exact = Pick(n => string.Equals(n, api, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(exact)) return exact;
+
+                // 2) SpashAPI 開頭
+                var spash = Pick(n => n.StartsWith("SpashAPI", StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(spash)) return spash;
+
+                // 3) 包含 apiName
+                var contains = Pick(n => n.Contains(api, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(contains)) return contains;
+
+                // 4) 退而求其次：選最短檔名（較像主 DLL）
+                return ordered.FirstOrDefault()?.Path;
+            }
+            catch
+            {
+                return dllFiles.FirstOrDefault();
             }
         }
 
@@ -108,8 +191,13 @@ namespace Executor
                     return null;
                 }
 
-                var dllFiles = Directory.GetFiles(apiFolder, "*.dll");
-                return dllFiles.Length > 0 ? dllFiles[0] : null;
+                var dllFiles = Directory.GetFiles(apiFolder, "*.dll", SearchOption.TopDirectoryOnly);
+                if (dllFiles.Length == 0)
+                {
+                    return null;
+                }
+
+                return ChooseApiDllPath(apiName, apiFolder, dllFiles);
             }
             catch
             {
